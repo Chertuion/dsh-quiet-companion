@@ -1,6 +1,6 @@
 {
   "name": "dsh-quiet-companion",
-  "version": "0.4.0-beta.1",
+  "version": "0.4.1-beta.1",
   "description": "安静陪伴：橙发花饰桌面伙伴，跟随 Harness 默认模型的画面与视频陪伴、自适应发言、记忆、Agent 进度与零食成长。",
   "type": "module",
   "main": "index.mjs",
@@ -28,7 +28,11 @@
     "third_party",
     "README.md",
     "README.txt",
-    "THIRD_PARTY_NOTICES.md"
+    "THIRD_PARTY_NOTICES.md",
+    "docs",
+    "CHANGELOG.md",
+    "assets/orange-character/ASSET_SOURCE.md",
+    "native/README.txt"
   ],
   "dsh": {
     "client": {

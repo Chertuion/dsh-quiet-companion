@@ -345,6 +345,8 @@ function GrowthSection({ snapshot, controller, disabled }) {
     h(Card,{title:'陪伴成长'},
       h(ToggleRow,{label:'启用成长',checked:growthEnabled,disabled,
         description:'陪伴过程中的成长与虚拟零食。关闭后保留已有成长和库存。',onChange:next=>controller.update({growthEnabled:next})}),
+      h(ToggleRow,{label:'显示桌面成长状态栏',checked:settings.growthPanelVisible===true,disabled,
+        description:'隐藏后，零食仍散落在角色身边；完整成长信息可在这里查看。',onChange:next=>controller.update({growthPanelVisible:next})}),
       h('div',{className:'qcp-form-row'},
         h('div',{className:'qcp-memory-toolbar'},h('span',{className:'qcp-tag'},`阶段：${stage}`),button('刷新成长',()=>controller.action('growth-refresh'),disabled)),
         h('dl',{className:'qcp-metrics'},

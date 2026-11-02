@@ -1,22 +1,14 @@
-# Orange flower companion
+# 橙发花饰角色素材
 
-This character pack was generated with the built-in image generation tool from
-the orange-haired human character in reference images supplied by the user.
-The references were used for orange hair, amber eyes, a flower and black ribbon
-hair ornament, an ivory-and-orange embroidered long dress, cream boots and a book.
+本套素材由内置图像生成工具依据用户提供的AI参考图生成。参考特征为橙色长发、琥珀色眼睛、橙花与黑缎带发饰、白橙刺绣长裙、浅色短靴及书本。
 
-- `idle.png`: normal full-body still.
-- `shy.png`: bashful full-body still.
-- `sheets/daily.png`: idle, waiting, thinking and writing.
-- `sheets/tasks.png`: searching, command work, success and error.
-- `sheets/touch.png`: dragging, landing, head pat and poke.
-- `sheets/care.png`: skirt interaction, eating, stretching and sleepy.
+- `idle.png`：普通全身立绘。
+- `shy.png`：害羞全身立绘。
+- `sheets/daily.png`：待机、等待、思考、书写。
+- `sheets/tasks.png`：检索、命令操作、成功、错误。
+- `sheets/touch.png`：拖动、落地、摸头、轻戳。
+- `sheets/care.png`：裙摆互动、进食、伸懒腰、困倦。
 
-Each sheet has four rows and four columns. Each row contains four keyframes;
-the manifest maps all sixteen states to these 64 frames. Rendering is a small
-keyframe animation system, not Live2D or a continuous video.
+每张图集为4行4列，每行4个关键帧；manifest将16种状态映射到共64个姿势。播放器使用关键帧切换，不是Live2D或连续视频。
 
-No CrossPet or former whale-tail animation images are copied into this pack.
-Generation does not grant additional rights in the user-supplied references.
-No additional redistribution license is granted for these generated assets.
-Third-party software licenses are listed separately in THIRD_PARTY_NOTICES.md.
+本素材包未复制CrossPet或此前鲸尾角色的动画图像。生成过程不对参考图授予新权利，本项目也未额外授予生成素材再分发许可。第三方软件的许可另见[第三方声明](../../THIRD_PARTY_NOTICES.md)。

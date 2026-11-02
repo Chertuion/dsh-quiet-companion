@@ -7,6 +7,47 @@ final class CompanionSnackView: NSView {
     let kind: String
     var onOffer: ((String) -> Void)?
     var canOffer = true
+    private var arrivalTimer: Timer?
+    private var arrivalStarted: Date?
+    private(set) var restingFrame = NSRect.zero
+
+    /// A logical destination is updated by layout without restarting the arrival.
+    func setRestingFrame(_ target: NSRect, reducedMotion: Bool) {
+        restingFrame = target
+        if reducedMotion { cancelArrival(snapToRest: true) }
+        else if arrivalStarted != nil { stepArrival() }
+        else { frame = target }
+    }
+
+    func animateArrival(reducedMotion: Bool) {
+        cancelArrival(snapToRest: true)
+        guard !reducedMotion else { return }
+        arrivalStarted = Date()
+        stepArrival()
+        arrivalTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in self?.stepArrival() }
+    }
+
+    func cancelArrival(snapToRest: Bool) {
+        arrivalTimer?.invalidate(); arrivalTimer = nil; arrivalStarted = nil
+        if snapToRest { frame = restingFrame; alphaValue = 1 }
+    }
+
+    private func stepArrival() {
+        guard let started = arrivalStarted else { return }
+        let t = min(1, max(0, Date().timeIntervalSince(started) / 0.55))
+        let remaining = 1 - t
+        let unit = restingFrame.width / 32
+        frame = restingFrame.offsetBy(dx: sin(t * .pi) * 3 * unit * remaining,
+                                      dy: 22 * unit * remaining * remaining)
+        alphaValue = 0.55 + 0.45 * t
+        if t >= 1 { cancelArrival(snapToRest: true) }
+    }
+
+    func containsVisibleFood(_ point: NSPoint) -> Bool {
+        !isHidden && alphaValue > 0.08 && NSBezierPath(ovalIn: bounds.insetBy(dx: 1, dy: 1)).contains(point)
+    }
+
+    deinit { arrivalTimer?.invalidate() }
 
     init(id: String, kind: String) {
         snackID = id
@@ -19,7 +60,7 @@ final class CompanionSnackView: NSView {
     }
     required init?(coder: NSCoder) { fatalError("Not a storyboard view") }
     override func mouseDown(with event: NSEvent) {
-        if canOffer { onOffer?(snackID) }
+        if canOffer, containsVisibleFood(convert(event.locationInWindow, from: nil)) { onOffer?(snackID) }
     }
     override func draw(_ dirtyRect: NSRect) {
         guard let context = NSGraphicsContext.current else { return }

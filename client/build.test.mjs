@@ -136,3 +136,16 @@ test('growth with no snacks disables offering and never invents missing metrics'
   assert.ok(html.includes('不需要额外 API Key 或系统授权'));
   assert.equal(html.includes('购买零食'),false);
 });
+
+test('desktop growth panel toggle defaults off and stays independent from growth and snack controls',{skip:!React},()=>{
+  const previous=pageFor('growth');
+  assert.match(previous,/aria-label="显示桌面成长状态栏"[^>]*aria-checked="false"/u);
+  assert.ok(previous.includes('零食仍散落在角色身边'));
+  assert.ok(previous.includes('完整成长信息可在这里查看'));
+  for(const visible of [true,false]) {
+    const html=pageFor('growth',{...fixture,settings:{...fixture.settings,growthEnabled:true,growthPanelVisible:visible}});
+    assert.match(html,new RegExp(`aria-label="显示桌面成长状态栏"[^>]*aria-checked="${visible}"`,'u'));
+    assert.match(html,/aria-label="启用成长"[^>]*aria-checked="true"/u);
+    assert.equal((html.match(/aria-label="显示桌面成长状态栏"/gu)??[]).length,1);
+  }
+});

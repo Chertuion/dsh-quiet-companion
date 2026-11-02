@@ -123,6 +123,9 @@ def main():
         assert native_status.get('audioAuthorized') is False
         assert isinstance(native_status.get('voices'), list)
         assert native_status.get('usingSocketTransport') is args.launch_services
+        assert native_status.get('growthPanelVisible') is False
+        assert native_status.get('petPanelWidth') == 320
+        assert native_status.get('panelWithinVisibleScreen') is True
         if args.launch_services:
             write(b'{"type":"control","action":"set-appearance","scale":1.05,"opacity":0.93}\n')
             wait_for('native-status', predicate=lambda value:
@@ -135,35 +138,125 @@ def main():
             mouse_status = wait_for('native-status', predicate=lambda value: '预览' in value.get('mouseStatus', ''))
             assert mouse_status.get('mousePlayActive') is False
             assert mouse_status.get('mouseAuthorized') is False
-            snacks = [{'id': f'qa-snack-{index}', 'kind': ['cookie', 'candy', 'fishcake'][index % 3],
+            snapshot_counter = 0
+
+            def fresh_status():
+                nonlocal snapshot_counter
+                snapshot_counter += 1
+                value = 0.80 + snapshot_counter / 1000
+                write((json.dumps({'type': 'control', 'action': 'set-appearance',
+                                   'opacity': value}) + '\n').encode())
+                return wait_for('native-status', predicate=lambda state:
+                                abs(state.get('opacity', 0) - value) < 0.00001)
+
+            def positions(state):
+                points = state.get('snackPositions')
+                assert state.get('snackLayout') == 'around-character'
+                assert isinstance(points, list) and len(points) == 8
+                assert len({point['slot'] for point in points}) == 8
+                assert sum(point['x'] < 160 for point in points) == 4
+                assert sum(point['x'] > 160 for point in points) == 4
+                for point in points:
+                    assert 0 <= point['x'] and point['x'] + point['width'] <= 320
+                    assert 0 <= point['y'] and point['y'] + point['height'] < 275
+                return {point['id']: (point['slot'], point['x'], point['y'],
+                                      point['width'], point['height']) for point in points}
+
+            snacks = [{'id': f'qa-snack-{index}', 'kind': ['mantou', 'lamian', 'dianxin', 'cake'][index % 4],
                        'nutrition': 8, 'createdAt': index} for index in range(10)]
             growth = {'level': 1, 'experience': 18, 'nextLevelExperience': 100,
                       'satiety': 45, 'energy': 76, 'mood': 83, 'stage': '幼年期',
                       'stats': {'earnedSnacks': 12, 'eatenSnacks': 0},
                       'snackCount': 12, 'snacks': snacks, 'status': '等待进食决定'}
-            write((json.dumps({'type': 'growth', 'state': growth,
-                               'event': {'id': 'qa-spawn', 'type': 'snack-spawned',
-                                         'snackId': 'qa-snack-0', 'kind': 'cookie'}}) + '\n').encode())
-            write(b'{"type":"ping","id":"growth-snapshot"}\n')
-            wait_for('pong', 'growth-snapshot')
+            initial = {'type': 'growth', 'state': growth,
+                       'event': {'id': 'qa-spawn', 'type': 'snack-spawned',
+                                 'snackId': 'qa-snack-0', 'kind': 'mantou'}}
+            write((json.dumps(initial) + '\n').encode())
+            hidden = wait_for('native-status', predicate=lambda state: len(state.get('snackPositions', [])) == 8)
+            assert hidden.get('growthPanelVisible') is False and hidden.get('petPanelWidth') == 320
+            assert hidden.get('growthBadgeVisible') is False and hidden.get('inventoryLabelVisible') is False
+            assert hidden.get('snackArrivalCount') == 0, 'Old startup inventory must stay still.'
+            initial_positions = positions(hidden)
+
+            # Exercise the actual menu's shared action; it emits only an appearance patch.
+            write(b'{"type":"control","action":"preview-place-at-right-edge"}\n')
+            write(b'{"type":"control","action":"toggle-growth-panel"}\n')
+            patch = wait_for('settings', predicate=lambda state: state.get('growthPanelVisible') is True)
+            assert set(patch) == {'type', 'growthPanelVisible'}, 'Menu must preserve other growth settings.'
+            shown = wait_for('native-status', predicate=lambda state: state.get('growthPanelVisible') is True)
+            assert shown.get('petPanelWidth') == 420
+            assert shown.get('panelWithinVisibleScreen') is True, 'Expanded sidebar must remain on screen.'
+            assert shown.get('growthBadgeVisible') is True and shown.get('inventoryLabelVisible') is True
+            assert positions(shown) == initial_positions
+            write(b'{"type":"settings","settings":{"growthPanelVisible":false}}\n')
+            hidden = wait_for('native-status', predicate=lambda state:
+                              state.get('growthPanelVisible') is False and state.get('petPanelWidth') == 320)
+            assert positions(hidden) == initial_positions
+            assert hidden.get('panelWithinVisibleScreen') is True
+
             growth['snacks'] = snacks[1:]
             growth['snackCount'] = 11
             growth['stats']['eatenSnacks'] = 1
             eaten = {'type': 'growth', 'state': growth,
                      'event': {'id': 'qa-eaten', 'type': 'snack-eaten',
-                               'snackId': 'qa-snack-0', 'kind': 'cookie'}}
+                               'snackId': 'qa-snack-0', 'kind': 'mantou'}}
             write((json.dumps(eaten) + '\n').encode())
-            write((json.dumps(eaten) + '\n').encode())  # Event replay must not consume or echo.
-            time.sleep(1)
+            wait_for('native-status', predicate=lambda state: state.get('snackEatingActive') is True)
+            write((json.dumps(eaten) + '\n').encode())
+            # Change scale/sidebar during the real preview flight; no inventory echo is allowed.
+            write(b'{"type":"control","action":"set-appearance","scale":1.2}\n')
+            write(b'{"type":"settings","settings":{"growthPanelVisible":true}}\n')
+            resized = wait_for('native-status', predicate=lambda state:
+                               abs(state.get('scale', 0) - 1.2) < 0.001 and state.get('growthPanelVisible') is True)
+            assert resized.get('panelWithinVisibleScreen') is True, 'Scaled panel must remain on screen.'
+            for identity, prior in initial_positions.items():
+                if identity != 'qa-snack-0':
+                    assert all(abs(left - right) < 0.00001 for left, right in zip(positions(resized)[identity], prior))
+            write(b'{"type":"settings","settings":{"growthPanelVisible":false}}\n')
+            wait_for('native-status', predicate=lambda state: state.get('snackEatingActive') is False, timeout=3)
+
+            new_snack = {'id': 'qa-new-snack', 'kind': 'cake', 'nutrition': 8, 'createdAt': 20}
+            growth['snacks'] = [new_snack, *snacks[1:]]
+            growth['snackCount'] = 12
+            spawned = {'type': 'growth', 'state': growth,
+                       'event': {'id': 'qa-new-spawn', 'type': 'snack-spawned',
+                                 'snackId': 'qa-new-snack', 'kind': 'cake'}}
+            write((json.dumps(spawned) + '\n').encode())
+            wait_for('native-status', predicate=lambda state: state.get('snackArrivalCount') == 1)
+            write((json.dumps(spawned) + '\n').encode())
+            spawned['event']['id'] = 'qa-new-spawn-again'
+            write((json.dumps(spawned) + '\n').encode())
+            assert fresh_status().get('snackArrivalCount') == 1, 'Duplicate snapshots must not restart arrival.'
+            batch_snacks = [{'id': 'qa-batch-a', 'kind': 'mantou', 'createdAt': 30},
+                            {'id': 'qa-batch-b', 'kind': 'dianxin', 'createdAt': 31}]
+            growth['snacks'] = [*batch_snacks, *growth['snacks']]
+            growth['snackCount'] += 2
+            batch = {'type': 'growth', 'state': growth,
+                     'event': {'id': 'qa-batch-spawn', 'type': 'snack-spawned',
+                               'snackId': 'qa-batch-b', 'kind': 'dianxin'}}
+            write((json.dumps(batch) + '\n').encode())
+            batched = wait_for('native-status', predicate=lambda state: state.get('snackArrivalCount') == 3)
+            assert {'qa-batch-a', 'qa-batch-b'} <= positions(batched).keys()
+            write((json.dumps(batch) + '\n').encode())
+            assert fresh_status().get('snackArrivalCount') == 3, 'Batch replay must not restart arrivals.'
+            write(b'{"type":"settings","settings":{"reduceMotion":true}}\n')
+            growth['snacks'] = [{'id': 'qa-still-snack', 'kind': 'mantou', 'createdAt': 21}, *snacks[1:]]
+            write((json.dumps({'type': 'growth', 'state': growth,
+                               'event': {'id': 'qa-still-spawn', 'type': 'snack-spawned',
+                                         'snackId': 'qa-still-snack', 'kind': 'mantou'}}) + '\n').encode())
+            still = fresh_status()
+            assert still.get('snackArrivalCount') == 3, 'Reduced motion must not animate arrival.'
+            positions(still)
             growth['level'] = 2
             growth['experience'] = 0
             write((json.dumps({'type': 'growth', 'state': growth,
                                'event': {'id': 'qa-level', 'type': 'level-up'}}) + '\n').encode())
             write(b'{"type":"control","action":"sleep"}\n')
-            wait_for('native-status', predicate=lambda value: value.get('petSleeping') is True)
+            wait_for('native-status', predicate=lambda state: state.get('petSleeping') is True)
             write(b'{"type":"control","action":"wake"}\n')
-            wait_for('native-status', predicate=lambda value: value.get('petSleeping') is False)
+            wait_for('native-status', predicate=lambda state: state.get('petSleeping') is False)
             assert not any(item.get('type') == 'snack-offer' for item in messages)
+            assert not any(item.get('type') == 'settings' for item in messages), 'Host settings must not echo.'
         assert process.poll() is None
         print(json.dumps({
             'passed': True, 'transport': 'launch-services-uds' if args.launch_services else 'stdin',
@@ -176,6 +269,12 @@ def main():
             'preview_audio_enable_stayed_off': args.launch_services,
             'preview_pointer_play_no_warp': args.launch_services,
             'growth_snapshot_eat_level_replay_safe': args.launch_services,
+            'snacks_around_character_stable': args.launch_services,
+            'growth_panel_hidden_by_default_and_toggle_safe': args.launch_services,
+            'arrival_events_deduplicated_and_reduced_motion_safe': args.launch_services,
+            'eating_resize_and_sidebar_toggle_safe': args.launch_services,
+            'batch_spawn_two_arrivals_and_replay_safe': args.launch_services,
+            'panel_clamped_after_sidebar_and_scale': args.launch_services,
         }))
     finally:
         try:
