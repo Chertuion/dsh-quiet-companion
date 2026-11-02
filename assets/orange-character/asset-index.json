@@ -1,0 +1,103 @@
+{
+  "format": "PNG files copied byte-for-byte from built-in image generation; no pixel edits",
+  "files": [
+    {
+      "file": "idle.png",
+      "sha256": "c90e5081ee243c868337c84cf0cb8e4a9bca17ac4872056bd57785427a9c0b08",
+      "bytes": 1864177,
+      "width": 1199,
+      "height": 1312
+    },
+    {
+      "file": "sheets/01-idle-waiting.png",
+      "sha256": "9a6dc41885cf6be7a54efcd321938408ce954ebc86984e1d8ecd827bdf90646b",
+      "bytes": 2446864,
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "file": "sheets/02-thinking-working.png",
+      "sha256": "d0124e219ad2cdcd0ed2871a1b2f25291b735b685c98e9ac4610eaccb2dd95c8",
+      "bytes": 2296892,
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "file": "sheets/03-search-command.png",
+      "sha256": "e9cd5a3ac3d62cc6e9a6f820a9b34ace80ceaa49eabe62a42705625b5b901066",
+      "bytes": 2420210,
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "file": "sheets/04-success-error.png",
+      "sha256": "2b49904dd7e20c10286c1bd15d8eba6d46f6415e94544c0c1bc4fc6016f5b9fa",
+      "bytes": 2485664,
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "file": "sheets/05-dragging-release.png",
+      "sha256": "88bfb9af7a9c056b952bcf5f027bed00140e6ac7e47b06672a01dff13f10ae56",
+      "bytes": 2566161,
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "file": "sheets/06-head-poke.png",
+      "sha256": "804fe637f5feec8699a68ea96da1a7aec2bc66003b71cf0ffd3da41891bd0883",
+      "bytes": 2306214,
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "file": "sheets/07-skirt-eat.png",
+      "sha256": "f7bfbeb3cc27d2443df73d165f093136b137c0f518f8c23f7dd86bfb5c089e18",
+      "bytes": 2476573,
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "file": "sheets/08-stretch-yawn.png",
+      "sha256": "39bb3be384e51a684546471b1246173337b8ac1795d2f6a3e2dc56268c15df95",
+      "bytes": 2367141,
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "file": "sheets/09-shy-concern.png",
+      "sha256": "858b3129c449569b719c0aa316cb98881df71ae5af4b81ea46b3cca3c1fa8a82",
+      "bytes": 2883160,
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "file": "sheets/10-tease-sleep.png",
+      "sha256": "262c9e509b5503b832779921a57c500ba1219df9cd4dd5e0068c8017097f5ebc",
+      "bytes": 2450177,
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "file": "sheets/11-replying-approval.png",
+      "sha256": "4b86673a92a57da2f6e23dd07c094ce62d63d77fa4bfadbab247109882aa369e",
+      "bytes": 2157125,
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "file": "sheets/12-look-wave.png",
+      "sha256": "c38ee9d74f9a339581a8b0ae8c322c78031c7b1870f7e76bf4665a59a5bc2ef0",
+      "bytes": 2426692,
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "file": "shy.png",
+      "sha256": "f50f64a42376574ae8c36d59e1aabc2b0648ac9ec06df2ef09c8ff882f0b6c18",
+      "bytes": 1918935,
+      "width": 1108,
+      "height": 1420
+    }
+  ]
+}

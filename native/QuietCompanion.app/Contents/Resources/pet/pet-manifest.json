@@ -1,472 +1,1406 @@
 {
-  "schemaVersion": 2,
-  "characterId": "orange-book-companion",
+  "schemaVersion": 3,
+  "characterId": "orange-q-companion",
   "columns": 4,
   "rows": 4,
   "sheets": {
-    "daily": "sheets/daily.png",
-    "tasks": "sheets/tasks.png",
-    "touch": "sheets/touch.png",
-    "care": "sheets/care.png"
+    "01-idle-waiting": "sheets/01-idle-waiting.png",
+    "02-thinking-working": "sheets/02-thinking-working.png",
+    "03-search-command": "sheets/03-search-command.png",
+    "04-success-error": "sheets/04-success-error.png",
+    "05-dragging-release": "sheets/05-dragging-release.png",
+    "06-head-poke": "sheets/06-head-poke.png",
+    "07-skirt-eat": "sheets/07-skirt-eat.png",
+    "08-stretch-yawn": "sheets/08-stretch-yawn.png",
+    "09-shy-concern": "sheets/09-shy-concern.png",
+    "10-tease-sleep": "sheets/10-tease-sleep.png",
+    "11-replying-approval": "sheets/11-replying-approval.png",
+    "12-look-wave": "sheets/12-look-wave.png"
   },
   "clips": {
     "idle": {
       "frames": [
         {
-          "sheet": "daily",
+          "sheet": "01-idle-waiting",
           "row": 0,
-          "column": 0
+          "column": 0,
+          "durationMs": 1600
         },
         {
-          "sheet": "daily",
+          "sheet": "01-idle-waiting",
           "row": 0,
-          "column": 1
+          "column": 1,
+          "durationMs": 600
         },
         {
-          "sheet": "daily",
+          "sheet": "01-idle-waiting",
           "row": 0,
-          "column": 2
+          "column": 2,
+          "durationMs": 300
         },
         {
-          "sheet": "daily",
+          "sheet": "01-idle-waiting",
           "row": 0,
-          "column": 3
+          "column": 3,
+          "durationMs": 100
+        },
+        {
+          "sheet": "01-idle-waiting",
+          "row": 1,
+          "column": 0,
+          "durationMs": 240
+        },
+        {
+          "sheet": "01-idle-waiting",
+          "row": 1,
+          "column": 1,
+          "durationMs": 100
+        },
+        {
+          "sheet": "01-idle-waiting",
+          "row": 1,
+          "column": 2,
+          "durationMs": 300
+        },
+        {
+          "sheet": "01-idle-waiting",
+          "row": 1,
+          "column": 3,
+          "durationMs": 1200
         }
       ],
-      "frameMs": 250,
+      "frameMs": 400,
       "loop": true
     },
     "waiting": {
       "frames": [
         {
-          "sheet": "daily",
-          "row": 1,
-          "column": 0
+          "sheet": "01-idle-waiting",
+          "row": 2,
+          "column": 0,
+          "durationMs": 950
         },
         {
-          "sheet": "daily",
-          "row": 1,
-          "column": 1
+          "sheet": "01-idle-waiting",
+          "row": 2,
+          "column": 1,
+          "durationMs": 600
         },
         {
-          "sheet": "daily",
-          "row": 1,
-          "column": 2
+          "sheet": "01-idle-waiting",
+          "row": 2,
+          "column": 2,
+          "durationMs": 480
         },
         {
-          "sheet": "daily",
-          "row": 1,
-          "column": 3
+          "sheet": "01-idle-waiting",
+          "row": 2,
+          "column": 3,
+          "durationMs": 400
+        },
+        {
+          "sheet": "01-idle-waiting",
+          "row": 3,
+          "column": 0,
+          "durationMs": 500
+        },
+        {
+          "sheet": "01-idle-waiting",
+          "row": 3,
+          "column": 1,
+          "durationMs": 550
+        },
+        {
+          "sheet": "01-idle-waiting",
+          "row": 3,
+          "column": 2,
+          "durationMs": 600
+        },
+        {
+          "sheet": "01-idle-waiting",
+          "row": 3,
+          "column": 3,
+          "durationMs": 900
         }
       ],
-      "frameMs": 250,
+      "frameMs": 400,
       "loop": true
     },
     "thinking": {
       "frames": [
         {
-          "sheet": "daily",
-          "row": 2,
-          "column": 0
+          "sheet": "02-thinking-working",
+          "row": 0,
+          "column": 0,
+          "durationMs": 600
         },
         {
-          "sheet": "daily",
-          "row": 2,
-          "column": 1
+          "sheet": "02-thinking-working",
+          "row": 0,
+          "column": 1,
+          "durationMs": 300
         },
         {
-          "sheet": "daily",
-          "row": 2,
-          "column": 2
+          "sheet": "02-thinking-working",
+          "row": 0,
+          "column": 2,
+          "durationMs": 300
         },
         {
-          "sheet": "daily",
-          "row": 2,
-          "column": 3
+          "sheet": "02-thinking-working",
+          "row": 0,
+          "column": 3,
+          "durationMs": 500
+        },
+        {
+          "sheet": "02-thinking-working",
+          "row": 1,
+          "column": 0,
+          "durationMs": 500
+        },
+        {
+          "sheet": "02-thinking-working",
+          "row": 1,
+          "column": 1,
+          "durationMs": 300
+        },
+        {
+          "sheet": "02-thinking-working",
+          "row": 1,
+          "column": 2,
+          "durationMs": 400
+        },
+        {
+          "sheet": "02-thinking-working",
+          "row": 1,
+          "column": 3,
+          "durationMs": 700
         }
       ],
-      "frameMs": 250,
+      "frameMs": 400,
       "loop": true
     },
     "working": {
       "frames": [
         {
-          "sheet": "daily",
-          "row": 3,
-          "column": 0
+          "sheet": "02-thinking-working",
+          "row": 2,
+          "column": 0,
+          "durationMs": 500
         },
         {
-          "sheet": "daily",
-          "row": 3,
-          "column": 1
+          "sheet": "02-thinking-working",
+          "row": 2,
+          "column": 1,
+          "durationMs": 250
         },
         {
-          "sheet": "daily",
-          "row": 3,
-          "column": 2
+          "sheet": "02-thinking-working",
+          "row": 2,
+          "column": 2,
+          "durationMs": 300
         },
         {
-          "sheet": "daily",
+          "sheet": "02-thinking-working",
+          "row": 2,
+          "column": 3,
+          "durationMs": 350
+        },
+        {
+          "sheet": "02-thinking-working",
           "row": 3,
-          "column": 3
+          "column": 0,
+          "durationMs": 450
+        },
+        {
+          "sheet": "02-thinking-working",
+          "row": 3,
+          "column": 1,
+          "durationMs": 150
+        },
+        {
+          "sheet": "02-thinking-working",
+          "row": 3,
+          "column": 2,
+          "durationMs": 300
+        },
+        {
+          "sheet": "02-thinking-working",
+          "row": 3,
+          "column": 3,
+          "durationMs": 600
         }
       ],
-      "frameMs": 250,
+      "frameMs": 400,
       "loop": true
     },
     "working_search": {
       "frames": [
         {
-          "sheet": "tasks",
+          "sheet": "03-search-command",
           "row": 0,
-          "column": 0
+          "column": 0,
+          "durationMs": 450
         },
         {
-          "sheet": "tasks",
+          "sheet": "03-search-command",
           "row": 0,
-          "column": 1
+          "column": 1,
+          "durationMs": 250
         },
         {
-          "sheet": "tasks",
+          "sheet": "03-search-command",
           "row": 0,
-          "column": 2
+          "column": 2,
+          "durationMs": 300
         },
         {
-          "sheet": "tasks",
+          "sheet": "03-search-command",
           "row": 0,
-          "column": 3
+          "column": 3,
+          "durationMs": 400
+        },
+        {
+          "sheet": "03-search-command",
+          "row": 1,
+          "column": 0,
+          "durationMs": 500
+        },
+        {
+          "sheet": "03-search-command",
+          "row": 1,
+          "column": 1,
+          "durationMs": 250
+        },
+        {
+          "sheet": "03-search-command",
+          "row": 1,
+          "column": 2,
+          "durationMs": 250
+        },
+        {
+          "sheet": "03-search-command",
+          "row": 1,
+          "column": 3,
+          "durationMs": 600
         }
       ],
-      "frameMs": 250,
+      "frameMs": 400,
       "loop": true
     },
     "working_command": {
       "frames": [
         {
-          "sheet": "tasks",
-          "row": 1,
-          "column": 0
+          "sheet": "03-search-command",
+          "row": 2,
+          "column": 0,
+          "durationMs": 450
         },
         {
-          "sheet": "tasks",
-          "row": 1,
-          "column": 1
+          "sheet": "03-search-command",
+          "row": 2,
+          "column": 1,
+          "durationMs": 300
         },
         {
-          "sheet": "tasks",
-          "row": 1,
-          "column": 2
+          "sheet": "03-search-command",
+          "row": 2,
+          "column": 2,
+          "durationMs": 200
         },
         {
-          "sheet": "tasks",
-          "row": 1,
-          "column": 3
+          "sheet": "03-search-command",
+          "row": 2,
+          "column": 3,
+          "durationMs": 300
+        },
+        {
+          "sheet": "03-search-command",
+          "row": 3,
+          "column": 0,
+          "durationMs": 350
+        },
+        {
+          "sheet": "03-search-command",
+          "row": 3,
+          "column": 1,
+          "durationMs": 200
+        },
+        {
+          "sheet": "03-search-command",
+          "row": 3,
+          "column": 2,
+          "durationMs": 300
+        },
+        {
+          "sheet": "03-search-command",
+          "row": 3,
+          "column": 3,
+          "durationMs": 550
         }
       ],
-      "frameMs": 250,
+      "frameMs": 400,
       "loop": true
     },
     "success": {
       "frames": [
         {
-          "sheet": "tasks",
-          "row": 2,
-          "column": 0
+          "sheet": "04-success-error",
+          "row": 0,
+          "column": 0,
+          "durationMs": 180
         },
         {
-          "sheet": "tasks",
-          "row": 2,
-          "column": 1
+          "sheet": "04-success-error",
+          "row": 0,
+          "column": 1,
+          "durationMs": 150
         },
         {
-          "sheet": "tasks",
-          "row": 2,
-          "column": 2
+          "sheet": "04-success-error",
+          "row": 0,
+          "column": 2,
+          "durationMs": 220
         },
         {
-          "sheet": "tasks",
-          "row": 2,
-          "column": 3
+          "sheet": "04-success-error",
+          "row": 0,
+          "column": 3,
+          "durationMs": 300
+        },
+        {
+          "sheet": "04-success-error",
+          "row": 1,
+          "column": 0,
+          "durationMs": 450
+        },
+        {
+          "sheet": "04-success-error",
+          "row": 1,
+          "column": 1,
+          "durationMs": 250
+        },
+        {
+          "sheet": "04-success-error",
+          "row": 1,
+          "column": 2,
+          "durationMs": 200
+        },
+        {
+          "sheet": "04-success-error",
+          "row": 1,
+          "column": 3,
+          "durationMs": 600
         }
       ],
-      "frameMs": 250,
+      "frameMs": 400,
       "loop": false
     },
     "error": {
       "frames": [
         {
-          "sheet": "tasks",
-          "row": 3,
-          "column": 0
+          "sheet": "04-success-error",
+          "row": 2,
+          "column": 0,
+          "durationMs": 200
         },
         {
-          "sheet": "tasks",
-          "row": 3,
-          "column": 1
+          "sheet": "04-success-error",
+          "row": 2,
+          "column": 1,
+          "durationMs": 250
         },
         {
-          "sheet": "tasks",
-          "row": 3,
-          "column": 2
+          "sheet": "04-success-error",
+          "row": 2,
+          "column": 2,
+          "durationMs": 250
         },
         {
-          "sheet": "tasks",
+          "sheet": "04-success-error",
+          "row": 2,
+          "column": 3,
+          "durationMs": 300
+        },
+        {
+          "sheet": "04-success-error",
           "row": 3,
-          "column": 3
+          "column": 0,
+          "durationMs": 500
+        },
+        {
+          "sheet": "04-success-error",
+          "row": 3,
+          "column": 1,
+          "durationMs": 300
+        },
+        {
+          "sheet": "04-success-error",
+          "row": 3,
+          "column": 2,
+          "durationMs": 250
+        },
+        {
+          "sheet": "04-success-error",
+          "row": 3,
+          "column": 3,
+          "durationMs": 650
         }
       ],
-      "frameMs": 250,
+      "frameMs": 400,
       "loop": false
     },
     "dragging": {
       "frames": [
         {
-          "sheet": "touch",
+          "sheet": "05-dragging-release",
           "row": 0,
-          "column": 0
+          "column": 0,
+          "durationMs": 200
         },
         {
-          "sheet": "touch",
+          "sheet": "05-dragging-release",
           "row": 0,
-          "column": 1
+          "column": 1,
+          "durationMs": 180
         },
         {
-          "sheet": "touch",
+          "sheet": "05-dragging-release",
           "row": 0,
-          "column": 2
+          "column": 2,
+          "durationMs": 200
         },
         {
-          "sheet": "touch",
+          "sheet": "05-dragging-release",
           "row": 0,
-          "column": 3
+          "column": 3,
+          "durationMs": 300
+        },
+        {
+          "sheet": "05-dragging-release",
+          "row": 1,
+          "column": 0,
+          "durationMs": 350
+        },
+        {
+          "sheet": "05-dragging-release",
+          "row": 1,
+          "column": 1,
+          "durationMs": 250
+        },
+        {
+          "sheet": "05-dragging-release",
+          "row": 1,
+          "column": 2,
+          "durationMs": 180
+        },
+        {
+          "sheet": "05-dragging-release",
+          "row": 1,
+          "column": 3,
+          "durationMs": 220
         }
       ],
-      "frameMs": 250,
+      "frameMs": 400,
       "loop": true
     },
     "dragging_release": {
       "frames": [
         {
-          "sheet": "touch",
-          "row": 1,
-          "column": 0
+          "sheet": "05-dragging-release",
+          "row": 2,
+          "column": 0,
+          "durationMs": 120
         },
         {
-          "sheet": "touch",
-          "row": 1,
-          "column": 1
+          "sheet": "05-dragging-release",
+          "row": 2,
+          "column": 1,
+          "durationMs": 130
         },
         {
-          "sheet": "touch",
-          "row": 1,
-          "column": 2
+          "sheet": "05-dragging-release",
+          "row": 2,
+          "column": 2,
+          "durationMs": 180
         },
         {
-          "sheet": "touch",
-          "row": 1,
-          "column": 3
+          "sheet": "05-dragging-release",
+          "row": 2,
+          "column": 3,
+          "durationMs": 180
+        },
+        {
+          "sheet": "05-dragging-release",
+          "row": 3,
+          "column": 0,
+          "durationMs": 160
+        },
+        {
+          "sheet": "05-dragging-release",
+          "row": 3,
+          "column": 1,
+          "durationMs": 200
+        },
+        {
+          "sheet": "05-dragging-release",
+          "row": 3,
+          "column": 2,
+          "durationMs": 250
+        },
+        {
+          "sheet": "05-dragging-release",
+          "row": 3,
+          "column": 3,
+          "durationMs": 500
         }
       ],
-      "frameMs": 250,
+      "frameMs": 400,
       "loop": false
     },
     "head_pat": {
       "frames": [
         {
-          "sheet": "touch",
-          "row": 2,
-          "column": 0
+          "sheet": "06-head-poke",
+          "row": 0,
+          "column": 0,
+          "durationMs": 220
         },
         {
-          "sheet": "touch",
-          "row": 2,
-          "column": 1
+          "sheet": "06-head-poke",
+          "row": 0,
+          "column": 1,
+          "durationMs": 180
         },
         {
-          "sheet": "touch",
-          "row": 2,
-          "column": 2
+          "sheet": "06-head-poke",
+          "row": 0,
+          "column": 2,
+          "durationMs": 220
         },
         {
-          "sheet": "touch",
-          "row": 2,
-          "column": 3
+          "sheet": "06-head-poke",
+          "row": 0,
+          "column": 3,
+          "durationMs": 300
+        },
+        {
+          "sheet": "06-head-poke",
+          "row": 1,
+          "column": 0,
+          "durationMs": 400
+        },
+        {
+          "sheet": "06-head-poke",
+          "row": 1,
+          "column": 1,
+          "durationMs": 300
+        },
+        {
+          "sheet": "06-head-poke",
+          "row": 1,
+          "column": 2,
+          "durationMs": 220
+        },
+        {
+          "sheet": "06-head-poke",
+          "row": 1,
+          "column": 3,
+          "durationMs": 500
         }
       ],
-      "frameMs": 250,
+      "frameMs": 400,
       "loop": false
     },
     "poke": {
       "frames": [
         {
-          "sheet": "touch",
-          "row": 3,
-          "column": 0
+          "sheet": "06-head-poke",
+          "row": 2,
+          "column": 0,
+          "durationMs": 180
         },
         {
-          "sheet": "touch",
-          "row": 3,
-          "column": 1
+          "sheet": "06-head-poke",
+          "row": 2,
+          "column": 1,
+          "durationMs": 180
         },
         {
-          "sheet": "touch",
-          "row": 3,
-          "column": 2
+          "sheet": "06-head-poke",
+          "row": 2,
+          "column": 2,
+          "durationMs": 220
         },
         {
-          "sheet": "touch",
+          "sheet": "06-head-poke",
+          "row": 2,
+          "column": 3,
+          "durationMs": 300
+        },
+        {
+          "sheet": "06-head-poke",
           "row": 3,
-          "column": 3
+          "column": 0,
+          "durationMs": 300
+        },
+        {
+          "sheet": "06-head-poke",
+          "row": 3,
+          "column": 1,
+          "durationMs": 220
+        },
+        {
+          "sheet": "06-head-poke",
+          "row": 3,
+          "column": 2,
+          "durationMs": 250
+        },
+        {
+          "sheet": "06-head-poke",
+          "row": 3,
+          "column": 3,
+          "durationMs": 500
         }
       ],
-      "frameMs": 250,
+      "frameMs": 400,
       "loop": false
     },
     "skirt": {
       "frames": [
         {
-          "sheet": "care",
+          "sheet": "07-skirt-eat",
           "row": 0,
-          "column": 0
+          "column": 0,
+          "durationMs": 220
         },
         {
-          "sheet": "care",
+          "sheet": "07-skirt-eat",
           "row": 0,
-          "column": 1
+          "column": 1,
+          "durationMs": 200
         },
         {
-          "sheet": "care",
+          "sheet": "07-skirt-eat",
           "row": 0,
-          "column": 2
+          "column": 2,
+          "durationMs": 220
         },
         {
-          "sheet": "care",
+          "sheet": "07-skirt-eat",
           "row": 0,
-          "column": 3
+          "column": 3,
+          "durationMs": 300
+        },
+        {
+          "sheet": "07-skirt-eat",
+          "row": 1,
+          "column": 0,
+          "durationMs": 350
+        },
+        {
+          "sheet": "07-skirt-eat",
+          "row": 1,
+          "column": 1,
+          "durationMs": 300
+        },
+        {
+          "sheet": "07-skirt-eat",
+          "row": 1,
+          "column": 2,
+          "durationMs": 250
+        },
+        {
+          "sheet": "07-skirt-eat",
+          "row": 1,
+          "column": 3,
+          "durationMs": 500
         }
       ],
-      "frameMs": 250,
+      "frameMs": 400,
       "loop": false
     },
     "eat_token": {
       "frames": [
         {
-          "sheet": "care",
-          "row": 1,
-          "column": 0
+          "sheet": "07-skirt-eat",
+          "row": 2,
+          "column": 0,
+          "durationMs": 200
         },
         {
-          "sheet": "care",
-          "row": 1,
-          "column": 1
+          "sheet": "07-skirt-eat",
+          "row": 2,
+          "column": 1,
+          "durationMs": 180
         },
         {
-          "sheet": "care",
-          "row": 1,
-          "column": 2
+          "sheet": "07-skirt-eat",
+          "row": 2,
+          "column": 2,
+          "durationMs": 220
         },
         {
-          "sheet": "care",
-          "row": 1,
-          "column": 3
+          "sheet": "07-skirt-eat",
+          "row": 2,
+          "column": 3,
+          "durationMs": 350
+        },
+        {
+          "sheet": "07-skirt-eat",
+          "row": 3,
+          "column": 0,
+          "durationMs": 400
+        },
+        {
+          "sheet": "07-skirt-eat",
+          "row": 3,
+          "column": 1,
+          "durationMs": 300
+        },
+        {
+          "sheet": "07-skirt-eat",
+          "row": 3,
+          "column": 2,
+          "durationMs": 250
+        },
+        {
+          "sheet": "07-skirt-eat",
+          "row": 3,
+          "column": 3,
+          "durationMs": 550
         }
       ],
-      "frameMs": 250,
+      "frameMs": 400,
       "loop": false
     },
     "idle_stretch": {
       "frames": [
         {
-          "sheet": "care",
-          "row": 2,
-          "column": 0
+          "sheet": "08-stretch-yawn",
+          "row": 0,
+          "column": 0,
+          "durationMs": 240
         },
         {
-          "sheet": "care",
-          "row": 2,
-          "column": 1
+          "sheet": "08-stretch-yawn",
+          "row": 0,
+          "column": 1,
+          "durationMs": 220
         },
         {
-          "sheet": "care",
-          "row": 2,
-          "column": 2
+          "sheet": "08-stretch-yawn",
+          "row": 0,
+          "column": 2,
+          "durationMs": 300
         },
         {
-          "sheet": "care",
-          "row": 2,
-          "column": 3
+          "sheet": "08-stretch-yawn",
+          "row": 0,
+          "column": 3,
+          "durationMs": 400
+        },
+        {
+          "sheet": "08-stretch-yawn",
+          "row": 1,
+          "column": 0,
+          "durationMs": 500
+        },
+        {
+          "sheet": "08-stretch-yawn",
+          "row": 1,
+          "column": 1,
+          "durationMs": 350
+        },
+        {
+          "sheet": "08-stretch-yawn",
+          "row": 1,
+          "column": 2,
+          "durationMs": 250
+        },
+        {
+          "sheet": "08-stretch-yawn",
+          "row": 1,
+          "column": 3,
+          "durationMs": 550
         }
       ],
-      "frameMs": 250,
+      "frameMs": 400,
       "loop": false
     },
     "idle_yawn": {
       "frames": [
         {
-          "sheet": "care",
-          "row": 3,
-          "column": 0
+          "sheet": "08-stretch-yawn",
+          "row": 2,
+          "column": 0,
+          "durationMs": 350
         },
         {
-          "sheet": "care",
-          "row": 3,
-          "column": 1
+          "sheet": "08-stretch-yawn",
+          "row": 2,
+          "column": 1,
+          "durationMs": 300
         },
         {
-          "sheet": "care",
-          "row": 3,
-          "column": 2
+          "sheet": "08-stretch-yawn",
+          "row": 2,
+          "column": 2,
+          "durationMs": 400
         },
         {
-          "sheet": "care",
+          "sheet": "08-stretch-yawn",
+          "row": 2,
+          "column": 3,
+          "durationMs": 400
+        },
+        {
+          "sheet": "08-stretch-yawn",
           "row": 3,
-          "column": 3
+          "column": 0,
+          "durationMs": 600
+        },
+        {
+          "sheet": "08-stretch-yawn",
+          "row": 3,
+          "column": 1,
+          "durationMs": 450
+        },
+        {
+          "sheet": "08-stretch-yawn",
+          "row": 3,
+          "column": 2,
+          "durationMs": 300
+        },
+        {
+          "sheet": "08-stretch-yawn",
+          "row": 3,
+          "column": 3,
+          "durationMs": 600
         }
       ],
-      "frameMs": 250,
+      "frameMs": 400,
+      "loop": false
+    },
+    "shy": {
+      "frames": [
+        {
+          "sheet": "09-shy-concern",
+          "row": 0,
+          "column": 0,
+          "durationMs": 650
+        },
+        {
+          "sheet": "09-shy-concern",
+          "row": 0,
+          "column": 1,
+          "durationMs": 450
+        },
+        {
+          "sheet": "09-shy-concern",
+          "row": 0,
+          "column": 2,
+          "durationMs": 500
+        },
+        {
+          "sheet": "09-shy-concern",
+          "row": 0,
+          "column": 3,
+          "durationMs": 450
+        },
+        {
+          "sheet": "09-shy-concern",
+          "row": 1,
+          "column": 0,
+          "durationMs": 250
+        },
+        {
+          "sheet": "09-shy-concern",
+          "row": 1,
+          "column": 1,
+          "durationMs": 550
+        },
+        {
+          "sheet": "09-shy-concern",
+          "row": 1,
+          "column": 2,
+          "durationMs": 400
+        },
+        {
+          "sheet": "09-shy-concern",
+          "row": 1,
+          "column": 3,
+          "durationMs": 800
+        }
+      ],
+      "frameMs": 400,
+      "loop": true
+    },
+    "concern": {
+      "frames": [
+        {
+          "sheet": "09-shy-concern",
+          "row": 2,
+          "column": 0,
+          "durationMs": 650
+        },
+        {
+          "sheet": "09-shy-concern",
+          "row": 2,
+          "column": 1,
+          "durationMs": 400
+        },
+        {
+          "sheet": "09-shy-concern",
+          "row": 2,
+          "column": 2,
+          "durationMs": 500
+        },
+        {
+          "sheet": "09-shy-concern",
+          "row": 2,
+          "column": 3,
+          "durationMs": 650
+        },
+        {
+          "sheet": "09-shy-concern",
+          "row": 3,
+          "column": 0,
+          "durationMs": 700
+        },
+        {
+          "sheet": "09-shy-concern",
+          "row": 3,
+          "column": 1,
+          "durationMs": 450
+        },
+        {
+          "sheet": "09-shy-concern",
+          "row": 3,
+          "column": 2,
+          "durationMs": 450
+        },
+        {
+          "sheet": "09-shy-concern",
+          "row": 3,
+          "column": 3,
+          "durationMs": 850
+        }
+      ],
+      "frameMs": 400,
+      "loop": true
+    },
+    "tease": {
+      "frames": [
+        {
+          "sheet": "10-tease-sleep",
+          "row": 0,
+          "column": 0,
+          "durationMs": 650
+        },
+        {
+          "sheet": "10-tease-sleep",
+          "row": 0,
+          "column": 1,
+          "durationMs": 400
+        },
+        {
+          "sheet": "10-tease-sleep",
+          "row": 0,
+          "column": 2,
+          "durationMs": 400
+        },
+        {
+          "sheet": "10-tease-sleep",
+          "row": 0,
+          "column": 3,
+          "durationMs": 500
+        },
+        {
+          "sheet": "10-tease-sleep",
+          "row": 1,
+          "column": 0,
+          "durationMs": 450
+        },
+        {
+          "sheet": "10-tease-sleep",
+          "row": 1,
+          "column": 1,
+          "durationMs": 400
+        },
+        {
+          "sheet": "10-tease-sleep",
+          "row": 1,
+          "column": 2,
+          "durationMs": 550
+        },
+        {
+          "sheet": "10-tease-sleep",
+          "row": 1,
+          "column": 3,
+          "durationMs": 800
+        }
+      ],
+      "frameMs": 400,
+      "loop": true
+    },
+    "sleep": {
+      "frames": [
+        {
+          "sheet": "10-tease-sleep",
+          "row": 2,
+          "column": 0,
+          "durationMs": 2000
+        },
+        {
+          "sheet": "10-tease-sleep",
+          "row": 2,
+          "column": 1,
+          "durationMs": 2000
+        },
+        {
+          "sheet": "10-tease-sleep",
+          "row": 2,
+          "column": 2,
+          "durationMs": 2000
+        },
+        {
+          "sheet": "10-tease-sleep",
+          "row": 2,
+          "column": 3,
+          "durationMs": 2000
+        },
+        {
+          "sheet": "10-tease-sleep",
+          "row": 3,
+          "column": 0,
+          "durationMs": 2000
+        },
+        {
+          "sheet": "10-tease-sleep",
+          "row": 3,
+          "column": 1,
+          "durationMs": 2000
+        },
+        {
+          "sheet": "10-tease-sleep",
+          "row": 3,
+          "column": 2,
+          "durationMs": 2000
+        },
+        {
+          "sheet": "10-tease-sleep",
+          "row": 3,
+          "column": 3,
+          "durationMs": 2000
+        }
+      ],
+      "frameMs": 400,
+      "loop": true
+    },
+    "replying": {
+      "frames": [
+        {
+          "sheet": "11-replying-approval",
+          "row": 0,
+          "column": 0,
+          "durationMs": 450,
+          "mouth": [
+            0.5111821086261981,
+            0.4249201277955272,
+            0.04472843450479233,
+            0.019169329073482427
+          ]
+        },
+        {
+          "sheet": "11-replying-approval",
+          "row": 0,
+          "column": 1,
+          "durationMs": 350,
+          "mouth": [
+            0.5,
+            0.41214057507987223,
+            0.04777070063694268,
+            0.019169329073482427
+          ]
+        },
+        {
+          "sheet": "11-replying-approval",
+          "row": 0,
+          "column": 2,
+          "durationMs": 400,
+          "mouth": [
+            0.49201277955271566,
+            0.3993610223642173,
+            0.04792332268370607,
+            0.019169329073482427
+          ]
+        },
+        {
+          "sheet": "11-replying-approval",
+          "row": 0,
+          "column": 3,
+          "durationMs": 450,
+          "mouth": [
+            0.4872611464968153,
+            0.4536741214057508,
+            0.044585987261146494,
+            0.01597444089456869
+          ]
+        },
+        {
+          "sheet": "11-replying-approval",
+          "row": 1,
+          "column": 0,
+          "durationMs": 400,
+          "mouth": [
+            0.5079872204472844,
+            0.46496815286624205,
+            0.04792332268370607,
+            0.01910828025477707
+          ]
+        },
+        {
+          "sheet": "11-replying-approval",
+          "row": 1,
+          "column": 1,
+          "durationMs": 350,
+          "mouth": [
+            0.5031847133757962,
+            0.4394904458598726,
+            0.044585987261146494,
+            0.01592356687898089
+          ]
+        },
+        {
+          "sheet": "11-replying-approval",
+          "row": 1,
+          "column": 2,
+          "durationMs": 450,
+          "mouth": [
+            0.4952076677316294,
+            0.42038216560509556,
+            0.04792332268370607,
+            0.01910828025477707
+          ]
+        },
+        {
+          "sheet": "11-replying-approval",
+          "row": 1,
+          "column": 3,
+          "durationMs": 500,
+          "mouth": [
+            0.49363057324840764,
+            0.42356687898089174,
+            0.044585987261146494,
+            0.01592356687898089
+          ]
+        }
+      ],
+      "frameMs": 400,
+      "loop": true
+    },
+    "waiting_approval": {
+      "frames": [
+        {
+          "sheet": "11-replying-approval",
+          "row": 2,
+          "column": 0,
+          "durationMs": 800
+        },
+        {
+          "sheet": "11-replying-approval",
+          "row": 2,
+          "column": 1,
+          "durationMs": 550
+        },
+        {
+          "sheet": "11-replying-approval",
+          "row": 2,
+          "column": 2,
+          "durationMs": 600
+        },
+        {
+          "sheet": "11-replying-approval",
+          "row": 2,
+          "column": 3,
+          "durationMs": 650
+        },
+        {
+          "sheet": "11-replying-approval",
+          "row": 3,
+          "column": 0,
+          "durationMs": 650
+        },
+        {
+          "sheet": "11-replying-approval",
+          "row": 3,
+          "column": 1,
+          "durationMs": 550
+        },
+        {
+          "sheet": "11-replying-approval",
+          "row": 3,
+          "column": 2,
+          "durationMs": 600
+        },
+        {
+          "sheet": "11-replying-approval",
+          "row": 3,
+          "column": 3,
+          "durationMs": 900
+        }
+      ],
+      "frameMs": 400,
+      "loop": true
+    },
+    "idle_look": {
+      "frames": [
+        {
+          "sheet": "12-look-wave",
+          "row": 0,
+          "column": 0,
+          "durationMs": 500
+        },
+        {
+          "sheet": "12-look-wave",
+          "row": 0,
+          "column": 1,
+          "durationMs": 350
+        },
+        {
+          "sheet": "12-look-wave",
+          "row": 0,
+          "column": 2,
+          "durationMs": 350
+        },
+        {
+          "sheet": "12-look-wave",
+          "row": 0,
+          "column": 3,
+          "durationMs": 500
+        },
+        {
+          "sheet": "12-look-wave",
+          "row": 1,
+          "column": 0,
+          "durationMs": 500
+        },
+        {
+          "sheet": "12-look-wave",
+          "row": 1,
+          "column": 1,
+          "durationMs": 350
+        },
+        {
+          "sheet": "12-look-wave",
+          "row": 1,
+          "column": 2,
+          "durationMs": 350
+        },
+        {
+          "sheet": "12-look-wave",
+          "row": 1,
+          "column": 3,
+          "durationMs": 600
+        }
+      ],
+      "frameMs": 400,
+      "loop": false
+    },
+    "wave": {
+      "frames": [
+        {
+          "sheet": "12-look-wave",
+          "row": 2,
+          "column": 0,
+          "durationMs": 250
+        },
+        {
+          "sheet": "12-look-wave",
+          "row": 2,
+          "column": 1,
+          "durationMs": 200
+        },
+        {
+          "sheet": "12-look-wave",
+          "row": 2,
+          "column": 2,
+          "durationMs": 200
+        },
+        {
+          "sheet": "12-look-wave",
+          "row": 2,
+          "column": 3,
+          "durationMs": 300
+        },
+        {
+          "sheet": "12-look-wave",
+          "row": 3,
+          "column": 0,
+          "durationMs": 350
+        },
+        {
+          "sheet": "12-look-wave",
+          "row": 3,
+          "column": 1,
+          "durationMs": 250
+        },
+        {
+          "sheet": "12-look-wave",
+          "row": 3,
+          "column": 2,
+          "durationMs": 250
+        },
+        {
+          "sheet": "12-look-wave",
+          "row": 3,
+          "column": 3,
+          "durationMs": 600
+        }
+      ],
+      "frameMs": 400,
       "loop": false
     }
   },
-  "stateMap": {
-    "IDLE": "idle",
-    "THINKING": "thinking",
-    "WORKING": "working",
-    "WAITING": "waiting",
-    "SUCCESS": "success",
-    "ERROR": "error",
-    "DISCONNECTED": "idle"
-  },
-  "workingActivityMap": {
-    "searching": "working_search",
-    "commanding": "working_command",
-    "editing": "working",
-    "testing": "working_command",
-    "using-tool": "working"
-  },
   "hitRegions": {
     "head": [
-      0.2,
+      0.1,
       0.02,
-      0.6,
-      0.3
+      0.8,
+      0.5
     ],
     "body": [
       0.18,
-      0.32,
+      0.52,
       0.64,
-      0.32
+      0.22
     ],
     "skirt": [
-      0.15,
-      0.64,
-      0.7,
-      0.34
+      0.12,
+      0.74,
+      0.76,
+      0.24
     ]
   },
   "anchors": {
     "mouth": [
       0.5,
-      0.25
+      0.44
+    ]
+  },
+  "staticMouths": {
+    "idle": [
+      0.4553794829024187,
+      0.4329268292682927,
+      0.0475396163469558,
+      0.012195121951219513
+    ],
+    "shy": [
+      0.4566787003610108,
+      0.43309859154929575,
+      0.048736462093862815,
+      0.01267605633802817
     ]
   }
 }

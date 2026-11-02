@@ -126,6 +126,10 @@ def main():
         assert native_status.get('growthPanelVisible') is False
         assert native_status.get('petPanelWidth') == 320
         assert native_status.get('panelWithinVisibleScreen') is True
+        assert native_status.get('source') == 'pcm-rms'
+        assert native_status.get('speechPlaying') is False
+        assert native_status.get('actualMouthLevel') == 0
+        assert native_status.get('lipSyncEnabled') is True
         if args.launch_services:
             write(b'{"type":"control","action":"set-appearance","scale":1.05,"opacity":0.93}\n')
             wait_for('native-status', predicate=lambda value:
@@ -138,6 +142,111 @@ def main():
             mouse_status = wait_for('native-status', predicate=lambda value: '预览' in value.get('mouseStatus', ''))
             assert mouse_status.get('mousePlayActive') is False
             assert mouse_status.get('mouseAuthorized') is False
+            def send(value):
+                write((json.dumps(value) + '\n').encode())
+
+            status_counter = 0
+
+            def status(predicate=lambda value: True):
+                nonlocal status_counter
+                deadline = time.monotonic() + 3
+                while time.monotonic() < deadline:
+                    messages[:] = [value for value in messages if value.get('type') != 'native-status']
+                    status_counter += 1
+                    identity = f'motion-status-{status_counter}'
+                    write(b'{"type":"request-status"}\n')
+                    send({'type': 'ping', 'id': identity})
+                    wait_for('pong', identity, timeout=2)
+                    snapshots = [value for value in messages if value.get('type') == 'native-status']
+                    messages[:] = [value for value in messages if value.get('type') != 'native-status']
+                    if snapshots and predicate(snapshots[-1]):
+                        return snapshots[-1]
+                    time.sleep(0.03)
+                raise AssertionError('No fresh native status met the motion/PCM condition.')
+
+            # Exercise actual Host semantic inputs before using preview-only pose controls.
+            send({'type': 'speech', 'text': '合成预览', 'mood': 'shy', 'speak': False})
+            send({'type': 'mood', 'mood': 'thinking'})
+            status(lambda value: value.get('currentClip') == 'thinking')
+            send({'type': 'mood', 'mood': 'idle'})
+            status(lambda value: value.get('currentClip') == 'shy')
+            for mood in ['concern', 'tease']:
+                send({'type': 'speech', 'text': '合成预览', 'mood': mood, 'speak': False})
+                status(lambda value, expected=mood: value.get('currentClip') == expected)
+            send({'type': 'agent', 'available': True,
+                  'current': {'phase': 'waiting-approval', 'sessionId': 'qa-motion'},
+                  'activeCount': 1, 'waitingCount': 1})
+            status(lambda value: value.get('currentClip') == 'waiting_approval')
+            send({'type': 'agent', 'available': False, 'current': None, 'activeCount': 0, 'waitingCount': 0})
+            send({'type': 'speech', 'text': '合成预览', 'mood': 'idle', 'speak': False})
+            write(b'{"type":"control","action":"preview-reset-motion"}\n')
+            baseline = status(lambda value: value.get('currentClip') == 'idle')
+            time.sleep(0.15)
+            dynamic = status(lambda value: value.get('motionMode') == 'native-mesh')
+            assert dynamic['frameMetrics']['sceneFrameCount'] > baseline['frameMetrics']['sceneFrameCount'], f'Real scene did not advance: baseline={baseline["frameMetrics"]}, after={dynamic["frameMetrics"]}'
+            assert dynamic['frameMetrics']['maximumNormalizedDisplacement'] < 0.03
+
+            # Only synthetic in-memory PCM and an explicitly stepped sample clock.
+            write(b'{"type":"control","action":"preview-pcm","sampleFrame":6000}\n')
+            time.sleep(0.15)
+            talking = status(lambda value: value.get('actualMouthLevel', 0) > 0.01)
+            assert talking.get('previewPCMActive') is True and talking.get('speechPlaying') is False
+            assert talking['frameMetrics']['mouthGeometryValid'] is True
+            send({'type': 'settings', 'settings': {'lipSyncEnabled': False}})
+            status(lambda value: value.get('lipSyncEnabled') is False and value.get('actualMouthLevel') == 0)
+            send({'type': 'settings', 'settings': {'lipSyncEnabled': True, 'reduceMotion': True}})
+            write(b'{"type":"control","action":"preview-pcm","sampleFrame":6500}\n')
+            status(lambda value: value.get('motionMode') == 'reduced-motion' and value.get('actualMouthLevel') == 0)
+            send({'type': 'settings', 'settings': {'reduceMotion': False, 'dynamicSkinEnabled': False}})
+            write(b'{"type":"control","action":"preview-pcm","sampleFrame":7000}\n')
+            time.sleep(0.15)
+            static_talking = status(lambda value: value.get('motionMode') == 'still-image' and value.get('actualMouthLevel', 0) > 0.01)
+            stable_warp = static_talking['frameMetrics']['warpFrameCount']
+            time.sleep(0.15)
+            still = status(lambda value: value.get('motionMode') == 'still-image')
+            assert still['frameMetrics']['warpFrameCount'] == stable_warp, 'Static mode must not apply mesh micro motion.'
+            write(b'{"type":"control","action":"hide"}\n')
+            time.sleep(0.12)
+            hidden_motion = status(lambda value: value.get('motionMode') == 'hidden')
+            assert hidden_motion.get('actualMouthLevel') == 0 and hidden_motion.get('speechPlaying') is False
+            time.sleep(0.15)
+            hidden_again = status(lambda value: value.get('motionMode') == 'hidden')
+            assert hidden_again['frameMetrics']['sceneFrameCount'] == hidden_motion['frameMetrics']['sceneFrameCount']
+            write(b'{"type":"control","action":"show"}\n')
+            status(lambda value: value.get('motionMode') == 'still-image' and value.get('actualMouthLevel') == 0)
+            send({'type': 'settings', 'settings': {'dynamicSkinEnabled': True}})
+            write(b'{"type":"control","action":"preview-pcm-stop"}\n')
+            write(b'{"type":"control","action":"sleep"}\n')
+            status(lambda value: value.get('petSleeping') is True and value.get('currentClip') == 'sleep')
+            send({'type': 'speech', 'text': '合成预览', 'mood': 'tease', 'speak': False})
+            send({'type': 'mood', 'mood': 'idle'})
+            time.sleep(1.1)
+            status(lambda value: value.get('petSleeping') is True and value.get('currentClip') == 'sleep')
+            write(b'{"type":"control","action":"wake"}\n')
+            status(lambda value: value.get('petSleeping') is False and value.get('currentClip') != 'sleep')
+            send({'type': 'speech', 'text': '合成预览', 'mood': 'idle', 'speak': False})
+            write(b'{"type":"control","action":"preview-reset-motion"}\n')
+            status(lambda value: value.get('currentClip') == 'idle' and value.get('actualMouthLevel') == 0)
+
+            # A reduced-motion interaction still has its real finite deadline.
+            # Agent updates and an identical reduced setting must not restart it.
+            send({'type': 'settings', 'settings': {'reduceMotion': True}})
+            write(b'{"type":"control","action":"preview-reset-motion"}\n')
+            send({'type': 'control', 'action': 'preview-action', 'name': 'head_pat'})
+            status(lambda value: value.get('currentClip') == 'head_pat')
+            time.sleep(0.30)
+            send({'type': 'agent', 'available': True,
+                  'current': {'phase': 'working', 'activity': 'searching', 'sessionId': 'qa-frozen-head'},
+                  'activeCount': 1, 'waitingCount': 0})
+            send({'type': 'settings', 'settings': {'reduceMotion': True}})
+            send({'type': 'settings', 'settings': {'reduceMotion': True}})
+            time.sleep(2.30)  # head_pat has 2340ms total in the supplied manifest.
+            status(lambda value: value.get('currentClip') == 'working_search')
+            send({'type': 'agent', 'available': False, 'current': None, 'activeCount': 0, 'waitingCount': 0})
+            send({'type': 'settings', 'settings': {'reduceMotion': False}})
+            write(b'{"type":"control","action":"preview-reset-motion"}\n')
+            status(lambda value: value.get('currentClip') == 'idle')
+
             snapshot_counter = 0
 
             def fresh_status():
@@ -275,6 +384,13 @@ def main():
             'eating_resize_and_sidebar_toggle_safe': args.launch_services,
             'batch_spawn_two_arrivals_and_replay_safe': args.launch_services,
             'panel_clamped_after_sidebar_and_scale': args.launch_services,
+            'semantic_mood_and_approval_mapping': args.launch_services,
+            'persistent_sleep_until_explicit_wake': args.launch_services,
+            'reduced_head_deadline_restores_latest_agent': args.launch_services,
+            'native_mesh_actual_scene_frames': args.launch_services,
+            'synthetic_pcm_lips_no_audio_output': args.launch_services,
+            'static_lips_without_micro_motion': args.launch_services,
+            'reduced_and_hidden_clear_lips_and_motion': args.launch_services,
         }))
     finally:
         try:

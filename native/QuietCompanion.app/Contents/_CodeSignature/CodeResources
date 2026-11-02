@@ -6,31 +6,63 @@
 	<dict>
 		<key>Resources/pet/idle.png</key>
 		<data>
-		7wo3PzdZwZa5p5c6cLAVPkkKvxU=
+		M0uG1rN7mWBlDPB0Qo43QEbdG4k=
 		</data>
 		<key>Resources/pet/pet-manifest.json</key>
 		<data>
-		mU2RbIOaWHByjOmkIajXHEE2mzU=
+		G9TfVLKA8fTQPlEkSOQrZhgIufc=
 		</data>
-		<key>Resources/pet/sheets/care.png</key>
+		<key>Resources/pet/sheets/01-idle-waiting.png</key>
 		<data>
-		L9BNlU+4I+kaeQ2RNiPAtw1FDG8=
+		DzMkis4LLr08mYTNXFuP4OId0cs=
 		</data>
-		<key>Resources/pet/sheets/daily.png</key>
+		<key>Resources/pet/sheets/02-thinking-working.png</key>
 		<data>
-		7I+Z3b2a7YkheSALLtp0O3paFes=
+		4x7j9NEVB/nCLZb/jwCbyhGU73w=
 		</data>
-		<key>Resources/pet/sheets/tasks.png</key>
+		<key>Resources/pet/sheets/03-search-command.png</key>
 		<data>
-		l2VnQ25RDoKeQ7xnrTnWVAMNalk=
+		Zq80XFKz9xnBy2afG9Meo+WZsZ0=
 		</data>
-		<key>Resources/pet/sheets/touch.png</key>
+		<key>Resources/pet/sheets/04-success-error.png</key>
 		<data>
-		pwK3IkrdRzAX9h8jl8NqBKFfe4s=
+		rfr71Pa98XA65VdSEYX/Fgh2Wbk=
+		</data>
+		<key>Resources/pet/sheets/05-dragging-release.png</key>
+		<data>
+		kFV1R7LTt+IBWa7xzX3Qd4LJIRA=
+		</data>
+		<key>Resources/pet/sheets/06-head-poke.png</key>
+		<data>
+		LhnL0Onh2xxS8eT6Sjuk8nd3XgQ=
+		</data>
+		<key>Resources/pet/sheets/07-skirt-eat.png</key>
+		<data>
+		wOYK7Eh8HibH5y+TqqcZzehOQGo=
+		</data>
+		<key>Resources/pet/sheets/08-stretch-yawn.png</key>
+		<data>
+		9cRVoPuhvVXpMPGgXHVJoU6cI2E=
+		</data>
+		<key>Resources/pet/sheets/09-shy-concern.png</key>
+		<data>
+		oVD9GVtR9lVBeIDmlKB94FEmAzA=
+		</data>
+		<key>Resources/pet/sheets/10-tease-sleep.png</key>
+		<data>
+		2o48vuwgfKXEH+t1Z4ylGwbX9wU=
+		</data>
+		<key>Resources/pet/sheets/11-replying-approval.png</key>
+		<data>
+		QuefID/gbn8cHVKAwRQr6DP/HgM=
+		</data>
+		<key>Resources/pet/sheets/12-look-wave.png</key>
+		<data>
+		arGoCDpVd39tmyQ4RXUEQRC8TIw=
 		</data>
 		<key>Resources/pet/shy.png</key>
 		<data>
-		T/Sbf6GlH/gx+mZyD4t7oYqZZCc=
+		aElMNnbkzOAyqIjSIHH1Qd8iZJs=
 		</data>
 	</dict>
 	<key>files2</key>
@@ -39,49 +71,105 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			/HJf2TBjOphHr1ypVWjl5eiCohXErEnbUj6+mY6f9ws=
+			yQ5Qge4kPIaDN8hM8MuOSpvKF6xIcgVr1XeFQnqcCwg=
 			</data>
 		</dict>
 		<key>Resources/pet/pet-manifest.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			T6XDH4SRNoZZQAowQPxY/YlzhbNuQ8QuMYQ/5u0SdlA=
+			ogWw/+WFaVZNkDDQq7L/HzbjNVhBfbKbEADlOU1k8B0=
 			</data>
 		</dict>
-		<key>Resources/pet/sheets/care.png</key>
+		<key>Resources/pet/sheets/01-idle-waiting.png</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			UR8fEtXIOhbWOE3K3P4fg3vtOWGm7XAooMWmZb5WbA4=
+			mm3EGIXPa+elTvzTIZOECM6VTryGmE4djs2Ce9+QZGs=
 			</data>
 		</dict>
-		<key>Resources/pet/sheets/daily.png</key>
+		<key>Resources/pet/sheets/02-thinking-working.png</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			2aD1tRF+d1pFbndOaLRZuxug0HymZ2A7Sqh52ybYWUY=
+			0BJOIZrSzc0O0ocaGy8lKRtzW2hcmOmsRhDqzLLdlcg=
 			</data>
 		</dict>
-		<key>Resources/pet/sheets/tasks.png</key>
+		<key>Resources/pet/sheets/03-search-command.png</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			nl29kwTyNK0nCdvIhYT1CJ2lNPunG9+6ZN4U096egl4=
+			6c1aOsPWLMbppvggqbNKzoDOqknqvmKkJwViW1uQEGY=
 			</data>
 		</dict>
-		<key>Resources/pet/sheets/touch.png</key>
+		<key>Resources/pet/sheets/04-success-error.png</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			ImitiHa7FUulFlfg6PyRAphrxivyReVVTCrvMbxJAkE=
+			K0mQTdfiDBAobBvRXY66bUb2QV6UVEwMG8T8YBb1ufo=
+			</data>
+		</dict>
+		<key>Resources/pet/sheets/05-dragging-release.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			iL+5r3qcBWuVK89fAnvtABQOasfkewZnKgHf8T8QrlY=
+			</data>
+		</dict>
+		<key>Resources/pet/sheets/06-head-poke.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			gE/mN/X+7IaZpo6pbaGnrsK8ZgA7cc8P/T2kGJG9CIM=
+			</data>
+		</dict>
+		<key>Resources/pet/sheets/07-skirt-eat.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			97++s8wn0kQ99z0WXwkxNrE3wPUY+MI/fdhr+1wInhg=
+			</data>
+		</dict>
+		<key>Resources/pet/sheets/08-stretch-yawn.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Obs744TlGmhFRkcbEkYXMze4rBeV0vaj4txWJowV35U=
+			</data>
+		</dict>
+		<key>Resources/pet/sheets/09-shy-concern.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			hYsxKcRJVptxnAqjFsuYiB33GuWvS4HqRrPMo8H6ioI=
+			</data>
+		</dict>
+		<key>Resources/pet/sheets/10-tease-sleep.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			JiyeUJtVA7gyd5khpXxQC6EhnfnNTdXgBoyAFwl/Xrw=
+			</data>
+		</dict>
+		<key>Resources/pet/sheets/11-replying-approval.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			S4ZnOpKlfaL24j3QfAlM5i1j13+kv626skcQmIKqNp4=
+			</data>
+		</dict>
+		<key>Resources/pet/sheets/12-look-wave.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			w47p10+aM5WBqLCujDIseAMcexhw9+dr9GZaWaW8LvA=
 			</data>
 		</dict>
 		<key>Resources/pet/shy.png</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			K00InXBLq0WzvajwoOgTEpoGyDys4sOC85GAkIdpjFs=
+			9Q9kpCN2V0row21Z4aq8KwZIrJ7AbfLvCcj/iC8LbBg=
 			</data>
 		</dict>
 	</dict>

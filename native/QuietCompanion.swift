@@ -84,6 +84,7 @@ private struct CompanionSettings {
     var consentPair = ""
     var videoAudioEnabled = false
     var voiceEnabled = false
+    var lipSyncEnabled = true
     var voiceIdentifier = ""
     var voiceRate = Double(AVSpeechUtteranceDefaultSpeechRate)
     var speechLanguage = "zh-CN"
@@ -104,7 +105,7 @@ private struct CompanionSettings {
         ["observationEnabled": observationEnabled, "screenEnabled": screenEnabled,
          "captureIntervalSeconds": captureIntervalSeconds, "snoozeUntil": snoozeUntil,
          "provider": provider, "model": model, "consentPair": consentPair, "useDefaultModel": true,
-         "videoAudioEnabled": videoAudioEnabled, "voiceEnabled": voiceEnabled,
+         "videoAudioEnabled": videoAudioEnabled, "voiceEnabled": voiceEnabled, "lipSyncEnabled": lipSyncEnabled,
          "voiceIdentifier": voiceIdentifier, "voiceRate": voiceRate, "speechLanguage": speechLanguage,
          "memoryEnabled": memoryEnabled, "agentProgressEnabled": agentProgressEnabled,
          "reduceMotion": reduceMotion, "dailyTokenBudget": dailyTokenBudget, "dailyBudget": dailyBudget,
@@ -308,6 +309,16 @@ private final class BubbleView: NSView {
 }
 
 private final class PetImageView: NSImageView {
+    var rendererView: NSView?
+    override func draw(_ dirtyRect: NSRect) {
+        // Keep image metadata/alpha for hit testing, but render only the mesh.
+        if rendererView == nil { super.draw(dirtyRect) }
+    }
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        guard let candidate = super.hitTest(point) else { return nil }
+        if let rendererView, candidate === rendererView || candidate.isDescendant(of: rendererView) { return self }
+        return candidate
+    }
     weak var companion: CompanionApp?
     private var initialMouse = NSPoint.zero
     private var initialOrigin = NSPoint.zero
@@ -341,7 +352,7 @@ private final class PetImageView: NSImageView {
     }
 }
 
-private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDelegate, AVSpeechSynthesizerDelegate, NSTextViewDelegate {
+private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSTextViewDelegate {
     private var settings = CompanionSettings()
     private var models: [CompanionModel] = []
     private var panel: PetPanel!
@@ -386,6 +397,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
     private var languagePicker: NSPopUpButton!
     private var audioStatusLabel: NSTextField!
     private var voiceCheckbox: NSButton!
+    private var lipSyncCheckbox: NSButton!
     private var voicePicker: NSPopUpButton!
     private var voiceRateSlider: NSSlider!
     private var memoryCheckbox: NSButton!
@@ -451,7 +463,14 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
     private var mouseLastTarget = CGPoint.zero
     private var memoryDirty = false
     private let audioTranscriber = SystemAudioTranscriber()
-    private let speechSynthesizer = AVSpeechSynthesizer()
+    private let speechPlayer = SpeechPCMPlayer()
+    private var avatarRenderer: AvatarMeshRenderer?
+    private var rendererHidden: Bool?
+    private var rendererReduced: Bool?
+    private var rendererMotion: Bool?
+    private var previewTimeline: SpeechMouthTimeline?
+    private var previewPCMActive = false
+    private var lastExplicitWake = Date.distantPast
     private var animationPlayer: PetAnimationPlayer?
     private var isShuttingDown = false
     private let defaults = UserDefaults.standard
@@ -470,7 +489,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         settings.consentPair = previewMode ? "" : (defaults.string(forKey: "screenConsentPair") ?? "")
         audioConsentPair = previewMode ? "" : (defaults.string(forKey: "audioConsentPair") ?? "")
         mousePlayConsent = !previewMode && defaults.bool(forKey: "mousePlayConsent")
-        speechSynthesizer.delegate = self
+        configureSpeechPlayer()
         settings.dynamicSkinEnabled = defaults.object(forKey: "dynamicSkinEnabled") as? Bool ?? true
         voices = AVSpeechSynthesisVoice.speechVoices().sorted { ($0.language, $0.name) < ($1.language, $1.name) }
         makePanel()
@@ -505,6 +524,12 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         imageView = PetImageView(frame: .zero)
         imageView.companion = self
         imageView.imageScaling = .scaleProportionallyUpOrDown
+        let renderer = AvatarMeshRenderer()
+        avatarRenderer = renderer
+        imageView.rendererView = renderer.view
+        renderer.view.frame = imageView.bounds
+        renderer.view.autoresizingMask = [.width, .height]
+        imageView.addSubview(renderer.view)
         bubble = BubbleView(frame: .zero)
         sleepLabel = label("z Z", font: .systemFont(ofSize: 23, weight: .light))
         sleepLabel.textColor = .systemOrange
@@ -528,6 +553,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         panel.setFrameOrigin(valid ? saved.origin : fallback)
         clampPetToVisibleScreen()
         panel.orderFrontRegardless()
+        refreshAvatarState()
     }
 
     private func layoutPet() {
@@ -540,8 +566,10 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         agentPill.frame = NSRect(x: 35 * scale, y: 275 * scale, width: 250 * scale, height: 22 * scale)
         bubble.text.font = .systemFont(ofSize: 14 * min(scale, 1.2), weight: .medium)
         sleepLabel.frame = NSRect(x: 250 * scale, y: 240 * scale, width: 65 * scale, height: 35 * scale)
+        avatarRenderer?.view.frame = imageView.bounds
         layoutGrowthTray()
         stepSnackEating()
+        refreshAvatarState()
         if panel.isVisible { clampPetToVisibleScreen(placementScreen) }
     }
 
@@ -580,45 +608,91 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         defaults.set(panel.frame.origin.y, forKey: "petY")
     }
 
+    private func configureSpeechPlayer() {
+        speechPlayer.onMouthLevel = { [weak self] level in self?.applyMouthLevel(level) }
+        speechPlayer.onPlaybackState = { [weak self] playing in
+            guard let self else { return }
+            self.audioTranscriber.suppressAudio = playing
+            self.animationPlayer?.setSpeaking(playing)
+            self.refreshAvatarState()
+            self.publishNativeStatus()
+        }
+        speechPlayer.onError = { [weak self] message in
+            guard let self else { return }
+            self.modelStatus = message
+            self.refreshSettingsUI()
+        }
+    }
+
+    private func applyMouthLevel(_ value: Double) {
+        let allowed = settings.lipSyncEnabled && !settings.reduceMotion && panel?.isVisible == true
+        avatarRenderer?.setMouthLevel(allowed ? value : 0)
+    }
+
+    private func stopSpokenText() {
+        previewTimeline = nil
+        previewPCMActive = false
+        speechPlayer.stop()
+        audioTranscriber.suppressAudio = false
+        animationPlayer?.setSpeaking(false)
+        avatarRenderer?.setMouthLevel(0)
+    }
+
+    private func refreshAvatarState() {
+        guard let renderer = avatarRenderer else { return }
+        let hidden = panel?.isVisible != true
+        let reduced = settings.reduceMotion
+        let motion = settings.dynamicSkinEnabled && animationPlayer?.available == true
+        if rendererHidden != hidden { renderer.setHidden(hidden); rendererHidden = hidden }
+        if rendererReduced != reduced { renderer.setReducedMotion(reduced); rendererReduced = reduced }
+        if rendererMotion != motion { renderer.setMotionEnabled(motion); rendererMotion = motion }
+        renderer.setAction(animationPlayer?.currentClip ?? "idle")
+        if hidden || reduced || !settings.lipSyncEnabled { renderer.setMouthLevel(0) }
+    }
+
+    private func displayPetImage(_ image: NSImage, mouthRect: [Double]?) {
+        imageView.image = image
+        imageView.contentTintColor = nil
+        if let cg = image.cgImage(forProposedRect: nil, context: nil, hints: nil) {
+            petBitmap = NSBitmapImageRep(cgImage: cg)
+        } else { petBitmap = nil }
+        avatarRenderer?.setImage(image, geometry: AvatarMeshGeometry(mouthRect: mouthRect))
+        refreshAvatarState()
+    }
+
     private func updateImage() {
-        // Both animated and still modes require the same validated identity.
-        // An old --assets-dir must never bring the previous character back.
         guard let animationPlayer, animationPlayer.available else {
-            imageView.image = NSImage(systemSymbolName: "sun.max.fill", accessibilityDescription: "陪伴角色")
-            imageView.contentTintColor = .systemOrange
-            petBitmap = imageView.image?.tiffRepresentation.flatMap { NSBitmapImageRep(data: $0) }
+            if let fallback = NSImage(systemSymbolName: "sun.max.fill", accessibilityDescription: "陪伴角色") {
+                displayPetImage(fallback, mouthRect: nil)
+            }
             return
         }
-        if settings.dynamicSkinEnabled {
-            animationPlayer.mood(currentMood)
-            return
+        animationPlayer.mood(currentMood)
+        if settings.dynamicSkinEnabled { return }
+        let name = currentMood == "shy" ? "shy" : "idle"
+        if let image = NSImage(contentsOf: assetsDirectory.appendingPathComponent(name + ".png")) {
+            displayPetImage(image, mouthRect: animationPlayer.staticMouthRect(name))
+        } else if let fallback = NSImage(systemSymbolName: "sun.max.fill", accessibilityDescription: "陪伴角色") {
+            displayPetImage(fallback, mouthRect: nil)
         }
-        let name = currentMood == "shy" ? "shy.png" : "idle.png"
-        if let image = NSImage(contentsOf: assetsDirectory.appendingPathComponent(name)) {
-            imageView.image = image
-            imageView.contentTintColor = nil
-        } else {
-            imageView.image = NSImage(systemSymbolName: "sun.max.fill", accessibilityDescription: "陪伴角色")
-            imageView.contentTintColor = .systemOrange
-        }
-        petBitmap = imageView.image?.tiffRepresentation.flatMap { NSBitmapImageRep(data: $0) }
     }
 
     private func configureAnimation() {
         animationPlayer?.stop()
         let player = PetAnimationPlayer(root: assetsDirectory) { [weak self] frame in
             guard let self, self.settings.dynamicSkinEnabled else { return }
-            self.imageView.image = frame
-            self.imageView.contentTintColor = nil
-            if let image = frame.cgImage(forProposedRect: nil, context: nil, hints: nil) {
-                self.petBitmap = NSBitmapImageRep(cgImage: image)
-            }
+            self.displayPetImage(frame, mouthRect: self.animationPlayer?.currentMouthRect)
         }
         animationPlayer = player
         player.setReducedMotion(settings.reduceMotion || !settings.dynamicSkinEnabled)
+        player.setState(activeAgentPhase, activity: activeAgentActivity)
+        player.setThinking(modelPending)
+        player.setSleeping(sleeping)
+        player.setSpeaking(speechPlayer.isPlaying || previewPCMActive)
+        player.mood(currentMood)
+        if panel?.isVisible == true { player.resume() } else { player.stop() }
+        if !settings.dynamicSkinEnabled || !player.available { updateImage() }
         layoutPet()
-        if settings.dynamicSkinEnabled, player.available { player.setState("IDLE") }
-        else { updateImage() }
     }
 
     /// Actual aspect-fit image bounds; coordinates here use AppKit's bottom-left origin.
@@ -631,6 +705,9 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
     }
 
     private func normalizedImagePoint(_ point: NSPoint) -> CGPoint? {
+        if let renderer = avatarRenderer {
+            return renderer.inverseNormalizedPoint(viewPoint: renderer.view.convert(point, from: imageView))
+        }
         let rect = drawnImageRect
         guard rect.width > 0, rect.height > 0, rect.contains(point) else { return nil }
         return CGPoint(x: (point.x - rect.minX) / rect.width, y: 1 - (point.y - rect.minY) / rect.height)
@@ -641,53 +718,32 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         interact(animationPlayer?.interactionRegion(at: normalized) ?? (normalized.y < 0.32 ? "head" : (normalized.y >= 0.63 ? "skirt" : "body")))
     }
 
-    private func animatePet() {
-        guard !settings.reduceMotion, !isDragging,
-              !(settings.dynamicSkinEnabled && animationPlayer?.available == true) else { return }
-        floatingPhase.toggle()
-        let targetY = (floatingPhase && !sleeping ? 9.0 : 4.0) * scale
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 1.5
-            imageView.animator().setFrameOrigin(NSPoint(x: 55 * scale, y: targetY))
-        }
-        sleepLabel.isHidden = !sleeping
-    }
+    private func animatePet() { sleepLabel.isHidden = !sleeping }
 
     func interact(_ input: String) {
-        // Accept a legacy command, but expose only the current skirt interaction.
         let kind = input == "tail" ? "skirt" : input
-        if kind == "sleep" { forcedSleep = true; sleeping = true }
-        else { forcedSleep = false; sleeping = false }
+        if kind == "sleep" { forcedSleep = true; sleeping = true; stopSpokenText() }
+        else if kind == "wake" { forcedSleep = false; sleeping = false; lastExplicitWake = Date() }
+        // Touching or finishing a drag never implicitly cancels persistent sleep.
         sleepLabel.isHidden = !sleeping
-        currentMood = ["head", "body", "feed"].contains(kind) ? "shy" : "idle"
+        if ["head", "body", "feed"].contains(kind) { currentMood = "shy" }
+        animationPlayer?.setSleeping(sleeping)
+        animationPlayer?.interaction(kind)
         updateImage()
-        if settings.dynamicSkinEnabled, animationPlayer?.available == true { animationPlayer?.interaction(kind) }
-        else if !settings.reduceMotion {
-            let angle: CGFloat = kind == "skirt" ? -6 : (kind == "head" ? 3 : (kind == "feed" ? -2 : 0))
-            imageView.animator().frameCenterRotation = angle
-            poseTimer?.invalidate()
-            poseTimer = Timer.scheduledTimer(withTimeInterval: 1.2, repeats: false) { [weak self] _ in
-                self?.imageView.animator().frameCenterRotation = 0
-                self?.currentMood = "idle"
-                self?.updateImage()
-            }
-        }
+        refreshAvatarState()
         publishNativeStatus()
         if !previewMode { emit(["type": "interaction", "kind": kind, "timestamp": nowMilliseconds()]) }
     }
 
     private func showSpeech(_ text: String, mood: String, speak: Bool = true) {
-        currentMood = ["idle", "shy", "concern", "tease", "happy", "success", "error"].contains(mood) ? mood : "idle"
+        stopSpokenText()
+        currentMood = ["idle", "shy", "concern", "tease", "happy", "success", "error", "thinking", "sleep", "sleepy"].contains(mood) ? mood : "idle"
         updateImage()
         bubble.text.stringValue = String(text.prefix(260))
         bubble.isHidden = false
         chatReply?.stringValue = String(text.prefix(1200))
-        if speak, settings.voiceEnabled, !previewMode, !text.isEmpty {
-            speechSynthesizer.stopSpeaking(at: .immediate)
-            let utterance = AVSpeechUtterance(string: String(text.prefix(2000)))
-            utterance.voice = AVSpeechSynthesisVoice(identifier: settings.voiceIdentifier) ?? AVSpeechSynthesisVoice(language: "zh-CN")
-            utterance.rate = Float(min(0.65, max(0.3, settings.voiceRate)))
-            speechSynthesizer.speak(utterance)
+        if speak, settings.voiceEnabled, !previewMode, panel.isVisible, !text.isEmpty {
+            speechPlayer.start(text: String(text.prefix(2000)), voiceIdentifier: settings.voiceIdentifier, rate: Float(settings.voiceRate))
         }
         bubbleTimer?.invalidate()
         bubbleTimer = Timer.scheduledTimer(withTimeInterval: min(25, max(8, Double(text.count) / 4)), repeats: false) { [weak self] _ in
@@ -723,9 +779,12 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         return menu
     }
 
-    @objc private func togglePet() {
-        if panel.isVisible { panel.orderOut(nil); animationPlayer?.stop() }
-        else { panel.orderFrontRegardless(); animationPlayer?.resume() }
+    @objc private func togglePet() { setPetVisible(!panel.isVisible) }
+    private func setPetVisible(_ visible: Bool) {
+        if visible { panel.orderFrontRegardless(); animationPlayer?.resume() }
+        else { stopSpokenText(); panel.orderOut(nil); animationPlayer?.stop() }
+        refreshAvatarState()
+        publishNativeStatus()
     }
     @objc private func openChat() { showChat() }
     @objc private func openSettings() { showSettings() }
@@ -735,13 +794,13 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
     }
     @objc private func pauseObservation() {
         settings.observationEnabled = false
-        speechSynthesizer.stopSpeaking(at: .immediate)
+        stopSpokenText()
         settingsChanged()
         showSpeech("观察已暂停", mood: "idle", speak: false)
     }
     @objc private func snooze() {
         settings.snoozeUntil = nowMilliseconds() + 30 * 60 * 1000
-        speechSynthesizer.stopSpeaking(at: .immediate)
+        stopSpokenText()
         settingsChanged()
         showSpeech("已安静 30 分钟，期间不读取应用、屏幕或系统声音", mood: "idle", speak: false)
     }
@@ -770,16 +829,17 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
     @objc private func wakePet() { interact("wake") }
     @objc private func toggleVoice() {
         settings.voiceEnabled.toggle()
-        if !settings.voiceEnabled { speechSynthesizer.stopSpeaking(at: .immediate) }
+        if !settings.voiceEnabled { stopSpokenText() }
         settingsChanged()
     }
 
     func dragBegan() {
+        stopSpokenText()
         isDragging = true
         panel.ignoresMouseEvents = false
         bubble.isHidden = true
-        if settings.dynamicSkinEnabled, animationPlayer?.available == true { animationPlayer?.interaction("drag-hold") }
-        else if !settings.reduceMotion { imageView.animator().frameCenterRotation = -7 }
+        animationPlayer?.interaction("drag-hold")
+        refreshAvatarState()
         if !previewMode { emit(["type": "interaction", "kind": "drag-hold", "timestamp": nowMilliseconds()]) }
     }
 
@@ -815,16 +875,6 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         }
         let growthHit = growthBadge.map { !$0.isHidden && $0.frame.contains(point) } ?? false
         panel.ignoresMouseEvents = !(bubbleHit || imageHit || foodHit || growthHit)
-    }
-
-    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didStart utterance: AVSpeechUtterance) {
-        audioTranscriber.suppressAudio = true
-    }
-    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
-        audioTranscriber.suppressAudio = false
-    }
-    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
-        audioTranscriber.suppressAudio = false
     }
 
     private func label(_ text: String, font: NSFont = .systemFont(ofSize: 13)) -> NSTextField {
@@ -920,24 +970,25 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
 
         let voiceView = tab("语音与动作")
         voiceCheckbox = check(voiceView, "朗读模型生成的话语（本机系统声音）", 555, #selector(voiceToggled))
-        voicePicker = NSPopUpButton(frame: NSRect(x: 24, y: 508, width: 574, height: 32), pullsDown: false)
+        lipSyncCheckbox = check(voiceView, "本机朗读时按真实PCM声音开合嘴部（RMS）", 522, #selector(lipSyncToggled))
+        voicePicker = NSPopUpButton(frame: NSRect(x: 24, y: 479, width: 574, height: 32), pullsDown: false)
         voices = AVSpeechSynthesisVoice.speechVoices().sorted { ($0.language, $0.name) < ($1.language, $1.name) }
         voicePicker.addItems(withTitles: ["系统默认中文声音"] + voices.map { "\($0.name) · \($0.language)" })
         voicePicker.target = self
         voicePicker.action = #selector(voiceSelected)
         voiceView.addSubview(voicePicker)
-        _ = put(voiceView, "语速", 463, 25)
+        _ = put(voiceView, "语速", 438, 25)
         voiceRateSlider = NSSlider(value: settings.voiceRate, minValue: 0.3, maxValue: 0.65, target: self, action: #selector(voiceRateChanged))
-        voiceRateSlider.frame = NSRect(x: 124, y: 459, width: 474, height: 28)
+        voiceRateSlider.frame = NSRect(x: 124, y: 434, width: 474, height: 28)
         voiceView.addSubview(voiceRateSlider)
-        voiceView.addSubview(button("试听当前声音", action: #selector(testVoice), frame: NSRect(x: 24, y: 406, width: 574, height: 34)))
-        _ = put(voiceView, "宠物大小", 351, 25)
+        voiceView.addSubview(button("试听当前声音", action: #selector(testVoice), frame: NSRect(x: 24, y: 384, width: 574, height: 34)))
+        _ = put(voiceView, "宠物大小", 329, 25)
         scaleSlider = NSSlider(value: scale, minValue: 0.6, maxValue: 1.6, target: self, action: #selector(scaleChanged))
-        scaleSlider.frame = NSRect(x: 124, y: 347, width: 474, height: 28)
+        scaleSlider.frame = NSRect(x: 124, y: 325, width: 474, height: 28)
         voiceView.addSubview(scaleSlider)
-        _ = put(voiceView, "透明度", 301, 25)
+        _ = put(voiceView, "透明度", 279, 25)
         opacitySlider = NSSlider(value: opacity, minValue: 0.45, maxValue: 1, target: self, action: #selector(opacityChanged))
-        opacitySlider.frame = NSRect(x: 124, y: 297, width: 474, height: 28)
+        opacitySlider.frame = NSRect(x: 124, y: 275, width: 474, height: 28)
         voiceView.addSubview(opacitySlider)
         reduceMotionCheckbox = check(voiceView, "减少动态效果", 239, #selector(reduceMotionToggled))
         dynamicSkinCheckbox = check(voiceView, "使用动态角色（取消后使用参考立绘）", 204, #selector(dynamicSkinToggled))
@@ -1013,6 +1064,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         audioStatusLabel.stringValue = audioStatus
         languagePicker.selectItem(at: settings.speechLanguage == "en-US" ? 1 : 0)
         voiceCheckbox.state = settings.voiceEnabled ? .on : .off
+        lipSyncCheckbox.state = settings.lipSyncEnabled ? .on : .off
         voiceRateSlider.doubleValue = settings.voiceRate
         let voiceIndex = voices.firstIndex(where: { $0.identifier == settings.voiceIdentifier })
         voicePicker.selectItem(at: voiceIndex.map { $0 + 1 } ?? 0)
@@ -1041,10 +1093,36 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         return !purpose.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    private func publishNativeStatus() {
+    private func previewPCM(_ payload: [String: Any]) {
+        guard previewMode else { return }
+        let rate = 24000.0
+        if previewTimeline == nil {
+            var samples = [Float](repeating: 0, count: 1920)
+            samples += (0..<5760).map { Float(0.2 * sin(2 * .pi * 440 * Double($0) / rate)) }
+            samples += [Float](repeating: 0, count: 4800)
+            var accumulator = SpeechRMSAccumulator(sampleRate: rate)
+            var windows = samples.withUnsafeBufferPointer { accumulator.consume($0, at: 0) }
+            windows += accumulator.finish()
+            var timeline = SpeechMouthTimeline(); timeline.append(windows); previewTimeline = timeline
+        }
+        let requested = (payload["sampleFrame"] as? NSNumber)?.int64Value ?? 0
+        let frame = min(120000, max(0, requested))
+        previewPCMActive = frame < 12480
+        animationPlayer?.setSpeaking(previewPCMActive)
+        let position = SpeechPCMClock.frame(sampleTime: frame, playerRate: rate, sourceRate: rate, presentationLatency: 0) ?? 0
+        applyMouthLevel(previewTimeline?.level(at: position, sampleRate: rate) ?? 0)
+        refreshAvatarState()
+        publishNativeStatus(force: true)
+    }
+
+    private func publishNativeStatus(force: Bool = false) {
         let screenAuthorized = !previewMode && CGPreflightScreenCaptureAccess()
         let audioAuthorized = !previewMode && speechPermissionRequestIsSafe() && screenAuthorized
             && SFSpeechRecognizer.authorizationStatus() == .authorized
+        let mesh = avatarRenderer?.diagnostics ?? [:]
+        let metricKeys = ["targetFPS", "sceneFrameCount", "warpFrameCount", "mouthFrameCount", "mouthVisible", "mouthGeometryValid", "skinSampleValid", "maximumNormalizedDisplacement", "textureCacheEntries"]
+        let metrics = mesh.filter { metricKeys.contains($0.key) }
+        let mode = panel?.isVisible != true ? "hidden" : (settings.reduceMotion ? "reduced-motion" : (settings.dynamicSkinEnabled ? "native-mesh" : "still-image"))
         let message: [String: Any] = [
             "type": "native-status", "audioStatus": audioStatus, "modelStatus": modelStatus,
             "screenAuthorized": screenAuthorized, "audioAuthorized": audioAuthorized,
@@ -1056,6 +1134,10 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             "mouseAuthorized": !previewMode && AXIsProcessTrusted(), "mousePlayActive": mousePlayActive,
             "mouseStatus": mouseStatus,
             "petSleeping": sleeping,
+            "motionMode": mode, "currentClip": animationPlayer?.currentClip ?? "idle",
+            "actualMouthLevel": mesh["mouthLevel"] ?? 0, "speechPlaying": speechPlayer.isPlaying,
+            "source": "pcm-rms", "previewPCMActive": previewPCMActive,
+            "lipSyncEnabled": settings.lipSyncEnabled, "frameMetrics": metrics,
             "growthPanelVisible": settings.growthPanelVisible,
             "growthBadgeVisible": growthBadge.map { !$0.isHidden } ?? false,
             "inventoryLabelVisible": snackOverflowLabel.map { !$0.isHidden } ?? false,
@@ -1070,7 +1152,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
                         "width": rect.width / scale, "height": rect.height / scale]
             },
             "voices": voices.map { ["id": $0.identifier, "name": $0.name, "language": $0.language] }]
-        guard let fingerprint = try? JSONSerialization.data(withJSONObject: message, options: [.sortedKeys]), fingerprint != lastNativeStatus else { return }
+        guard let fingerprint = try? JSONSerialization.data(withJSONObject: message, options: [.sortedKeys]), (force || fingerprint != lastNativeStatus) else { return }
         lastNativeStatus = fingerprint
         emit(message)
     }
@@ -1115,8 +1197,8 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         case "pause": pauseObservation()
         case "resume": resumeObservation()
         case "snooze": snooze()
-        case "show": panel.orderFrontRegardless(); animationPlayer?.resume()
-        case "hide": panel.orderOut(nil); animationPlayer?.stop()
+        case "show": setPetVisible(true)
+        case "hide": setPetVisible(false)
         case "chat": showChat()
         case "feed": feedPet()
         case "sleep": sleepPet()
@@ -1142,7 +1224,14 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             scaleSlider?.doubleValue = scale
             opacitySlider?.doubleValue = opacity
             refreshSettingsUI()
-        case "refresh-status": publishNativeStatus()
+        case "refresh-status": publishNativeStatus(force: true)
+        case "preview-pcm": previewPCM(payload)
+        case "preview-pcm-stop": if previewMode { stopSpokenText(); publishNativeStatus(force: true) }
+        case "preview-action":
+            if previewMode, let name = payload["name"] as? String, MotionAction(rawValue: name) != nil {
+                animationPlayer?.interaction(name); refreshAvatarState(); publishNativeStatus(force: true)
+            }
+        case "preview-reset-motion": if previewMode { stopSpokenText(); configureAnimation(); publishNativeStatus(force: true) }
         case "enable-mouse-play": enableMousePlay()
         case "mouse-play": startMousePlay()
         default: break
@@ -1453,22 +1542,25 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
     }
     @objc private func voiceToggled() {
         settings.voiceEnabled = voiceCheckbox.state == .on
-        if !settings.voiceEnabled { speechSynthesizer.stopSpeaking(at: .immediate) }
+        if !settings.voiceEnabled { stopSpokenText() }
+        settingsChanged()
+    }
+    @objc private func lipSyncToggled() {
+        settings.lipSyncEnabled = lipSyncCheckbox.state == .on
+        if !settings.lipSyncEnabled { avatarRenderer?.setMouthLevel(0) }
         settingsChanged()
     }
     @objc private func voiceSelected() {
+        stopSpokenText()
         let index = voicePicker.indexOfSelectedItem - 1
         settings.voiceIdentifier = voices.indices.contains(index) ? voices[index].identifier : ""
         settingsChanged()
     }
-    @objc private func voiceRateChanged() { settings.voiceRate = voiceRateSlider.doubleValue; settingsChanged() }
+    @objc private func voiceRateChanged() { stopSpokenText(); settings.voiceRate = voiceRateSlider.doubleValue; settingsChanged() }
     @objc private func testVoice() {
         guard !previewMode else { return }
-        let utterance = AVSpeechUtterance(string: "这是当前系统声音的试听。")
-        utterance.voice = AVSpeechSynthesisVoice(identifier: settings.voiceIdentifier) ?? AVSpeechSynthesisVoice(language: "zh-CN")
-        utterance.rate = Float(settings.voiceRate)
-        speechSynthesizer.stopSpeaking(at: .immediate)
-        speechSynthesizer.speak(utterance)
+        stopSpokenText()
+        speechPlayer.start(text: "这是当前系统声音的试听。", voiceIdentifier: settings.voiceIdentifier, rate: Float(settings.voiceRate))
     }
     @objc private func memoryToggled() { settings.memoryEnabled = memoryCheckbox.state == .on; settingsChanged() }
     @objc private func agentToggled() { settings.agentProgressEnabled = agentCheckbox.state == .on; settingsChanged() }
@@ -1701,10 +1793,11 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         let app = NSWorkspace.shared.frontmostApplication
         guard app?.processIdentifier != ProcessInfo.processInfo.processIdentifier else { return }
         let idle = CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: CGEventType(rawValue: UInt32.max)!)
-        let nextSleeping = forcedSleep || (idle.isFinite && idle >= 300)
+        let nextSleeping = forcedSleep || (idle.isFinite && idle >= 300 && Date().timeIntervalSince(lastExplicitWake) >= 300)
         if sleeping != nextSleeping {
             sleeping = nextSleeping
-            if settings.dynamicSkinEnabled { animationPlayer?.interaction(sleeping ? "sleep" : "wake") }
+            animationPlayer?.setSleeping(sleeping)
+            if !sleeping { animationPlayer?.interaction("wake") }
             publishNativeStatus()
             if !previewMode { emit(["type": "interaction", "kind": sleeping ? "sleep" : "wake", "automatic": true, "timestamp": nowMilliseconds()]) }
         }
@@ -1897,7 +1990,8 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             lines.append("进行中 \(formatted(active)) · 等待中 \(formatted(waiting))")
         }
         agentSummary = lines.joined(separator: "\n")
-        if settings.dynamicSkinEnabled && !modelPending { animationPlayer?.setState(activeAgentPhase, activity: activeAgentActivity) }
+        animationPlayer?.setState(activeAgentPhase, activity: activeAgentActivity)
+        refreshAvatarState()
         agentPill.toolTip = agentSummary
         agentPill.isHidden = !settings.agentProgressEnabled || agentPill.stringValue.isEmpty
         refreshSettingsUI()
@@ -2120,10 +2214,16 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
               let content = panel.contentView else { return }
         let t = settings.reduceMotion ? 1 : min(1, max(0, Date().timeIntervalSince(eatingStarted) / 0.75))
         let eased = 1 - pow(1 - t, 2)
-        let mouthAnchor = animationPlayer?.mouthAnchor ?? CGPoint(x: 0.50, y: 0.23)
-        let imageRect = drawnImageRect
-        let mouth = imageView.convert(NSPoint(x: imageRect.minX + imageRect.width * mouthAnchor.x,
-                                             y: imageRect.minY + imageRect.height * (1 - mouthAnchor.y)), to: content)
+        let mouth: CGPoint
+        if let renderer = avatarRenderer,
+           let rendered = renderer.mouthPoint() ?? renderer.normalizedPoint(for: animationPlayer?.mouthAnchor ?? CGPoint(x: 0.50, y: 0.44)) {
+            mouth = renderer.view.convert(rendered, to: content)
+        } else {
+            let anchor = animationPlayer?.mouthAnchor ?? CGPoint(x: 0.50, y: 0.44)
+            let imageRect = drawnImageRect
+            mouth = imageView.convert(NSPoint(x: imageRect.minX + imageRect.width * anchor.x,
+                                              y: imageRect.minY + imageRect.height * (1 - anchor.y)), to: content)
+        }
         let start = NSRect(x: eatingStartFrame.minX * scale, y: eatingStartFrame.minY * scale,
                            width: eatingStartFrame.width * scale, height: eatingStartFrame.height * scale)
         view.frame = NSRect(x: start.minX + (mouth.x - 8 * scale - start.minX) * eased,
@@ -2199,18 +2299,17 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             if let id = command["id"] as? String { emit(["type": "pong", "id": String(id.prefix(128))]) }
         case "control":
             if let action = command["action"] as? String { handleControl(String(action.prefix(64)), payload: command) }
-        case "request-status": publishNativeStatus()
+        case "request-status": publishNativeStatus(force: true)
         case "speech":
             showSpeech(command["text"] as? String ?? "", mood: command["mood"] as? String ?? "idle",
                        speak: command["speak"] as? Bool ?? false)
         case "mood":
             let mood = command["mood"] as? String ?? "idle"
-            currentMood = mood
             modelPending = mood == "thinking"
-            if settings.dynamicSkinEnabled {
-                animationPlayer?.setState(modelPending ? "thinking" : activeAgentPhase, activity: activeAgentActivity)
-            }
-            else { updateImage() }
+            animationPlayer?.setThinking(modelPending)
+            // Completion clears only pending; preserve the response's personality.
+            if mood != "idle" && mood != "thinking" { currentMood = mood; updateImage() }
+            refreshAvatarState()
         case "status":
             modelStatus = command["text"] as? String ?? ""
             refreshSettingsUI()
@@ -2229,9 +2328,15 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             stopMousePlay("设置已改变，指针互动已停止。")
             resolveDefault(provider: incoming["provider"] as? String ?? settings.provider,
                            model: incoming["model"] as? String ?? settings.model)
-            if let value = incoming["observationEnabled"] as? Bool { settings.observationEnabled = value }
+            if let value = incoming["observationEnabled"] as? Bool {
+                if !value && settings.observationEnabled { stopSpokenText() }
+                settings.observationEnabled = value
+            }
             if let value = incoming["captureIntervalSeconds"] as? Double, value.isFinite { settings.captureIntervalSeconds = min(30, max(1, value)) }
-            if let value = incoming["snoozeUntil"] as? Double, value.isFinite { settings.snoozeUntil = max(0, value) }
+            if let value = incoming["snoozeUntil"] as? Double, value.isFinite {
+                if value > nowMilliseconds() && value != settings.snoozeUntil { stopSpokenText() }
+                settings.snoozeUntil = max(0, value)
+            }
             if let value = incoming["screenEnabled"] as? Bool {
                 let pair = incoming["consentPair"] as? String ?? settings.consentPair
                 settings.consentPair = pair == settings.pair && !settings.provider.isEmpty ? pair : ""
@@ -2246,10 +2351,14 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             }
             if let value = incoming["voiceEnabled"] as? Bool {
                 settings.voiceEnabled = value
-                if !value { speechSynthesizer.stopSpeaking(at: .immediate) }
+                if !value { stopSpokenText() }
             }
-            if let value = incoming["voiceIdentifier"] as? String { settings.voiceIdentifier = value }
-            if let value = incoming["voiceRate"] as? Double, value.isFinite { settings.voiceRate = min(0.65, max(0.3, value)) }
+            if let value = incoming["lipSyncEnabled"] as? Bool {
+                settings.lipSyncEnabled = value
+                if !value { avatarRenderer?.setMouthLevel(0) }
+            }
+            if let value = incoming["voiceIdentifier"] as? String, value != settings.voiceIdentifier { stopSpokenText(); settings.voiceIdentifier = value }
+            if let value = incoming["voiceRate"] as? Double, value.isFinite, value != settings.voiceRate { stopSpokenText(); settings.voiceRate = min(0.65, max(0.3, value)) }
             if let value = incoming["speechLanguage"] as? String { settings.speechLanguage = ["zh-CN", "en-US"].contains(value) ? value : "zh-CN" }
             if let value = incoming["memoryEnabled"] as? Bool { settings.memoryEnabled = value }
             if let value = incoming["agentProgressEnabled"] as? Bool { settings.agentProgressEnabled = value }
@@ -2299,8 +2408,9 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         passthroughTimer?.invalidate()
         poseTimer?.invalidate()
         bubbleTimer?.invalidate()
-        speechSynthesizer.stopSpeaking(at: .immediate)
+        stopSpokenText()
         animationPlayer?.stop()
+        avatarRenderer?.stop()
         eatingAnimationTimer?.invalidate()
         for view in snackViews.values { view.cancelArrival(snapToRest: false) }
         Task { await audioTranscriber.stop() }
@@ -2317,14 +2427,14 @@ if CommandLine.arguments.contains("--self-test") {
     let decodedFrames = animation.allFramesDecode()
     let passed = !settings.observationEnabled && !settings.screenEnabled && !settings.videoAudioEnabled
         && !settings.voiceEnabled && !settings.memoryEnabled && !settings.mousePlayEnabled && !settings.growthPanelVisible
-        && animation.available && decodedFrames
-        && animation.clipCount == 16 && animation.frameCount == 64
+        && settings.lipSyncEnabled && animation.available && decodedFrames
+        && animation.clipCount >= 24 && animation.frameCount >= 24
     emit(["type": "ready", "protocolVersion": 1, "selfTest": true])
     emit(["type": "self-test", "passed": passed,
           "captureDefault": false, "metadataDefault": false, "minimumIntervalSeconds": 1,
           "maximumImageDimension": 1280, "audioCapture": false,
           "screenshotFeatureAvailable": screenshotFeatureAvailable,
-          "systemAudioDefault": settings.videoAudioEnabled, "voiceDefault": settings.voiceEnabled,
+          "systemAudioDefault": settings.videoAudioEnabled, "voiceDefault": settings.voiceEnabled, "lipSyncDefault": settings.lipSyncEnabled,
           "memoryDefault": settings.memoryEnabled, "growthPanelDefault": settings.growthPanelVisible, "defaultModel": "harness",
           "animationManifest": animation.available, "pngDecoded": decodedFrames,
           "characterId": animation.characterID ?? "unavailable",

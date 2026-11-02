@@ -1,4 +1,4 @@
-Native companion component — 0.4.1 — 2026-11-02
+Native companion component — 0.5.0 — 2026-11-02
 
 Build
   ./build.sh
@@ -9,75 +9,78 @@ Documents. cp -X and ditto --noextattr --norsrc copy resources without metadata.
 No global xattr removal, quarantine bypass, or production notarization occurs.
 An optional first argument copies the completed bundle to that destination.
 
-Orange character assets and atlas schema
-The only build source is ../assets/orange-character. Missing or invalid assets
-stop the build before Swift compilation. No previous bundled resources,
-../assets/animations, or legacy loose art are used as a fallback. Only the
-manifest, idle.png, shy.png and its referenced PNG sheets enter the new app:
-  Contents/Resources/pet/idle.png
-  Contents/Resources/pet/shy.png
-  Contents/Resources/pet/pet-manifest.json
+Q-character assets, timed poses and native mesh
+The only build source remains ../assets/orange-character; its active identity
+is now schemaVersion:3, characterId:"orange-q-companion". Invalid/missing art
+stops the build before Swift compilation. No old bundle, blue character or
+older orange-character schema is used as a fallback. Runtime layout:
+  Contents/Resources/pet/{idle.png,shy.png,pet-manifest.json}
   Contents/Resources/pet/sheets/<name>.png
---assets-dir PATH may override this pet root, but the same identity/schema
-validation applies to both animated and still modes. An unsupported character,
-incomplete manifest or invalid PNG produces an orange neutral sun symbol;
-it never falls back to the previous blue-haired character.
+--assets-dir applies the same strict identity/schema validation. Invalid art
+uses a neutral symbol and disables face-local mouth geometry.
 
-Required manifest structure (all sixteen clips must be provided):
-  schemaVersion: 2
-  characterId: "orange-book-companion"
-  columns: 4
-  rows: 4
-  sheets: {"sheet-id": "sheets/file.png", ...}
-  clips: {
-    "idle": {
-      "frames": [
-        {"sheet":"sheet-id", "row":0, "column":0},
-        {"sheet":"sheet-id", "row":0, "column":1},
-        {"sheet":"sheet-id", "row":0, "column":2},
-        {"sheet":"sheet-id", "row":0, "column":3}
-      ],
-      "frameMs":250,
-      "loop":true
-    }, ...
-  }
-  stateMap: {"IDLE":"idle", "THINKING":"thinking", "WORKING":"working",
-             "WAITING":"waiting", "SUCCESS":"success", "ERROR":"error"}
-  workingActivityMap: {"search":"working_search", "command":"working_command"}
-Required clip keys are idle, waiting, thinking, working, working_search,
-working_command, success, error, dragging, dragging_release, head_pat, poke,
-skirt, eat_token, idle_stretch and idle_yawn. Each has exactly four frames,
-row/column 0..3, a finite frameMs in 16..5000 and a boolean loop. Choose loop
-false for temporary interactions that should return to the active agent pose;
-dragging and ordinary activity clips can loop. All state/activity targets
-must exist, and stateMap.IDLE must equal idle. A legacy tail clip is rejected.
+The manifest uses columns:4, rows:4, sheets:{id:relativePNGPath} and clips.
+All 24 MotionAction keys are required: idle, waiting, thinking, working,
+working_search, working_command, success, error, dragging, dragging_release,
+head_pat, poke, skirt, eat_token, idle_stretch, idle_yawn, shy, concern, tease,
+sleep, replying, waiting_approval, idle_look and wave. A tail clip is rejected;
+old inbound tail interactions remain an alias for skirt only.
+Each clip contains 1..64 frames, frameMs:16..5000 and loop:boolean. Each frame
+has sheet, row, column, optional durationMs:16..5000, and optional mouth:
+[x,y,width,height]. Missing durationMs uses frameMs; total clip duration must
+not exceed two minutes. Mouth/hit coordinates use normalized top-left UV.
+staticMouths.idle and .shy provide separate mouth rectangles for the still art.
+The build checks mouth sizes against the renderer's small-frame limits:
+width 0.002..0.12 and height 0.002..0.075, fully inside the image. A pose without
+mouth geometry does not get a guessed mouth. Optional hitRegions head/body/
+skirt and anchors.mouth retain normalized geometry. State choice is resolved
+by MotionState.swift instead of the old stateMap/workingActivityMap.
 
-Sheets must be valid PNG files, each at least 4x4 and at most 4096x4096, with
-all sheets sharing the same dimensions. They need not be divisible by four:
-source cell edges use floor(column*width/4) and floor(row*height/4), so a
-1254x1254 sheet has 313/314-pixel crops and a stable 313.5x313.5 display size.
-Keep a consistent character scale, canvas and baseline across all cells.
-Static idle.png/shy.png can have a different aspect ratio and are also bounded
-to 4096px. Paths must be relative PNG paths that resolve inside this source.
+PNG sheets are square, at least 4x4 and at most 4096x4096. Different sheets
+may use different pixel dimensions. Integer floor cell edges preserve every
+source pixel, and each crop has a common logical square display size. The
+runtime caches at most four decoded sheets within 64 MiB and twelve current
+pose frames. Timed poses follow a monotonic clock and do not restart when an
+equivalent Host snapshot arrives. Persistent sleep, pending thinking, actual
+speech, approval waiting and personality moods have distinct semantic paths.
+Explicit wake clears persistent sleep; touches and model idle do not. Actual
+PCM playback temporarily uses the calibrated replying pose without clearing
+the sleep flag, then restores sleep when playback ends. Drag begins by stopping
+speech so a drag pose never receives an unmapped speaking mouth. Finite gestures
+still complete at their real deadline when reduced motion holds the first pose;
+Agent/config updates do not restart that deadline.
 
-Optional manifest geometry uses normalized 0..1 coordinates from each cell's
-top-left corner, applied to the actual aspect-fit display rectangle:
-  hitRegions: {"head":[0.20,0.02,0.60,0.30],
-               "body":[0.22,0.32,0.56,0.31],
-               "skirt":[0.10,0.63,0.80,0.35]}
-  anchors: {"mouth":[0.50,0.23]}
-These shown values are the defaults. Hit rectangles must stay inside the cell;
-the mouth anchor controls the visible snack's destination. Transparent pixels
-remain click-through. Interactions emit head/body/skirt; an old inbound tail
-name is accepted only as an alias for skirt and never emitted.
+AvatarMeshRenderer.swift uses a native SpriteKit affine vertex grid to add
+small continuous breathing/head/edge movement between supplied poses. These
+are mesh deformations of supplied art, not additional hand-drawn frames or a
+rigged Live2D model. Frame-local mouth geometry and the same forward/inverse
+grid transform drive visible mouths, snack destinations and alpha hit testing.
+The NSImageView retains the source image for alpha metadata but does not draw
+it under the mesh, avoiding double images. Its event layer owns drag/click/
+right-click while the renderer's view does not consume input.
+Static mode disables mesh micro motion while retaining PCM mouth movement.
+Reduced motion and hidden panels close the mouth and disable motion; showing
+again requires a fresh mouth-level input. Hiding also stops local speech.
 
-PetAnimation.swift reads actual PNG keyframes and manifest timing/state maps.
-The cache holds at most four decoded sheets within 64 MiB plus at most twelve
-current-clip frame images; switching clips clears that clip's frame cache.
-Reduced motion uses only the first frame of each requested pose. The settings
-switch selects this same orange character's dynamic atlas or supplied still
-art. This is four-keyframe sprite animation, not Live2D or the prior thousands
-of WebP frames; all sixteen states use the new character resources.
+PCM speech and mouth level
+SpeechPCMPlayer.swift replaces the direct AVSpeechSynthesizer.speak path.
+AVSpeechSynthesizer.write creates owned Float32 mono PCM from Float32/Int16/
+Int32 planar or interleaved input. The player computes 20ms RMS windows and
+queries AVAudioPlayerNode's actual sample clock with output presentation
+latency; no letter count, generated-text duration, synthesis callback wall
+time or random loop drives the mouth. Buffer underruns preserve real silent
+sample gaps. Phoneme/viseme timing is not enabled in this version.
+Only generated model speech explicitly marked speak:true and locally enabled
+voice output is read aloud, plus the explicit local voice-test button. Voice
+output still defaults false; lipSyncEnabled defaults true and has its own
+native/Host checkbox. It has no effect without actual local speech, except
+explicit safe synthetic-PCM preview controls. Pause/snooze, mute, replacement,
+hide and shutdown cancel audio and close the mouth. Synthesis EOF is not the
+playback end: actual dataPlayedBack completions and all queued PCM must drain.
+Queued data is bounded across canceled generations by leases: 8 MiB, 30s,
+512 buffers; text is capped at 2000 characters and synthesized in <=64-character
+segments, with generation/playback-clock timeouts. No microphone, capture,
+network transport or audio history file is added by this output player.
 
 Privacy and activation
 Observation, screen capture, system audio, voice output and memory default off.
@@ -142,7 +145,7 @@ transcript:
 settings (flattened):
   observationEnabled, screenEnabled, captureIntervalSeconds, snoozeUntil,
   provider, model, useDefaultModel:true, consentPair, audioConsentPair,
-  videoAudioEnabled, speechLanguage, voiceEnabled, voiceIdentifier, voiceRate,
+  videoAudioEnabled, speechLanguage, voiceEnabled, lipSyncEnabled, voiceIdentifier, voiceRate,
   memoryEnabled, agentProgressEnabled, reduceMotion, dynamicSkinEnabled,
   growthPanelVisible (default false),
   dailyTokenBudget, dailyBudget, inputPricePerMillion, outputPricePerMillion.
@@ -227,9 +230,20 @@ and consent settings; status uses synthetic false authorization values.
 
 Safe QA
   <staged app>/Contents/MacOS/QuietCompanion --self-test
-Self-test checks default-off settings, the orange manifest and all 16x4
-PNG atlas cells, reporting pngDecoded, characterId, clipCount, frameCount
-and allFramesDecoded. ImageIO decoding does
+Standalone SpeechPCMPlayerSilentTests.swift covers pure PCM formats, sine/
+silence, clock mapping, cancellation, global lease limits and EOF/drain without
+initializing TTS or an audio output engine. SpeechPCMPlayerPlaybackTest.swift
+is a separate manual harness: concatenate it after SpeechPCMPlayer.swift,
+compile with -parse-as-library and use --play-once only after announcing sound.
+It plays exactly one fixed short sentence, samples the real playback clock/RMS
+and checks natural drain/zero mouth, without capture or settings persistence.
+Default execution of that manual harness starts no audio.
+MotionStateSelfTest.swift and
+AvatarMeshGeometrySelfTest.swift are standalone test programs; none is
+concatenated into the production build.
+Self-test checks default-off capture/voice settings, lip-sync default true,
+the Q-character manifest and every supplied PNG atlas cell, reporting
+pngDecoded, characterId, clipCount, frameCount and allFramesDecoded. ImageIO decoding does
 not create an NSImage or access WindowServer in this non-UI test.
 It does not create NSApplication, observe activity, capture screen/system audio,
 request permissions, speak, or call a model.
@@ -241,7 +255,9 @@ The live-pipe regression runs the actual --preview helper with stdin left open:
   python3 protocol-test.py <staged app>
 It sends a sub-100-byte ping, fragmented JSON and an overlong bounded id,
 requires each pong within two seconds, and always shuts down its own helper.
-This UI test needs ordinary macOS WindowServer access; it does not request
+This UI test needs an unlocked, visible macOS WindowServer session; SpriteKit
+scene-frame advancement is intentionally checked and a locked/occluded session
+must be unlocked before visual QA. It does not request
 screen/audio permission, observe activity or make model calls.
 For the production launch/transport path:
   python3 protocol-test.py <staged app> --launch-services
@@ -299,3 +315,16 @@ snackLayout, snackPositions
 (unscaled id/slot/x/y/width/height), snackArrivalCount and snackEatingActive
 for these assertions. No observation or additional permission is involved.
 It does not install or change the real desktop profile or its permissions.
+
+Native motion and PCM preview diagnostics
+native-status includes motionMode, currentClip, actualMouthLevel,
+speechPlaying, source:"pcm-rms", lipSyncEnabled, previewPCMActive and compact
+frameMetrics from actual SpriteKit scene updates, not a fabricated timer count.
+request-status/refresh-status force a fresh snapshot. Only --preview accepts
+control preview-pcm:{sampleFrame}, preview-pcm-stop, preview-action:{name} and
+preview-reset-motion. preview-pcm uses a fixed in-memory sine/silence sequence
+and explicit synthetic sample positions; it does not synthesize TTS, create an
+audio output engine or claim speechPlaying:true. Production ignores all these
+test actions. The safe LaunchServices regression checks mood restoration,
+approval waiting, persistent sleep/wake, actual scene progression, synthetic
+PCM mouths, static mouths without mesh movement and reduced/hidden clearing.

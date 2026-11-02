@@ -1,0 +1,1118 @@
+{
+  "schemaVersion": 1,
+  "coordinateSystem": "All rectangles are original image/cell normalized [x,y,width,height], TOP-LEFT origin. Pixel bbox fields are [minX,minY,maxXExclusive,maxYExclusive].",
+  "method": "Read-only RGBA8 PNG stdlib unfilter + warm-brown/red 8-connected components in face ROI; actual source images viewed; selected isolated closed-mouth lines rather than cheeks/hair/eyes. No pixel editing.",
+  "master": {
+    "closedMouthPixelBboxExclusive": [
+      548,
+      570,
+      601,
+      582
+    ],
+    "closedMouthPixelBboxCellExclusive": [
+      548,
+      570,
+      601,
+      582
+    ],
+    "paddingPixels": 2,
+    "mouthPixelRectCell": [
+      546,
+      568,
+      57,
+      16
+    ],
+    "mouth": [
+      0.4553794829024187,
+      0.4329268292682927,
+      0.0475396163469558,
+      0.012195121951219513
+    ],
+    "anchor": [
+      0.4791492910758966,
+      0.43902439024390244
+    ],
+    "file": "idle.png",
+    "width": 1199,
+    "height": 1312,
+    "sha256": "c90e5081ee243c868337c84cf0cb8e4a9bca17ac4872056bd57785427a9c0b08",
+    "evidence": "128 connected warm-brown/red mouth pixels; antialias fringe covered by 2px padding; visually checked below nose and eyes",
+    "skinSamplingQA": {
+      "method": "Same 3x3 sample offsets/thresholds as AvatarMeshRenderer.sampledSkin; original PNG top-left pixels",
+      "acceptedSamples": 9,
+      "passes": true,
+      "rgba": [
+        [
+          252,
+          233,
+          224,
+          253
+        ],
+        [
+          253,
+          234,
+          225,
+          253
+        ],
+        [
+          252,
+          234,
+          225,
+          253
+        ],
+        [
+          252,
+          233,
+          223,
+          253
+        ],
+        [
+          253,
+          235,
+          226,
+          253
+        ],
+        [
+          252,
+          234,
+          226,
+          253
+        ],
+        [
+          252,
+          234,
+          224,
+          253
+        ],
+        [
+          252,
+          234,
+          224,
+          253
+        ],
+        [
+          253,
+          235,
+          225,
+          253
+        ]
+      ],
+      "medianRGB8": [
+        252,
+        234,
+        225
+      ]
+    },
+    "originalGeneratedFile": "orange-q-master.png"
+  },
+  "manifestStaticMouths": {
+    "idle": [
+      0.4553794829024187,
+      0.4329268292682927,
+      0.0475396163469558,
+      0.012195121951219513
+    ],
+    "shy": [
+      0.4566787003610108,
+      0.43309859154929575,
+      0.048736462093862815,
+      0.01267605633802817
+    ]
+  },
+  "omittedStaticMouths": [],
+  "replyingSheet": {
+    "file": "sheets/11-replying-approval.png",
+    "width": 1254,
+    "height": 1254,
+    "sha256": "4b86673a92a57da2f6e23dd07c094ce62d63d77fa4bfadbab247109882aa369e",
+    "columns": 4,
+    "rows": 4,
+    "frames": [
+      {
+        "closedMouthPixelBboxExclusive": [
+          161,
+          134,
+          173,
+          138
+        ],
+        "closedMouthPixelBboxCellExclusive": [
+          161,
+          134,
+          173,
+          138
+        ],
+        "paddingPixels": 1,
+        "mouthPixelRectCell": [
+          160,
+          133,
+          14,
+          6
+        ],
+        "mouth": [
+          0.5111821086261981,
+          0.4249201277955272,
+          0.04472843450479233,
+          0.019169329073482427
+        ],
+        "anchor": [
+          0.5335463258785943,
+          0.43450479233226835
+        ],
+        "skinSamplingQA": {
+          "method": "Actual AvatarMeshRenderer sampledSkin offsets/thresholds (verified against current source), original PNG top-left pixels",
+          "rendererSourceSHA256": "56614ca5c52e172f640255764c37378aa9ea301704416b9ec72c09ca41cd0c40",
+          "acceptedSamples": 9,
+          "passes": true,
+          "rgba": [
+            [
+              251,
+              226,
+              215,
+              253
+            ],
+            [
+              251,
+              225,
+              216,
+              253
+            ],
+            [
+              252,
+              227,
+              216,
+              253
+            ],
+            [
+              252,
+              226,
+              215,
+              253
+            ],
+            [
+              250,
+              226,
+              217,
+              253
+            ],
+            [
+              251,
+              227,
+              216,
+              253
+            ],
+            [
+              252,
+              225,
+              216,
+              253
+            ],
+            [
+              251,
+              227,
+              218,
+              253
+            ],
+            [
+              250,
+              228,
+              218,
+              253
+            ]
+          ],
+          "medianRGB8": [
+            251,
+            226,
+            216
+          ]
+        },
+        "frameIndex": 0,
+        "row": 0,
+        "column": 0,
+        "cropPixelRect": [
+          0,
+          0,
+          313,
+          313
+        ]
+      },
+      {
+        "closedMouthPixelBboxExclusive": [
+          471,
+          130,
+          484,
+          134
+        ],
+        "closedMouthPixelBboxCellExclusive": [
+          158,
+          130,
+          171,
+          134
+        ],
+        "paddingPixels": 1,
+        "mouthPixelRectCell": [
+          157,
+          129,
+          15,
+          6
+        ],
+        "mouth": [
+          0.5,
+          0.41214057507987223,
+          0.04777070063694268,
+          0.019169329073482427
+        ],
+        "anchor": [
+          0.5238853503184714,
+          0.4217252396166134
+        ],
+        "skinSamplingQA": {
+          "method": "Actual AvatarMeshRenderer sampledSkin offsets/thresholds (verified against current source), original PNG top-left pixels",
+          "rendererSourceSHA256": "56614ca5c52e172f640255764c37378aa9ea301704416b9ec72c09ca41cd0c40",
+          "acceptedSamples": 9,
+          "passes": true,
+          "rgba": [
+            [
+              252,
+              227,
+              217,
+              253
+            ],
+            [
+              252,
+              229,
+              218,
+              254
+            ],
+            [
+              251,
+              228,
+              218,
+              254
+            ],
+            [
+              252,
+              226,
+              214,
+              253
+            ],
+            [
+              252,
+              228,
+              217,
+              254
+            ],
+            [
+              252,
+              227,
+              217,
+              254
+            ],
+            [
+              251,
+              224,
+              214,
+              253
+            ],
+            [
+              251,
+              226,
+              217,
+              253
+            ],
+            [
+              251,
+              226,
+              215,
+              253
+            ]
+          ],
+          "medianRGB8": [
+            252,
+            227,
+            217
+          ]
+        },
+        "frameIndex": 1,
+        "row": 0,
+        "column": 1,
+        "cropPixelRect": [
+          313,
+          0,
+          314,
+          313
+        ]
+      },
+      {
+        "closedMouthPixelBboxExclusive": [
+          782,
+          126,
+          795,
+          130
+        ],
+        "closedMouthPixelBboxCellExclusive": [
+          155,
+          126,
+          168,
+          130
+        ],
+        "paddingPixels": 1,
+        "mouthPixelRectCell": [
+          154,
+          125,
+          15,
+          6
+        ],
+        "mouth": [
+          0.49201277955271566,
+          0.3993610223642173,
+          0.04792332268370607,
+          0.019169329073482427
+        ],
+        "anchor": [
+          0.5159744408945687,
+          0.40894568690095845
+        ],
+        "skinSamplingQA": {
+          "method": "Actual AvatarMeshRenderer sampledSkin offsets/thresholds (verified against current source), original PNG top-left pixels",
+          "rendererSourceSHA256": "56614ca5c52e172f640255764c37378aa9ea301704416b9ec72c09ca41cd0c40",
+          "acceptedSamples": 9,
+          "passes": true,
+          "rgba": [
+            [
+              251,
+              225,
+              215,
+              253
+            ],
+            [
+              252,
+              226,
+              215,
+              253
+            ],
+            [
+              252,
+              227,
+              216,
+              253
+            ],
+            [
+              249,
+              222,
+              211,
+              253
+            ],
+            [
+              251,
+              224,
+              213,
+              253
+            ],
+            [
+              251,
+              225,
+              215,
+              253
+            ],
+            [
+              250,
+              224,
+              213,
+              253
+            ],
+            [
+              250,
+              223,
+              212,
+              253
+            ],
+            [
+              251,
+              225,
+              214,
+              253
+            ]
+          ],
+          "medianRGB8": [
+            251,
+            225,
+            214
+          ]
+        },
+        "frameIndex": 2,
+        "row": 0,
+        "column": 2,
+        "cropPixelRect": [
+          627,
+          0,
+          313,
+          313
+        ]
+      },
+      {
+        "closedMouthPixelBboxExclusive": [
+          1094,
+          143,
+          1106,
+          146
+        ],
+        "closedMouthPixelBboxCellExclusive": [
+          154,
+          143,
+          166,
+          146
+        ],
+        "paddingPixels": 1,
+        "mouthPixelRectCell": [
+          153,
+          142,
+          14,
+          5
+        ],
+        "mouth": [
+          0.4872611464968153,
+          0.4536741214057508,
+          0.044585987261146494,
+          0.01597444089456869
+        ],
+        "anchor": [
+          0.5095541401273885,
+          0.46166134185303515
+        ],
+        "skinSamplingQA": {
+          "method": "Actual AvatarMeshRenderer sampledSkin offsets/thresholds (verified against current source), original PNG top-left pixels",
+          "rendererSourceSHA256": "56614ca5c52e172f640255764c37378aa9ea301704416b9ec72c09ca41cd0c40",
+          "acceptedSamples": 9,
+          "passes": true,
+          "rgba": [
+            [
+              251,
+              225,
+              214,
+              253
+            ],
+            [
+              252,
+              226,
+              215,
+              253
+            ],
+            [
+              252,
+              228,
+              217,
+              253
+            ],
+            [
+              250,
+              225,
+              212,
+              253
+            ],
+            [
+              251,
+              227,
+              216,
+              253
+            ],
+            [
+              252,
+              228,
+              218,
+              253
+            ],
+            [
+              250,
+              225,
+              212,
+              253
+            ],
+            [
+              252,
+              227,
+              216,
+              253
+            ],
+            [
+              252,
+              229,
+              218,
+              253
+            ]
+          ],
+          "medianRGB8": [
+            252,
+            227,
+            216
+          ]
+        },
+        "frameIndex": 3,
+        "row": 0,
+        "column": 3,
+        "cropPixelRect": [
+          940,
+          0,
+          314,
+          313
+        ]
+      },
+      {
+        "closedMouthPixelBboxExclusive": [
+          160,
+          460,
+          173,
+          464
+        ],
+        "closedMouthPixelBboxCellExclusive": [
+          160,
+          147,
+          173,
+          151
+        ],
+        "paddingPixels": 1,
+        "mouthPixelRectCell": [
+          159,
+          146,
+          15,
+          6
+        ],
+        "mouth": [
+          0.5079872204472844,
+          0.46496815286624205,
+          0.04792332268370607,
+          0.01910828025477707
+        ],
+        "anchor": [
+          0.5319488817891374,
+          0.4745222929936306
+        ],
+        "skinSamplingQA": {
+          "method": "Actual AvatarMeshRenderer sampledSkin offsets/thresholds (verified against current source), original PNG top-left pixels",
+          "rendererSourceSHA256": "56614ca5c52e172f640255764c37378aa9ea301704416b9ec72c09ca41cd0c40",
+          "acceptedSamples": 9,
+          "passes": true,
+          "rgba": [
+            [
+              252,
+              222,
+              210,
+              253
+            ],
+            [
+              251,
+              222,
+              211,
+              253
+            ],
+            [
+              252,
+              223,
+              212,
+              253
+            ],
+            [
+              252,
+              223,
+              211,
+              253
+            ],
+            [
+              251,
+              224,
+              213,
+              253
+            ],
+            [
+              251,
+              223,
+              212,
+              253
+            ],
+            [
+              253,
+              227,
+              216,
+              253
+            ],
+            [
+              251,
+              229,
+              218,
+              253
+            ],
+            [
+              251,
+              223,
+              212,
+              253
+            ]
+          ],
+          "medianRGB8": [
+            251,
+            223,
+            212
+          ]
+        },
+        "frameIndex": 4,
+        "row": 1,
+        "column": 0,
+        "cropPixelRect": [
+          0,
+          313,
+          313,
+          314
+        ]
+      },
+      {
+        "closedMouthPixelBboxExclusive": [
+          472,
+          452,
+          484,
+          455
+        ],
+        "closedMouthPixelBboxCellExclusive": [
+          159,
+          139,
+          171,
+          142
+        ],
+        "paddingPixels": 1,
+        "mouthPixelRectCell": [
+          158,
+          138,
+          14,
+          5
+        ],
+        "mouth": [
+          0.5031847133757962,
+          0.4394904458598726,
+          0.044585987261146494,
+          0.01592356687898089
+        ],
+        "anchor": [
+          0.5254777070063694,
+          0.44745222929936307
+        ],
+        "skinSamplingQA": {
+          "method": "Actual AvatarMeshRenderer sampledSkin offsets/thresholds (verified against current source), original PNG top-left pixels",
+          "rendererSourceSHA256": "56614ca5c52e172f640255764c37378aa9ea301704416b9ec72c09ca41cd0c40",
+          "acceptedSamples": 9,
+          "passes": true,
+          "rgba": [
+            [
+              252,
+              223,
+              213,
+              253
+            ],
+            [
+              251,
+              225,
+              215,
+              253
+            ],
+            [
+              252,
+              227,
+              218,
+              253
+            ],
+            [
+              251,
+              224,
+              213,
+              253
+            ],
+            [
+              250,
+              225,
+              215,
+              253
+            ],
+            [
+              251,
+              226,
+              217,
+              253
+            ],
+            [
+              251,
+              223,
+              213,
+              253
+            ],
+            [
+              250,
+              225,
+              216,
+              253
+            ],
+            [
+              251,
+              226,
+              216,
+              254
+            ]
+          ],
+          "medianRGB8": [
+            251,
+            225,
+            215
+          ]
+        },
+        "frameIndex": 5,
+        "row": 1,
+        "column": 1,
+        "cropPixelRect": [
+          313,
+          313,
+          314,
+          314
+        ]
+      },
+      {
+        "closedMouthPixelBboxExclusive": [
+          783,
+          446,
+          796,
+          450
+        ],
+        "closedMouthPixelBboxCellExclusive": [
+          156,
+          133,
+          169,
+          137
+        ],
+        "paddingPixels": 1,
+        "mouthPixelRectCell": [
+          155,
+          132,
+          15,
+          6
+        ],
+        "mouth": [
+          0.4952076677316294,
+          0.42038216560509556,
+          0.04792332268370607,
+          0.01910828025477707
+        ],
+        "anchor": [
+          0.5191693290734825,
+          0.4299363057324841
+        ],
+        "skinSamplingQA": {
+          "method": "Actual AvatarMeshRenderer sampledSkin offsets/thresholds (verified against current source), original PNG top-left pixels",
+          "rendererSourceSHA256": "56614ca5c52e172f640255764c37378aa9ea301704416b9ec72c09ca41cd0c40",
+          "acceptedSamples": 9,
+          "passes": true,
+          "rgba": [
+            [
+              251,
+              224,
+              212,
+              254
+            ],
+            [
+              251,
+              224,
+              213,
+              253
+            ],
+            [
+              252,
+              225,
+              214,
+              253
+            ],
+            [
+              250,
+              223,
+              214,
+              254
+            ],
+            [
+              252,
+              223,
+              212,
+              253
+            ],
+            [
+              251,
+              225,
+              214,
+              253
+            ],
+            [
+              251,
+              230,
+              221,
+              254
+            ],
+            [
+              251,
+              226,
+              216,
+              253
+            ],
+            [
+              252,
+              226,
+              215,
+              253
+            ]
+          ],
+          "medianRGB8": [
+            251,
+            225,
+            214
+          ]
+        },
+        "frameIndex": 6,
+        "row": 1,
+        "column": 2,
+        "cropPixelRect": [
+          627,
+          313,
+          313,
+          314
+        ]
+      },
+      {
+        "closedMouthPixelBboxExclusive": [
+          1096,
+          447,
+          1108,
+          450
+        ],
+        "closedMouthPixelBboxCellExclusive": [
+          156,
+          134,
+          168,
+          137
+        ],
+        "paddingPixels": 1,
+        "mouthPixelRectCell": [
+          155,
+          133,
+          14,
+          5
+        ],
+        "mouth": [
+          0.49363057324840764,
+          0.42356687898089174,
+          0.044585987261146494,
+          0.01592356687898089
+        ],
+        "anchor": [
+          0.5159235668789809,
+          0.4315286624203822
+        ],
+        "skinSamplingQA": {
+          "method": "Actual AvatarMeshRenderer sampledSkin offsets/thresholds (verified against current source), original PNG top-left pixels",
+          "rendererSourceSHA256": "56614ca5c52e172f640255764c37378aa9ea301704416b9ec72c09ca41cd0c40",
+          "acceptedSamples": 9,
+          "passes": true,
+          "rgba": [
+            [
+              252,
+              226,
+              215,
+              253
+            ],
+            [
+              251,
+              226,
+              215,
+              253
+            ],
+            [
+              252,
+              227,
+              218,
+              253
+            ],
+            [
+              251,
+              224,
+              214,
+              253
+            ],
+            [
+              251,
+              226,
+              215,
+              253
+            ],
+            [
+              252,
+              227,
+              217,
+              253
+            ],
+            [
+              251,
+              224,
+              213,
+              253
+            ],
+            [
+              251,
+              226,
+              216,
+              253
+            ],
+            [
+              252,
+              227,
+              216,
+              253
+            ]
+          ],
+          "medianRGB8": [
+            251,
+            226,
+            215
+          ]
+        },
+        "frameIndex": 7,
+        "row": 1,
+        "column": 3,
+        "cropPixelRect": [
+          940,
+          313,
+          314,
+          314
+        ]
+      }
+    ],
+    "originalGeneratedFile": "11-replying-approval-clean.png"
+  },
+  "otherFrames": {
+    "mouth": null,
+    "instruction": "Leave waiting_approval and all other uncalibrated action frames mouth absent/null. Both static idle and static shy now have independently calibrated rectangles."
+  },
+  "feedingFallbackAnchor": [
+    0.5,
+    0.44
+  ],
+  "rendererLimitsChecked": {
+    "maximumWidth": 0.12,
+    "maximumHeight": 0.075,
+    "allRectanglesPass": true
+  },
+  "notes": [
+    "Use actual cell dimensions 313 or 314 from integer floor boundaries, matching PetAnimationPlayer. Do not divide all cells by 313.5 or full sheet size.",
+    "These closed-line masks support RMS amplitude-driven mouth overlays, not phoneme/viseme labels.",
+    "Original idle master geometry and metadata preserved exactly. Replying recalibrated against new clean sheet, static shy against new padded image. No pixel editing.",
+    "Every new mouth rectangle passes actual current renderer size and local opaque-skin sampling gates. Only those calibrated frames should enable overlay."
+  ],
+  "supersededReplyingSource": {
+    "file": "work/q-motion-assets/11-replying-approval.png",
+    "sha256": "e96eb78ca9f980a42416f274b8821620a53c4d2e0d49d95a04b65b8eb18f7d62",
+    "instruction": "Recalibration below supersedes this older sheet; do not reuse its geometry without checking."
+  },
+  "staticShy": {
+    "closedMouthPixelBboxExclusive": [
+      508,
+      617,
+      558,
+      631
+    ],
+    "closedMouthPixelBboxCellExclusive": [
+      508,
+      617,
+      558,
+      631
+    ],
+    "paddingPixels": 2,
+    "mouthPixelRectCell": [
+      506,
+      615,
+      54,
+      18
+    ],
+    "mouth": [
+      0.4566787003610108,
+      0.43309859154929575,
+      0.048736462093862815,
+      0.01267605633802817
+    ],
+    "anchor": [
+      0.48104693140794225,
+      0.4394366197183099
+    ],
+    "skinSamplingQA": {
+      "method": "Actual AvatarMeshRenderer sampledSkin offsets/thresholds (verified against current source), original PNG top-left pixels",
+      "rendererSourceSHA256": "56614ca5c52e172f640255764c37378aa9ea301704416b9ec72c09ca41cd0c40",
+      "acceptedSamples": 9,
+      "passes": true,
+      "rgba": [
+        [
+          252,
+          231,
+          221,
+          253
+        ],
+        [
+          253,
+          231,
+          222,
+          253
+        ],
+        [
+          253,
+          231,
+          223,
+          253
+        ],
+        [
+          253,
+          231,
+          222,
+          253
+        ],
+        [
+          253,
+          231,
+          222,
+          253
+        ],
+        [
+          253,
+          231,
+          222,
+          253
+        ],
+        [
+          252,
+          231,
+          222,
+          253
+        ],
+        [
+          252,
+          231,
+          222,
+          253
+        ],
+        [
+          253,
+          231,
+          222,
+          253
+        ]
+      ],
+      "medianRGB8": [
+        253,
+        231,
+        222
+      ]
+    },
+    "file": "shy.png",
+    "width": 1108,
+    "height": 1420,
+    "sha256": "f50f64a42376574ae8c36d59e1aabc2b0648ac9ec06df2ef09c8ff882f0b6c18",
+    "evidence": "139-pixel isolated curved warm-brown closed mouth below nose, 2px padding; whole image visually checked",
+    "originalGeneratedFile": "13-shy-master-padded.png"
+  }
+}

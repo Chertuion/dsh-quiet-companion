@@ -1,0 +1,472 @@
+{
+  "schemaVersion": 1,
+  "tool": "built-in image_gen",
+  "reference": "orange-q-master.png",
+  "note": "Work assets only; raw generated PNGs, no replacement, release or installation.",
+  "jobs": [
+    {
+      "id": "01-idle-waiting",
+      "index": 1,
+      "file": "01-idle-waiting.png",
+      "actions": [
+        "idle",
+        "waiting"
+      ],
+      "transparent_background": true,
+      "reference": "orange-q-master.png",
+      "layout": {
+        "columns": 4,
+        "rows": 4,
+        "framesPerAction": 8,
+        "actionARows": [
+          0,
+          1
+        ],
+        "actionBRows": [
+          2,
+          3
+        ],
+        "readingOrder": "row-major"
+      },
+      "prompt": "Use case: identity-preserve. Asset type: production transparent PNG sprite animation atlas.\nInput image 1 is the strict character identity and style reference, not a background to preserve. Make the exact same extremely cute TWO-HEADS-TALL chibi human girl: oversized round head about half the full height, tiny torso and short legs, long orange hair, large amber eyes, orange flower and black ribbon on viewer's RIGHT, white-and-orange floral long dress with black ribbon accents, white lace-up shoes, and the same dark book with an orange flower emblem. Preserve her head/body proportion, face, hair ornament, palette, linework, clothing and shoes in every cell. No tail, animal ears or horns. Do not revert to a three/four-heads-tall girl.\nCreate ONE square high-resolution 4-by-4 atlas (prefer 2048x2048). Exactly 16 equal invisible cells: four columns, four rows, read left-to-right then top-to-bottom. TOP TWO ROWS are action A's eight sequential key poses. BOTTOM TWO ROWS are action B's eight sequential key poses. There is exactly one full-body girl in each cell: 16 instances of the same character at successive times, NOT 16 different characters.\nEach eight-frame action must contain visibly distinct, plausible continuous motion with preparation, response and return/settle; no eight identical copies. Changes between neighboring frames are small, anatomically coherent, with consistent face/head scale and stable placement. Start/end silhouettes must join naturally. Keep a fixed camera and fixed scale, align the soles to the same baseline, center the entire figure including hair, ornament, book, and shoes, and leave at least TEN PERCENT clear padding on every side of EACH cell. Never crop hair, fingers, book or feet; never let a figure cross a cell boundary. Intentional limb motion is allowed, random scale/vertical jitter is not.\nMaintain exactly two arms and two hands. When a hand is used for an action, keep the book visibly supported in the other arm; never duplicate, lose, teleport or merge the book or hands. Every prop must remain coherent frame to frame.\nBackground: genuinely transparent alpha across the entire sheet and between figures. No backdrop, white/color fill, checkerboard, glow, ground plane, contact/drop shadow, scenery, labels, letters, digits, watermarks, visible grid or borders. White dress details remain opaque. Clean alpha edges. Do not paint a background.\nACTION A — idle, cells 1–8 (top two rows): Natural quiet breathing and one blink. Frames 1–8: relaxed book hug; slight inhale; shoulders gently higher; breath peak with soft half-lids; exhale; gentle blink closed; eyes reopen; relaxed starting posture. Keep motion subtle but genuinely different.\nACTION B — waiting, cells 9–16 (bottom two rows): Patient book-holding with small eye/head attention shifts. Frames 1–8: centered calm; glance slightly left; small left head tilt; return toward center; glance slightly right; small right head tilt; eyes return; centered calm. Feet stay planted.",
+      "status": "generated",
+      "generatedSourceFile": "exec-e4fb7738-ded8-45b2-b731-959fd6b17888.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2446864,
+      "sha256": "9a6dc41885cf6be7a54efcd321938408ce954ebc86984e1d8ecd827bdf90646b",
+      "pixelEditing": "none"
+    },
+    {
+      "id": "02-thinking-working",
+      "index": 2,
+      "file": "02-thinking-working.png",
+      "actions": [
+        "thinking",
+        "working"
+      ],
+      "transparent_background": true,
+      "reference": "orange-q-master.png",
+      "layout": {
+        "columns": 4,
+        "rows": 4,
+        "framesPerAction": 8,
+        "actionARows": [
+          0,
+          1
+        ],
+        "actionBRows": [
+          2,
+          3
+        ],
+        "readingOrder": "row-major"
+      },
+      "prompt": "Use case: identity-preserve. Asset type: production transparent PNG sprite animation atlas.\nInput image 1 is the strict character identity and style reference, not a background to preserve. Make the exact same extremely cute TWO-HEADS-TALL chibi human girl: oversized round head about half the full height, tiny torso and short legs, long orange hair, large amber eyes, orange flower and black ribbon on viewer's RIGHT, white-and-orange floral long dress with black ribbon accents, white lace-up shoes, and the same dark book with an orange flower emblem. Preserve her head/body proportion, face, hair ornament, palette, linework, clothing and shoes in every cell. No tail, animal ears or horns. Do not revert to a three/four-heads-tall girl.\nCreate ONE square high-resolution 4-by-4 atlas (prefer 2048x2048). Exactly 16 equal invisible cells: four columns, four rows, read left-to-right then top-to-bottom. TOP TWO ROWS are action A's eight sequential key poses. BOTTOM TWO ROWS are action B's eight sequential key poses. There is exactly one full-body girl in each cell: 16 instances of the same character at successive times, NOT 16 different characters.\nEach eight-frame action must contain visibly distinct, plausible continuous motion with preparation, response and return/settle; no eight identical copies. Changes between neighboring frames are small, anatomically coherent, with consistent face/head scale and stable placement. Start/end silhouettes must join naturally. Keep a fixed camera and fixed scale, align the soles to the same baseline, center the entire figure including hair, ornament, book, and shoes, and leave at least TEN PERCENT clear padding on every side of EACH cell. Never crop hair, fingers, book or feet; never let a figure cross a cell boundary. Intentional limb motion is allowed, random scale/vertical jitter is not.\nMaintain exactly two arms and two hands. When a hand is used for an action, keep the book visibly supported in the other arm; never duplicate, lose, teleport or merge the book or hands. Every prop must remain coherent frame to frame.\nBackground: genuinely transparent alpha across the entire sheet and between figures. No backdrop, white/color fill, checkerboard, glow, ground plane, contact/drop shadow, scenery, labels, letters, digits, watermarks, visible grid or borders. White dress details remain opaque. Clean alpha edges. Do not paint a background.\nACTION A — thinking, cells 1–8 (top two rows): Thinking with one hand at chin. Frames 1–8: hold book; free right hand while book is supported by left arm; lift hand; touch chin; slight thoughtful head tilt and upward eyes; head returns; hand lowers; hold book again.\nACTION B — working, cells 9–16 (bottom two rows): Writing carefully in her book, with blank pages and NO visible text. Frames 1–8: calm with book; open it on left arm; bring a small pen with right hand; begin short writing stroke; another coherent writing stroke and focused eyes; pause with tiny satisfied nod; close/reposition book; return to calm book hug.",
+      "status": "generated",
+      "generatedSourceFile": "exec-66d47a26-d9e7-4619-921c-f11f0bb037a7.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2296892,
+      "sha256": "d0124e219ad2cdcd0ed2871a1b2f25291b735b685c98e9ac4610eaccb2dd95c8",
+      "pixelEditing": "none"
+    },
+    {
+      "id": "03-search-command",
+      "index": 3,
+      "file": "03-search-command.png",
+      "actions": [
+        "working_search",
+        "working_command"
+      ],
+      "transparent_background": true,
+      "reference": "orange-q-master.png",
+      "layout": {
+        "columns": 4,
+        "rows": 4,
+        "framesPerAction": 8,
+        "actionARows": [
+          0,
+          1
+        ],
+        "actionBRows": [
+          2,
+          3
+        ],
+        "readingOrder": "row-major"
+      },
+      "prompt": "Use case: identity-preserve. Asset type: production transparent PNG sprite animation atlas.\nInput image 1 is the strict character identity and style reference, not a background to preserve. Make the exact same extremely cute TWO-HEADS-TALL chibi human girl: oversized round head about half the full height, tiny torso and short legs, long orange hair, large amber eyes, orange flower and black ribbon on viewer's RIGHT, white-and-orange floral long dress with black ribbon accents, white lace-up shoes, and the same dark book with an orange flower emblem. Preserve her head/body proportion, face, hair ornament, palette, linework, clothing and shoes in every cell. No tail, animal ears or horns. Do not revert to a three/four-heads-tall girl.\nCreate ONE square high-resolution 4-by-4 atlas (prefer 2048x2048). Exactly 16 equal invisible cells: four columns, four rows, read left-to-right then top-to-bottom. TOP TWO ROWS are action A's eight sequential key poses. BOTTOM TWO ROWS are action B's eight sequential key poses. There is exactly one full-body girl in each cell: 16 instances of the same character at successive times, NOT 16 different characters.\nEach eight-frame action must contain visibly distinct, plausible continuous motion with preparation, response and return/settle; no eight identical copies. Changes between neighboring frames are small, anatomically coherent, with consistent face/head scale and stable placement. Start/end silhouettes must join naturally. Keep a fixed camera and fixed scale, align the soles to the same baseline, center the entire figure including hair, ornament, book, and shoes, and leave at least TEN PERCENT clear padding on every side of EACH cell. Never crop hair, fingers, book or feet; never let a figure cross a cell boundary. Intentional limb motion is allowed, random scale/vertical jitter is not.\nMaintain exactly two arms and two hands. When a hand is used for an action, keep the book visibly supported in the other arm; never duplicate, lose, teleport or merge the book or hands. Every prop must remain coherent frame to frame.\nBackground: genuinely transparent alpha across the entire sheet and between figures. No backdrop, white/color fill, checkerboard, glow, ground plane, contact/drop shadow, scenery, labels, letters, digits, watermarks, visible grid or borders. White dress details remain opaque. Clean alpha edges. Do not paint a background.\nACTION A — working_search, cells 1–8 (top two rows): Searching by turning a book page. Frames 1–8: book supported; open book; right hand lifts page edge; page halfway across; page settles; eyes scan the blank spread; gently close/reposition; calm book hug. No page text or symbols.\nACTION B — working_command, cells 9–16 (bottom two rows): Lightly operating a small blank screen beside her, with book safely held by left arm. The little unmarked screen is a consistent prop throughout these eight frames. Frames 1–8: hand poised near screen; move index toward it; gentle tap; finger lifts; second tiny tap; focused nod; withdraw hand; calm rest beside the screen. No words, digits, code, icons or labels on the screen.",
+      "status": "generated",
+      "generatedSourceFile": "exec-1b94614c-6d96-4b7c-a4f8-30ae069b7047.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2420210,
+      "sha256": "e9cd5a3ac3d62cc6e9a6f820a9b34ace80ceaa49eabe62a42705625b5b901066",
+      "pixelEditing": "none"
+    },
+    {
+      "id": "04-success-error",
+      "index": 4,
+      "file": "04-success-error.png",
+      "actions": [
+        "success",
+        "error"
+      ],
+      "transparent_background": true,
+      "reference": "orange-q-master.png",
+      "layout": {
+        "columns": 4,
+        "rows": 4,
+        "framesPerAction": 8,
+        "actionARows": [
+          0,
+          1
+        ],
+        "actionBRows": [
+          2,
+          3
+        ],
+        "readingOrder": "row-major"
+      },
+      "prompt": "Use case: identity-preserve. Asset type: production transparent PNG sprite animation atlas.\nInput image 1 is the strict character identity and style reference, not a background to preserve. Make the exact same extremely cute TWO-HEADS-TALL chibi human girl: oversized round head about half the full height, tiny torso and short legs, long orange hair, large amber eyes, orange flower and black ribbon on viewer's RIGHT, white-and-orange floral long dress with black ribbon accents, white lace-up shoes, and the same dark book with an orange flower emblem. Preserve her head/body proportion, face, hair ornament, palette, linework, clothing and shoes in every cell. No tail, animal ears or horns. Do not revert to a three/four-heads-tall girl.\nCreate ONE square high-resolution 4-by-4 atlas (prefer 2048x2048). Exactly 16 equal invisible cells: four columns, four rows, read left-to-right then top-to-bottom. TOP TWO ROWS are action A's eight sequential key poses. BOTTOM TWO ROWS are action B's eight sequential key poses. There is exactly one full-body girl in each cell: 16 instances of the same character at successive times, NOT 16 different characters.\nEach eight-frame action must contain visibly distinct, plausible continuous motion with preparation, response and return/settle; no eight identical copies. Changes between neighboring frames are small, anatomically coherent, with consistent face/head scale and stable placement. Start/end silhouettes must join naturally. Keep a fixed camera and fixed scale, align the soles to the same baseline, center the entire figure including hair, ornament, book, and shoes, and leave at least TEN PERCENT clear padding on every side of EACH cell. Never crop hair, fingers, book or feet; never let a figure cross a cell boundary. Intentional limb motion is allowed, random scale/vertical jitter is not.\nMaintain exactly two arms and two hands. When a hand is used for an action, keep the book visibly supported in the other arm; never duplicate, lose, teleport or merge the book or hands. Every prop must remain coherent frame to frame.\nBackground: genuinely transparent alpha across the entire sheet and between figures. No backdrop, white/color fill, checkerboard, glow, ground plane, contact/drop shadow, scenery, labels, letters, digits, watermarks, visible grid or borders. White dress details remain opaque. Clean alpha edges. Do not paint a background.\nACTION A — success, cells 1–8 (top two rows): A small happy celebration, not a giant jump. Frames 1–8: calm book supported in left arm; brighten eyes; right hand curls into a tiny cheer; small upper-body bounce with feet planted; happy squint smile; arm relaxes; posture settles; calm book hug. No confetti or text.\nACTION B — error, cells 9–16 (bottom two rows): Brief puzzled head scratch that ends reassuringly. Frames 1–8: calm book; gently puzzled eyebrows; slight head tilt; right hand reaches side of head while left arm holds book; tiny scratch; soften expression; hand lowers; calm recovered posture. No written question or exclamation marks.",
+      "status": "generated",
+      "generatedSourceFile": "exec-1575e73b-08a0-473c-87cb-5d5873526266.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2485664,
+      "sha256": "2b49904dd7e20c10286c1bd15d8eba6d46f6415e94544c0c1bc4fc6016f5b9fa",
+      "pixelEditing": "none"
+    },
+    {
+      "id": "05-dragging-release",
+      "index": 5,
+      "file": "05-dragging-release.png",
+      "actions": [
+        "dragging",
+        "dragging_release"
+      ],
+      "transparent_background": true,
+      "reference": "orange-q-master.png",
+      "layout": {
+        "columns": 4,
+        "rows": 4,
+        "framesPerAction": 8,
+        "actionARows": [
+          0,
+          1
+        ],
+        "actionBRows": [
+          2,
+          3
+        ],
+        "readingOrder": "row-major"
+      },
+      "prompt": "Use case: identity-preserve. Asset type: production transparent PNG sprite animation atlas.\nInput image 1 is the strict character identity and style reference, not a background to preserve. Make the exact same extremely cute TWO-HEADS-TALL chibi human girl: oversized round head about half the full height, tiny torso and short legs, long orange hair, large amber eyes, orange flower and black ribbon on viewer's RIGHT, white-and-orange floral long dress with black ribbon accents, white lace-up shoes, and the same dark book with an orange flower emblem. Preserve her head/body proportion, face, hair ornament, palette, linework, clothing and shoes in every cell. No tail, animal ears or horns. Do not revert to a three/four-heads-tall girl.\nCreate ONE square high-resolution 4-by-4 atlas (prefer 2048x2048). Exactly 16 equal invisible cells: four columns, four rows, read left-to-right then top-to-bottom. TOP TWO ROWS are action A's eight sequential key poses. BOTTOM TWO ROWS are action B's eight sequential key poses. There is exactly one full-body girl in each cell: 16 instances of the same character at successive times, NOT 16 different characters.\nEach eight-frame action must contain visibly distinct, plausible continuous motion with preparation, response and return/settle; no eight identical copies. Changes between neighboring frames are small, anatomically coherent, with consistent face/head scale and stable placement. Start/end silhouettes must join naturally. Keep a fixed camera and fixed scale, align the soles to the same baseline, center the entire figure including hair, ornament, book, and shoes, and leave at least TEN PERCENT clear padding on every side of EACH cell. Never crop hair, fingers, book or feet; never let a figure cross a cell boundary. Intentional limb motion is allowed, random scale/vertical jitter is not.\nMaintain exactly two arms and two hands. When a hand is used for an action, keep the book visibly supported in the other arm; never duplicate, lose, teleport or merge the book or hands. Every prop must remain coherent frame to frame.\nBackground: genuinely transparent alpha across the entire sheet and between figures. No backdrop, white/color fill, checkerboard, glow, ground plane, contact/drop shadow, scenery, labels, letters, digits, watermarks, visible grid or borders. White dress details remain opaque. Clean alpha edges. Do not paint a background.\nACTION A — dragging, cells 1–8 (top two rows): Being gently held suspended, no visible cursor, rope or external hand. Frames 1–8: hovering balanced; small legs tilt left; tiny body follow-through; central suspended pose; legs sway right; hair/ribbons follow gently; return toward center; balanced hover. Keep overall figure scale and nominal foot baseline consistent, no violent stretching.\nACTION B — dragging_release, cells 9–16 (bottom two rows): A gentle landing and recovery. Frames 1–8: nearly upright with feet just above their shared baseline; toes meet baseline; knees cushion slightly; skirt and hair settle; upper body returns upright; tiny residual sway; feet square; calm stable book hug. No ground, dust, impact symbol, shadow or falling props.",
+      "status": "generated",
+      "generatedSourceFile": "exec-cfc55911-1ef7-4990-92cf-d34d97ca5273.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2566161,
+      "sha256": "88bfb9af7a9c056b952bcf5f027bed00140e6ac7e47b06672a01dff13f10ae56",
+      "pixelEditing": "none"
+    },
+    {
+      "id": "06-head-poke",
+      "index": 6,
+      "file": "06-head-poke.png",
+      "actions": [
+        "head_pat",
+        "poke"
+      ],
+      "transparent_background": true,
+      "reference": "orange-q-master.png",
+      "layout": {
+        "columns": 4,
+        "rows": 4,
+        "framesPerAction": 8,
+        "actionARows": [
+          0,
+          1
+        ],
+        "actionBRows": [
+          2,
+          3
+        ],
+        "readingOrder": "row-major"
+      },
+      "prompt": "Use case: identity-preserve. Asset type: production transparent PNG sprite animation atlas.\nInput image 1 is the strict character identity and style reference, not a background to preserve. Make the exact same extremely cute TWO-HEADS-TALL chibi human girl: oversized round head about half the full height, tiny torso and short legs, long orange hair, large amber eyes, orange flower and black ribbon on viewer's RIGHT, white-and-orange floral long dress with black ribbon accents, white lace-up shoes, and the same dark book with an orange flower emblem. Preserve her head/body proportion, face, hair ornament, palette, linework, clothing and shoes in every cell. No tail, animal ears or horns. Do not revert to a three/four-heads-tall girl.\nCreate ONE square high-resolution 4-by-4 atlas (prefer 2048x2048). Exactly 16 equal invisible cells: four columns, four rows, read left-to-right then top-to-bottom. TOP TWO ROWS are action A's eight sequential key poses. BOTTOM TWO ROWS are action B's eight sequential key poses. There is exactly one full-body girl in each cell: 16 instances of the same character at successive times, NOT 16 different characters.\nEach eight-frame action must contain visibly distinct, plausible continuous motion with preparation, response and return/settle; no eight identical copies. Changes between neighboring frames are small, anatomically coherent, with consistent face/head scale and stable placement. Start/end silhouettes must join naturally. Keep a fixed camera and fixed scale, align the soles to the same baseline, center the entire figure including hair, ornament, book, and shoes, and leave at least TEN PERCENT clear padding on every side of EACH cell. Never crop hair, fingers, book or feet; never let a figure cross a cell boundary. Intentional limb motion is allowed, random scale/vertical jitter is not.\nMaintain exactly two arms and two hands. When a hand is used for an action, keep the book visibly supported in the other arm; never duplicate, lose, teleport or merge the book or hands. Every prop must remain coherent frame to frame.\nBackground: genuinely transparent alpha across the entire sheet and between figures. No backdrop, white/color fill, checkerboard, glow, ground plane, contact/drop shadow, scenery, labels, letters, digits, watermarks, visible grid or borders. White dress details remain opaque. Clean alpha edges. Do not paint a background.\nACTION A — head_pat, cells 1–8 (top two rows): Receiving a pleasant head pat, with NO extra hand or other person drawn. Frames 1–8: calm book hug; eyes lift softly; tiny head tilt; eyelids soften; happy closed-eye squint; gentle blush; eyes reopen; calm book hug. Show continuous facial/shoulder response.\nACTION B — poke, cells 9–16 (bottom two rows): A mild surprise after a playful poke, then slightly shy recovery. Frames 1–8: calm; eyes widen; shoulders draw in slightly; hug book closer; cheeks gently blush; small relieved smile; relax shoulders; return to calm. No aggressive reaction, text or extra hands.",
+      "status": "generated",
+      "generatedSourceFile": "exec-593dc792-8ba2-490a-8aa0-ebc86bd673a6.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2306214,
+      "sha256": "804fe637f5feec8699a68ea96da1a7aec2bc66003b71cf0ffd3da41891bd0883",
+      "pixelEditing": "none"
+    },
+    {
+      "id": "07-skirt-eat",
+      "index": 7,
+      "file": "07-skirt-eat.png",
+      "actions": [
+        "skirt",
+        "eat_token"
+      ],
+      "transparent_background": true,
+      "reference": "orange-q-master.png",
+      "layout": {
+        "columns": 4,
+        "rows": 4,
+        "framesPerAction": 8,
+        "actionARows": [
+          0,
+          1
+        ],
+        "actionBRows": [
+          2,
+          3
+        ],
+        "readingOrder": "row-major"
+      },
+      "prompt": "Use case: identity-preserve. Asset type: production transparent PNG sprite animation atlas.\nInput image 1 is the strict character identity and style reference, not a background to preserve. Make the exact same extremely cute TWO-HEADS-TALL chibi human girl: oversized round head about half the full height, tiny torso and short legs, long orange hair, large amber eyes, orange flower and black ribbon on viewer's RIGHT, white-and-orange floral long dress with black ribbon accents, white lace-up shoes, and the same dark book with an orange flower emblem. Preserve her head/body proportion, face, hair ornament, palette, linework, clothing and shoes in every cell. No tail, animal ears or horns. Do not revert to a three/four-heads-tall girl.\nCreate ONE square high-resolution 4-by-4 atlas (prefer 2048x2048). Exactly 16 equal invisible cells: four columns, four rows, read left-to-right then top-to-bottom. TOP TWO ROWS are action A's eight sequential key poses. BOTTOM TWO ROWS are action B's eight sequential key poses. There is exactly one full-body girl in each cell: 16 instances of the same character at successive times, NOT 16 different characters.\nEach eight-frame action must contain visibly distinct, plausible continuous motion with preparation, response and return/settle; no eight identical copies. Changes between neighboring frames are small, anatomically coherent, with consistent face/head scale and stable placement. Start/end silhouettes must join naturally. Keep a fixed camera and fixed scale, align the soles to the same baseline, center the entire figure including hair, ornament, book, and shoes, and leave at least TEN PERCENT clear padding on every side of EACH cell. Never crop hair, fingers, book or feet; never let a figure cross a cell boundary. Intentional limb motion is allowed, random scale/vertical jitter is not.\nMaintain exactly two arms and two hands. When a hand is used for an action, keep the book visibly supported in the other arm; never duplicate, lose, teleport or merge the book or hands. Every prop must remain coherent frame to frame.\nBackground: genuinely transparent alpha across the entire sheet and between figures. No backdrop, white/color fill, checkerboard, glow, ground plane, contact/drop shadow, scenery, labels, letters, digits, watermarks, visible grid or borders. White dress details remain opaque. Clean alpha edges. Do not paint a background.\nACTION A — skirt, cells 1–8 (top two rows): Gently smoothing/holding the outer skirt edge, fully modest. Frames 1–8: neutral book held in left arm; right hand approaches skirt side; lightly grasps the OUTER edge; tiny outward smoothing gesture; brief shy glance; relax fabric; hand returns; neutral book hug. Do not expose legs, underwear, chest or lift the long dress above its normal covering.\nACTION B — eat_token, cells 9–16 (bottom two rows): Eat one little cookie while never losing the book: book remains visibly supported in left arm and cookie in the ONLY right hand. Frames 1–8: cookie near waist; lift cookie to chest; approach lips; touch cookie to lips; one small bite leaves a tiny missing corner; lower cookie with small chewing motion; content gentle chew; return hand near waist and settle. No extra arm/hand, duplicated cookie, vanishing book, floating crumbs, large open mouth or text.",
+      "status": "generated",
+      "generatedSourceFile": "exec-319f7244-b4ca-49ee-a453-f4525dd5a35a.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2476573,
+      "sha256": "f7bfbeb3cc27d2443df73d165f093136b137c0f518f8c23f7dd86bfb5c089e18",
+      "pixelEditing": "none"
+    },
+    {
+      "id": "08-stretch-yawn",
+      "index": 8,
+      "file": "08-stretch-yawn.png",
+      "actions": [
+        "idle_stretch",
+        "idle_yawn"
+      ],
+      "transparent_background": true,
+      "reference": "orange-q-master.png",
+      "layout": {
+        "columns": 4,
+        "rows": 4,
+        "framesPerAction": 8,
+        "actionARows": [
+          0,
+          1
+        ],
+        "actionBRows": [
+          2,
+          3
+        ],
+        "readingOrder": "row-major"
+      },
+      "prompt": "Use case: identity-preserve. Asset type: production transparent PNG sprite animation atlas.\nInput image 1 is the strict character identity and style reference, not a background to preserve. Make the exact same extremely cute TWO-HEADS-TALL chibi human girl: oversized round head about half the full height, tiny torso and short legs, long orange hair, large amber eyes, orange flower and black ribbon on viewer's RIGHT, white-and-orange floral long dress with black ribbon accents, white lace-up shoes, and the same dark book with an orange flower emblem. Preserve her head/body proportion, face, hair ornament, palette, linework, clothing and shoes in every cell. No tail, animal ears or horns. Do not revert to a three/four-heads-tall girl.\nCreate ONE square high-resolution 4-by-4 atlas (prefer 2048x2048). Exactly 16 equal invisible cells: four columns, four rows, read left-to-right then top-to-bottom. TOP TWO ROWS are action A's eight sequential key poses. BOTTOM TWO ROWS are action B's eight sequential key poses. There is exactly one full-body girl in each cell: 16 instances of the same character at successive times, NOT 16 different characters.\nEach eight-frame action must contain visibly distinct, plausible continuous motion with preparation, response and return/settle; no eight identical copies. Changes between neighboring frames are small, anatomically coherent, with consistent face/head scale and stable placement. Start/end silhouettes must join naturally. Keep a fixed camera and fixed scale, align the soles to the same baseline, center the entire figure including hair, ornament, book, and shoes, and leave at least TEN PERCENT clear padding on every side of EACH cell. Never crop hair, fingers, book or feet; never let a figure cross a cell boundary. Intentional limb motion is allowed, random scale/vertical jitter is not.\nMaintain exactly two arms and two hands. When a hand is used for an action, keep the book visibly supported in the other arm; never duplicate, lose, teleport or merge the book or hands. Every prop must remain coherent frame to frame.\nBackground: genuinely transparent alpha across the entire sheet and between figures. No backdrop, white/color fill, checkerboard, glow, ground plane, contact/drop shadow, scenery, labels, letters, digits, watermarks, visible grid or borders. White dress details remain opaque. Clean alpha edges. Do not paint a background.\nACTION A — idle_stretch, cells 1–8 (top two rows): A small one-arm stretch while the other arm safely supports the book. Frames 1–8: calm; right elbow lifts; right arm extends upward; slight comfortable torso stretch; stretch peak; lower elbow; hair/ribbon settles; calm book hug. Keep chibi proportions, book visible, and feet on baseline.\nACTION B — idle_yawn, cells 9–16 (bottom two rows): A gradual sleepy yawn and gentle recovery. Frames 1–8: calm book supported by left arm; lids grow heavy; right hand rises; small yawn behind hand; eyes gently close; mouth closes; hand lowers; quiet drowsy book hug. No Z letters, bed or shadow.",
+      "status": "generated",
+      "generatedSourceFile": "exec-d4c13e83-6b8c-48c4-a32b-ea9b6af03030.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2367141,
+      "sha256": "39bb3be384e51a684546471b1246173337b8ac1795d2f6a3e2dc56268c15df95",
+      "pixelEditing": "none"
+    },
+    {
+      "id": "09-shy-concern",
+      "index": 9,
+      "file": "09-shy-concern.png",
+      "actions": [
+        "shy",
+        "concern"
+      ],
+      "transparent_background": true,
+      "reference": "orange-q-master.png",
+      "layout": {
+        "columns": 4,
+        "rows": 4,
+        "framesPerAction": 8,
+        "actionARows": [
+          0,
+          1
+        ],
+        "actionBRows": [
+          2,
+          3
+        ],
+        "readingOrder": "row-major"
+      },
+      "prompt": "Use case: identity-preserve. Asset type: production transparent PNG sprite animation atlas.\nInput image 1 is the strict character identity and style reference, not a background to preserve. Make the exact same extremely cute TWO-HEADS-TALL chibi human girl: oversized round head about half the full height, tiny torso and short legs, long orange hair, large amber eyes, orange flower and black ribbon on viewer's RIGHT, white-and-orange floral long dress with black ribbon accents, white lace-up shoes, and the same dark book with an orange flower emblem. Preserve her head/body proportion, face, hair ornament, palette, linework, clothing and shoes in every cell. No tail, animal ears or horns. Do not revert to a three/four-heads-tall girl.\nCreate ONE square high-resolution 4-by-4 atlas (prefer 2048x2048). Exactly 16 equal invisible cells: four columns, four rows, read left-to-right then top-to-bottom. TOP TWO ROWS are action A's eight sequential key poses. BOTTOM TWO ROWS are action B's eight sequential key poses. There is exactly one full-body girl in each cell: 16 instances of the same character at successive times, NOT 16 different characters.\nEach eight-frame action must contain visibly distinct, plausible continuous motion with preparation, response and return/settle; no eight identical copies. Changes between neighboring frames are small, anatomically coherent, with consistent face/head scale and stable placement. Start/end silhouettes must join naturally. Keep a fixed camera and fixed scale, align the soles to the same baseline, center the entire figure including hair, ornament, book, and shoes, and leave at least TEN PERCENT clear padding on every side of EACH cell. Never crop hair, fingers, book or feet; never let a figure cross a cell boundary. Intentional limb motion is allowed, random scale/vertical jitter is not.\nMaintain exactly two arms and two hands. When a hand is used for an action, keep the book visibly supported in the other arm; never duplicate, lose, teleport or merge the book or hands. Every prop must remain coherent frame to frame.\nBackground: genuinely transparent alpha across the entire sheet and between figures. No backdrop, white/color fill, checkerboard, glow, ground plane, contact/drop shadow, scenery, labels, letters, digits, watermarks, visible grid or borders. White dress details remain opaque. Clean alpha edges. Do not paint a background.\nACTION A — shy, cells 1–8 (top two rows): A sweet shy blush and side glance. Frames 1–8: calm book hug; cheeks pinken; eyes glance aside; chin lowers slightly; tiny bashful smile; head returns; eyes look forward; settle in calm shy book hug. Preserve face identity; no romantic symbols or text.\nACTION B — concern, cells 9–16 (bottom two rows): Warm quiet concern with one hand gently at her own chest, not touching anyone else. Frames 1–8: calm book in left arm; attentive soft brows; right hand rises toward chest; hand rests lightly at chest; small sympathetic head tilt; straighten; hand lowers; calm welcoming book hug. No tears, fear, diagnosis or written symbols.",
+      "status": "generated",
+      "generatedSourceFile": "exec-59d4271e-c2fc-48b6-8802-ce58f3bae62d.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2883160,
+      "sha256": "858b3129c449569b719c0aa316cb98881df71ae5af4b81ea46b3cca3c1fa8a82",
+      "pixelEditing": "none"
+    },
+    {
+      "id": "10-tease-sleep",
+      "index": 10,
+      "file": "10-tease-sleep.png",
+      "actions": [
+        "tease",
+        "sleep"
+      ],
+      "transparent_background": true,
+      "reference": "orange-q-master.png",
+      "layout": {
+        "columns": 4,
+        "rows": 4,
+        "framesPerAction": 8,
+        "actionARows": [
+          0,
+          1
+        ],
+        "actionBRows": [
+          2,
+          3
+        ],
+        "readingOrder": "row-major"
+      },
+      "prompt": "Use case: identity-preserve. Asset type: production transparent PNG sprite animation atlas.\nInput image 1 is the strict character identity and style reference, not a background to preserve. Make the exact same extremely cute TWO-HEADS-TALL chibi human girl: oversized round head about half the full height, tiny torso and short legs, long orange hair, large amber eyes, orange flower and black ribbon on viewer's RIGHT, white-and-orange floral long dress with black ribbon accents, white lace-up shoes, and the same dark book with an orange flower emblem. Preserve her head/body proportion, face, hair ornament, palette, linework, clothing and shoes in every cell. No tail, animal ears or horns. Do not revert to a three/four-heads-tall girl.\nCreate ONE square high-resolution 4-by-4 atlas (prefer 2048x2048). Exactly 16 equal invisible cells: four columns, four rows, read left-to-right then top-to-bottom. TOP TWO ROWS are action A's eight sequential key poses. BOTTOM TWO ROWS are action B's eight sequential key poses. There is exactly one full-body girl in each cell: 16 instances of the same character at successive times, NOT 16 different characters.\nEach eight-frame action must contain visibly distinct, plausible continuous motion with preparation, response and return/settle; no eight identical copies. Changes between neighboring frames are small, anatomically coherent, with consistent face/head scale and stable placement. Start/end silhouettes must join naturally. Keep a fixed camera and fixed scale, align the soles to the same baseline, center the entire figure including hair, ornament, book, and shoes, and leave at least TEN PERCENT clear padding on every side of EACH cell. Never crop hair, fingers, book or feet; never let a figure cross a cell boundary. Intentional limb motion is allowed, random scale/vertical jitter is not.\nMaintain exactly two arms and two hands. When a hand is used for an action, keep the book visibly supported in the other arm; never duplicate, lose, teleport or merge the book or hands. Every prop must remain coherent frame to frame.\nBackground: genuinely transparent alpha across the entire sheet and between figures. No backdrop, white/color fill, checkerboard, glow, ground plane, contact/drop shadow, scenery, labels, letters, digits, watermarks, visible grid or borders. White dress details remain opaque. Clean alpha edges. Do not paint a background.\nACTION A — tease, cells 1–8 (top two rows): A gentle playful knowing smile, harmless and quiet. Frames 1–8: calm book hug; one eyebrow lifts slightly; tiny closed-mouth smile; slight head tilt; playful side glance; glance returns; soften smile; return to calm. No threatening, possessive, evil or sexual expression; no tongue out.\nACTION B — sleep, cells 9–16 (bottom two rows): A CONTINUOUS SLEEP LOOP while standing and hugging the book. Eyes stay CLOSED in ALL eight frames, head comfortably lowered, posture stable. Frames 1–8 show a full very gentle breathing cycle: restful start, slight inhale, chest rises, breath peak, slight exhale, chest lowers, settle, matching restful start. Do NOT wake up in the last frame. No bed, pillow, Z letters, shadow or other props.",
+      "status": "generated",
+      "generatedSourceFile": "exec-6d4f5c11-23dd-4f7d-af90-bdd0622b3399.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2450177,
+      "sha256": "262c9e509b5503b832779921a57c500ba1219df9cd4dd5e0068c8017097f5ebc",
+      "pixelEditing": "none"
+    },
+    {
+      "id": "11-replying-approval",
+      "index": 11,
+      "file": "11-replying-approval.png",
+      "actions": [
+        "replying",
+        "waiting_approval"
+      ],
+      "transparent_background": true,
+      "reference": "orange-q-master.png",
+      "layout": {
+        "columns": 4,
+        "rows": 4,
+        "framesPerAction": 8,
+        "actionARows": [
+          0,
+          1
+        ],
+        "actionBRows": [
+          2,
+          3
+        ],
+        "readingOrder": "row-major"
+      },
+      "prompt": "Use case: identity-preserve. Asset type: production transparent PNG sprite animation atlas.\nInput image 1 is the strict character identity and style reference, not a background to preserve. Make the exact same extremely cute TWO-HEADS-TALL chibi human girl: oversized round head about half the full height, tiny torso and short legs, long orange hair, large amber eyes, orange flower and black ribbon on viewer's RIGHT, white-and-orange floral long dress with black ribbon accents, white lace-up shoes, and the same dark book with an orange flower emblem. Preserve her head/body proportion, face, hair ornament, palette, linework, clothing and shoes in every cell. No tail, animal ears or horns. Do not revert to a three/four-heads-tall girl.\nCreate ONE square high-resolution 4-by-4 atlas (prefer 2048x2048). Exactly 16 equal invisible cells: four columns, four rows, read left-to-right then top-to-bottom. TOP TWO ROWS are action A's eight sequential key poses. BOTTOM TWO ROWS are action B's eight sequential key poses. There is exactly one full-body girl in each cell: 16 instances of the same character at successive times, NOT 16 different characters.\nEach eight-frame action must contain visibly distinct, plausible continuous motion with preparation, response and return/settle; no eight identical copies. Changes between neighboring frames are small, anatomically coherent, with consistent face/head scale and stable placement. Start/end silhouettes must join naturally. Keep a fixed camera and fixed scale, align the soles to the same baseline, center the entire figure including hair, ornament, book, and shoes, and leave at least TEN PERCENT clear padding on every side of EACH cell. Never crop hair, fingers, book or feet; never let a figure cross a cell boundary. Intentional limb motion is allowed, random scale/vertical jitter is not.\nMaintain exactly two arms and two hands. When a hand is used for an action, keep the book visibly supported in the other arm; never duplicate, lose, teleport or merge the book or hands. Every prop must remain coherent frame to frame.\nBackground: genuinely transparent alpha across the entire sheet and between figures. No backdrop, white/color fill, checkerboard, glow, ground plane, contact/drop shadow, scenery, labels, letters, digits, watermarks, visible grid or borders. White dress details remain opaque. Clean alpha edges. Do not paint a background.\nACTION A — replying, cells 1–8 (top two rows): Neutral frontal talking BODY layer for a later program-driven mouth. In ALL eight frames keep mouth a tiny CLOSED LINE, face frontal, head upright with the SAME mouth position and facial scale. Hold book in both hands. Show only tiny natural breathing/shoulder motions and a restrained almost-imperceptible nod, then return. NO open mouth, lipsync mouth changes, turn, side glance or hand gesture in these eight frames.\nACTION B — waiting_approval, cells 9–16 (bottom two rows): Patiently asking for confirmation with a single open-palm gesture. Frames 1–8: calm book in left arm; right elbow releases; right palm turns up; hand extends a little as a warm question; hold an attentive kind look; draw palm back; settle arm; calm book hug. No question-mark glyph, labels, speech bubble or authority symbol.",
+      "status": "generated",
+      "generatedSourceFile": "exec-4236c067-f26a-45af-a6a6-7794526ccce3.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 3819643,
+      "sha256": "e96eb78ca9f980a42416f274b8821620a53c4d2e0d49d95a04b65b8eb18f7d62",
+      "pixelEditing": "none"
+    },
+    {
+      "id": "12-look-wave",
+      "index": 12,
+      "file": "12-look-wave.png",
+      "actions": [
+        "idle_look",
+        "wave"
+      ],
+      "transparent_background": true,
+      "reference": "orange-q-master.png",
+      "layout": {
+        "columns": 4,
+        "rows": 4,
+        "framesPerAction": 8,
+        "actionARows": [
+          0,
+          1
+        ],
+        "actionBRows": [
+          2,
+          3
+        ],
+        "readingOrder": "row-major"
+      },
+      "prompt": "Use case: identity-preserve. Asset type: production transparent PNG sprite animation atlas.\nInput image 1 is the strict character identity and style reference, not a background to preserve. Make the exact same extremely cute TWO-HEADS-TALL chibi human girl: oversized round head about half the full height, tiny torso and short legs, long orange hair, large amber eyes, orange flower and black ribbon on viewer's RIGHT, white-and-orange floral long dress with black ribbon accents, white lace-up shoes, and the same dark book with an orange flower emblem. Preserve her head/body proportion, face, hair ornament, palette, linework, clothing and shoes in every cell. No tail, animal ears or horns. Do not revert to a three/four-heads-tall girl.\nCreate ONE square high-resolution 4-by-4 atlas (prefer 2048x2048). Exactly 16 equal invisible cells: four columns, four rows, read left-to-right then top-to-bottom. TOP TWO ROWS are action A's eight sequential key poses. BOTTOM TWO ROWS are action B's eight sequential key poses. There is exactly one full-body girl in each cell: 16 instances of the same character at successive times, NOT 16 different characters.\nEach eight-frame action must contain visibly distinct, plausible continuous motion with preparation, response and return/settle; no eight identical copies. Changes between neighboring frames are small, anatomically coherent, with consistent face/head scale and stable placement. Start/end silhouettes must join naturally. Keep a fixed camera and fixed scale, align the soles to the same baseline, center the entire figure including hair, ornament, book, and shoes, and leave at least TEN PERCENT clear padding on every side of EACH cell. Never crop hair, fingers, book or feet; never let a figure cross a cell boundary. Intentional limb motion is allowed, random scale/vertical jitter is not.\nMaintain exactly two arms and two hands. When a hand is used for an action, keep the book visibly supported in the other arm; never duplicate, lose, teleport or merge the book or hands. Every prop must remain coherent frame to frame.\nBackground: genuinely transparent alpha across the entire sheet and between figures. No backdrop, white/color fill, checkerboard, glow, ground plane, contact/drop shadow, scenery, labels, letters, digits, watermarks, visible grid or borders. White dress details remain opaque. Clean alpha edges. Do not paint a background.\nACTION A — idle_look, cells 1–8 (top two rows): Look around and return, small natural eye/head motion. Frames 1–8: calm forward book hug; eyes left; gentle left head turn; return center; eyes right; gentle right head turn; return center; calm forward. Keep front-facing character identity and stable feet, no full body rotation.\nACTION B — wave, cells 9–16 (bottom two rows): A small friendly wave and return. Frames 1–8: calm book safely held in left arm; right hand rises to shoulder; palm opens; small wave left; small wave right; hand lowers; return right hand to book; calm book hug. Exactly two arms/two hands, no other character or written greeting.",
+      "status": "generated",
+      "generatedSourceFile": "exec-25bb1f15-79fd-47d1-a69a-178db7bd5658.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2426692,
+      "sha256": "c38ee9d74f9a339581a8b0ae8c322c78031c7b1870f7e76bf4665a59a5bc2ef0",
+      "pixelEditing": "none"
+    },
+    {
+      "id": "13-shy-master",
+      "file": "13-shy-master.png",
+      "actions": [
+        "shy-static"
+      ],
+      "reference": "orange-q-master.png",
+      "transparent_background": true,
+      "prompt": "Use case: identity-preserve. Input image 1 is the edit target and exact character/composition reference. Create a transparent PNG shy expression variant of this same TWO-HEADS-TALL orange-haired human chibi girl. Change ONLY the facial expression to soft bashful blush, eyes glancing gently aside and a tiny closed shy smile. Preserve the enormous round head and tiny body proportion, amber eyes, orange flower and black ribbon on viewer's right, long orange hair, exact white-orange floral long dress, shoes, both hands hugging the same dark flower-emblem book, all pose, body size, head placement, full-body framing and clean linework. No tail, animal ears or horns. Output the SAME 1199 by 1312 pixel dimensions and same subject placement as the reference if possible. Full character including flower, hair, hands, book and shoes entirely inside canvas. Genuinely transparent alpha outside character; no painted background, glow, shadow, text, border, checkerboard, other character or extra hands. Do not make an atlas or add poses. One full-body character only.",
+      "status": "generated",
+      "generatedSourceFile": "exec-5529ef48-06e7-4050-a05e-f5d48ee783f1.png",
+      "width": 1108,
+      "height": 1420,
+      "bytes": 2128349,
+      "sha256": "a20432448c419e3f563c4490e9a7b333966837c1a9683c1cb7006dfda96f286d",
+      "pixelEditing": "none"
+    },
+    {
+      "id": "11-replying-approval-clean",
+      "file": "11-replying-approval-clean.png",
+      "actions": [
+        "replying",
+        "waiting_approval"
+      ],
+      "reference": "11-replying-approval.png",
+      "prompt": "Use case: background-removal, strict identity-preserving edit. Edit the provided existing 4 by 4 sprite atlas. REMOVE ONLY the faint low-alpha multicolored haze and colored noise in the negative space OUTSIDE every character. Make that exterior background genuinely alpha ZERO, clean transparent PNG, including all gutters and canvas edges. Preserve the exact existing sixteen separate full-body poses, exactly the same 4-column by 4-row layout, each character's position, scale, foot baseline, spacing, silhouette, hands, book, tiny closed-line mouth, face, two-heads-tall proportions, orange long hair, orange flower and black ribbon, white-orange floral dress, black accents and white shoes. Keep rows 1 and 2 as the eight replying poses, and rows 3 and 4 as the eight open-palm waiting-approval poses. Do not shift, enlarge, crop, redraw poses, rearrange cells, add animation frames, or change character art. Preserve foreground colors and expression; do not treat orange hair, pale dress, earrings or translucent anti-aliased character edges as background. Retain clean antialiased silhouette edges but no surrounding glow or haze. Keep the same 1254 by 1254 canvas if supported. No text, labels, cell borders, background color, shadow, checkerboard, new objects or extra characters. The only requested change is a genuinely transparent noise-free exterior background.",
+      "corrects": "11-replying-approval",
+      "generationRound": "targeted-correction-1",
+      "transparent_background": true,
+      "status": "generated",
+      "generatedSourceFile": "exec-3d015116-4303-450b-879f-15052c792101.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2157125,
+      "sha256": "4b86673a92a57da2f6e23dd07c094ce62d63d77fa4bfadbab247109882aa369e",
+      "pixelEditing": "none",
+      "qualityStatus": "needs-review"
+    },
+    {
+      "id": "13-shy-master-padded",
+      "file": "13-shy-master-padded.png",
+      "actions": [
+        "shy-static"
+      ],
+      "reference": "orange-q-master.png",
+      "prompt": "Use case: identity-preserving expression edit of this exact master. Produce one single full-body transparent PNG of the SAME TWO-HEADS-TALL orange-haired human chibi girl. Preserve the enormous round head and tiny body proportion, amber eyes, the same long orange hair, same orange flower and black ribbon on viewer's right, dangling earrings, exact white-orange floral long dress with black ribbon accents, white lace-up shoes, and BOTH hands hugging the same dark flower-emblem book. Preserve the original frontal full-body pose, identity, high quality clean lines, colors, centered composition, and approximate head/body positions. Change only the expression to a gentle slightly bashful blush, a tiny CLOSED-MOUTH smile and softly side-glancing eyes. Keep the head level. Fit the entire character inside the canvas, with all hair, flower, ribbon, dress hem and both complete shoes visible and unclipped. Use real completely transparent left AND right margins of AT LEAST SIX PERCENT of the image width; aim for eight percent on both sides for safety. Also leave a clear transparent top and bottom margin so neither hair nor shoes touches the canvas. Keep the character large and centered with the master's portrait aspect ratio and framing. Prefer the same 1199 by 1312 pixel canvas if supported; never crop the body to meet dimensions. Preserve the two-heads-tall silhouette rather than elongating the body. Genuinely alpha-zero transparent exterior, no colored haze, glow, painted background, shadow, text, border, checkerboard, atlas, extra people, animal ears, tail, horns or extra hands. One character only.",
+      "corrects": "13-shy-master",
+      "generationRound": "targeted-correction-1",
+      "transparent_background": true,
+      "status": "generated",
+      "generatedSourceFile": "exec-fa6f04ea-d828-48fd-b3da-d6a234471dab.png",
+      "width": 1108,
+      "height": 1420,
+      "bytes": 1918935,
+      "sha256": "f50f64a42376574ae8c36d59e1aabc2b0648ac9ec06df2ef09c8ff882f0b6c18",
+      "pixelEditing": "none",
+      "qualityStatus": "needs-review"
+    }
+  ],
+  "referenceImage": {
+    "status": "generated",
+    "generatedSourceFile": "orange-q-master.png",
+    "file": "orange-q-master.png",
+    "width": 1199,
+    "height": 1312,
+    "bytes": 1864177,
+    "sha256": "c90e5081ee243c868337c84cf0cb8e4a9bca17ac4872056bd57785427a9c0b08",
+    "pixelEditing": "none"
+  }
+}
