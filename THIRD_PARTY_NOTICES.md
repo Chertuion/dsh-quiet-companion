@@ -32,6 +32,23 @@ This project keeps third-party works under their original terms. Its own `UNLICE
 
 Zod **4.6.7** is an indirect dependency of the memory components. It is MIT licensed; `third_party/zod-LICENSE` retains the copyright and license.
 
+## Roleplay food and relationship rules — partial MIT reuse in 0.3.0-beta.1
+
+- Project: https://github.com/ajuwm/dsh-roleplay-plugin
+- Fixed commit: `c2f4844e8e342c9a0079b7d4df419adb774bccef`.
+- Copyright (c) 2026 roleplay-plugin contributors. The complete original MIT license is retained in `third_party/ROLEPLAY-GROWTH-LICENSE.txt`.
+- Food values originate from [`roleplay-host.mjs`, lines 178–185](https://github.com/ajuwm/dsh-roleplay-plugin/blob/c2f4844e8e342c9a0079b7d4df419adb774bccef/agent-presets/roleplay/roleplay-host.mjs#L178-L185); restoration originates from [`applyItemEffects`, lines 1337–1349](https://github.com/ajuwm/dsh-roleplay-plugin/blob/c2f4844e8e342c9a0079b7d4df419adb774bccef/agent-presets/roleplay/roleplay-host.mjs#L1337-L1349).
+- The unchanged pure `axisTier` and `repeatDimOf` helpers originate from [`relation-core.mjs`](https://github.com/ajuwm/dsh-roleplay-plugin/blob/c2f4844e8e342c9a0079b7d4df419adb774bccef/agent-presets/roleplay/lib/relation-core.mjs). They are actually called for familiarity stages and diminishing repeated-interaction rewards.
+- Local file `third_party/roleplay-game-core.mjs` extracts the four food records and adapts restoration into an immutable `applyFood` wrapper. It is **not** a copy of upstream's similarly named minigame module. This companion calls the satiety/mood rules; the upstream price/health data does not become a purchasing or health system here.
+- This project implements its own token receipts and deduplication, snack inventory/reserve, XP thresholds, virtual-state variation, automatic-eating gates, persistence and macOS presentation.
+- The full upstream plugin, roleplay presets, character-card management, multi-character relationship data, diaries, anniversaries, minigames, coin purchases, mortality/absence penalties, global Host hooks, PowerShell scripts and Windows pet executables are **not** integrated.
+
+## Researched only — not dependencies or copied implementations
+
+Open-LLM-VTuber remains a research reference. No code, Live2D assets, microphone conversation pipeline or voice-interruption implementation from that project is bundled.
+
+`xp-level-system` and `xp-parser` were inspected as possible XP libraries but are not installed, imported or bundled. Their licenses are not presented as licenses for this project's own XP rules. Research does not imply an integrated feature.
+
 ## Reference stills
 
 The still `idle.png` and `shy.png` assets were prepared using an image-generation/editing tool from references supplied for this companion. They are separate from the licensed upstream frame sequence and carry no additional redistribution grant here. No local photo-library filenames, credentials, chat history or captured screen data are distributed.

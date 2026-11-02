@@ -5,7 +5,7 @@ staging_dir="$(/usr/bin/mktemp -d /private/tmp/quiet-companion-build.XXXXXX)"
 app_path="$staging_dir/QuietCompanion.app"
 module_cache="${QUIET_COMPANION_MODULE_CACHE_DIR:-$staging_dir/module-cache}"
 mkdir -p "$app_path/Contents/MacOS" "$app_path/Contents/Resources/pet" "$module_cache"
-/bin/cat "$native_dir/PetAnimation.swift" "$native_dir/QuietCompanion.swift" > "$staging_dir/main.swift"
+/bin/cat "$native_dir/PetAnimation.swift" "$native_dir/GrowthViews.swift" "$native_dir/QuietCompanion.swift" > "$staging_dir/main.swift"
 /usr/bin/xcrun swiftc -swift-version 5 -O -target arm64-apple-macos14.0 \
   -module-cache-path "$module_cache" \
   -framework AppKit -framework ScreenCaptureKit -framework CoreGraphics \

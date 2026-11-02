@@ -1,4 +1,4 @@
-Native companion component — 0.2.1 — 2026-11-02
+Native companion component — 0.3.0 — 2026-11-02
 
 Build
   ./build.sh
@@ -189,3 +189,28 @@ The safe preview test checks a private socket's authenticated ready, tiny and
 fragmented ping commands, voices/appearance/status and blocked preview audio
 enable, then shuts down its own test app. It does not test actual Speech or
 screen permissions; those still need the user's interactive authorization.
+
+Growth and visible snacks
+GrowthViews.swift contains original AppKit cookie/candy/fishcake drawings.
+It also maps the actual food catalog kinds mantou/lamian/dianxin/cake to
+馒头/一碗拉面/精致点心/橡木蛋糕卷, using original bun/noodle-bowl/pastry/cream-roll
+drawings; no food images or other external graphics are copied.
+Inbound growth:{state,event?} is authoritative: level, experience,
+nextLevelExperience, satiety/energy/mood (0..100), stage, optional levelTitle,
+stats.earnedSnacks/eatenSnacks, snackCount, snacks and status. The right-hand
+tray renders at most eight concrete snack ids; its overflow badge uses total
+snackCount, not just the bounded entity array. A compact level/XP/body-state
+card opens a read-only detail window. The expanded panel stays transparent
+outside the character, visible snacks and card, and does not cover her feet
+or mouth. The helper neither generates food nor changes inventory or XP.
+Clicking a snack emits snack-offer:{id}. The existing feed action emits the
+same intent without an id. Neither plays an eating action prematurely.
+Only a unique snack-eaten event moves the corresponding snack to the mouth,
+fades it away and plays the real eat_token clip. The native event-id cache
+suppresses repeated event replay. snack-spawned fades a displayed snack in;
+level-up adds a plain operation-status hint, not fabricated character dialogue.
+The Host decides if/when to eat and supplies all growth changes. Native status
+includes petSleeping before interaction events so the Host can defer feeding.
+The safe LaunchServices preview regression sends synthetic spawn/eat/replay/
+level/sleep/wake messages and asserts there is no inventory-consumption echo.
+It does not install or change the real desktop profile or its permissions.

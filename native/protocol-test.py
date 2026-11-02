@@ -135,6 +135,35 @@ def main():
             mouse_status = wait_for('native-status', predicate=lambda value: '预览' in value.get('mouseStatus', ''))
             assert mouse_status.get('mousePlayActive') is False
             assert mouse_status.get('mouseAuthorized') is False
+            snacks = [{'id': f'qa-snack-{index}', 'kind': ['cookie', 'candy', 'fishcake'][index % 3],
+                       'nutrition': 8, 'createdAt': index} for index in range(10)]
+            growth = {'level': 1, 'experience': 18, 'nextLevelExperience': 100,
+                      'satiety': 45, 'energy': 76, 'mood': 83, 'stage': '幼年期',
+                      'stats': {'earnedSnacks': 12, 'eatenSnacks': 0},
+                      'snackCount': 12, 'snacks': snacks, 'status': '等待进食决定'}
+            write((json.dumps({'type': 'growth', 'state': growth,
+                               'event': {'id': 'qa-spawn', 'type': 'snack-spawned',
+                                         'snackId': 'qa-snack-0', 'kind': 'cookie'}}) + '\n').encode())
+            write(b'{"type":"ping","id":"growth-snapshot"}\n')
+            wait_for('pong', 'growth-snapshot')
+            growth['snacks'] = snacks[1:]
+            growth['snackCount'] = 11
+            growth['stats']['eatenSnacks'] = 1
+            eaten = {'type': 'growth', 'state': growth,
+                     'event': {'id': 'qa-eaten', 'type': 'snack-eaten',
+                               'snackId': 'qa-snack-0', 'kind': 'cookie'}}
+            write((json.dumps(eaten) + '\n').encode())
+            write((json.dumps(eaten) + '\n').encode())  # Event replay must not consume or echo.
+            time.sleep(1)
+            growth['level'] = 2
+            growth['experience'] = 0
+            write((json.dumps({'type': 'growth', 'state': growth,
+                               'event': {'id': 'qa-level', 'type': 'level-up'}}) + '\n').encode())
+            write(b'{"type":"control","action":"sleep"}\n')
+            wait_for('native-status', predicate=lambda value: value.get('petSleeping') is True)
+            write(b'{"type":"control","action":"wake"}\n')
+            wait_for('native-status', predicate=lambda value: value.get('petSleeping') is False)
+            assert not any(item.get('type') == 'snack-offer' for item in messages)
         assert process.poll() is None
         print(json.dumps({
             'passed': True, 'transport': 'launch-services-uds' if args.launch_services else 'stdin',
@@ -146,6 +175,7 @@ def main():
             'native_parent_pid': ready.get('parentPid'),
             'preview_audio_enable_stayed_off': args.launch_services,
             'preview_pointer_play_no_warp': args.launch_services,
+            'growth_snapshot_eat_level_replay_safe': args.launch_services,
         }))
     finally:
         try:

@@ -55,6 +55,7 @@ function pageFor(tab,snapshot=fixture) {
 for(const [tab,labels] of [
   ['companion',['应用感知','画面理解','理解系统播放声音','可能保存在本机共享附件缓存']],
   ['appearance',['动态鲸尾女仆','宠物大小','透明度','朗读模型回应','本机测试声音']],
+  ['growth',['陪伴成长','零食库存','每份零食所需 token','本 Host Agent 步骤及宠物自身调用','不计其他应用']],
   ['memory',['保存置顶事实','全部事实与来源','用户原文','清空全部陪伴记忆']],
   ['usage',['显示真实任务进度','今日实际用量','未知','每日 token 上限','尚未查询账户余额']],
 ]) test(`Host React renders a complete ${tab} page without observation or permission side effects`,{skip:!React},()=>{
@@ -110,4 +111,28 @@ test('mouse play exposes actual native authorization and active state',{skip:!Re
   assert.match(html,/aria-label="允许撒娇抢鼠标"[^>]*aria-checked="true"/u);
   assert.ok(html.includes('辅助功能：已授权 · 状态：正在轻拉鼠标'));
   assert.match(html,/<input[^>]*min="5"[^>]*max="120"[^>]*value="45"/u);
+});
+
+test('growth renders actual experience, bounded needs, stacked inventory and waiting reason',{skip:!React},()=>{
+  const html=pageFor('growth',{...fixture,growth:{level:3,levelTitle:'陪伴伙伴',experience:25,nextLevelExperience:80,stage:'熟悉',
+    satiety:75,energy:64,mood:90,snackCount:25,snacks:[{id:'snack-fixture',kind:'小饼干'}],
+    stats:{earnedSnacks:30,eatenSnacks:5,trackedTokens:60000},status:'她正在专注，稍后再吃。'}});
+  for(const label of ['Lv. 3 · 陪伴伙伴','阶段：熟悉','升级经验：25 / 80','75 / 100','64 / 100','90 / 100','当前库存：25 份',
+    '小饼干 · 1','累计获得 30 份 · 已吃 5 份 · 已记录 60,000 token','她正在专注，稍后再吃。']) assert.ok(html.includes(label),`missing ${label}`);
+  assert.match(html,/<progress[^>]*value="25"[^>]*max="80"/u);
+  assert.match(html,/<input[^>]*min="100"[^>]*max="100000"[^>]*value="2000"/u);
+  assert.match(html,/<button(?![^>]*disabled)[^>]*>递一份零食<\/button>/u);
+  assert.equal(html.includes('清空成长'),false);
+});
+
+test('growth with no snacks disables offering and never invents missing metrics',{skip:!React},()=>{
+  const html=pageFor('growth',{...fixture,growth:{snackCount:0,snacks:[],stats:{}}});
+  assert.ok(html.includes('当前库存：0 份'));
+  assert.match(html,/<button[^>]*disabled=""[^>]*>递一份零食<\/button>/u);
+  assert.equal(html.includes('<progress'),false);
+  assert.equal(html.includes('<meter'),false);
+  assert.equal(html.includes('NaN'),false);
+  assert.ok(html.includes('未上报用量不推算'));
+  assert.ok(html.includes('不需要额外 API Key 或系统授权'));
+  assert.equal(html.includes('购买零食'),false);
 });

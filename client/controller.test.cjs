@@ -78,3 +78,18 @@ test('mouse play permission is explicit while disabling and delay changes use se
     {channel:'/api',endpoint:'quiet-companion/update-settings',payload:{patch:{mousePlayAfterMinutes:20}}},
   ]); controller.dispose();
 });
+test('virtual snack and growth controls use the existing owner channel without new permissions or credentials',async()=>{
+  const calls=[]; const {controller}=fixture(async(channel,endpoint,payload)=>{
+    calls.push({channel,endpoint,payload});return {ok:true,value:{settings:{growthEnabled:true},growth:{snacks:[]}}};
+  });
+  await controller.action('offer-snack',{id:'snack-fixture'});
+  await controller.action('offer-snack');
+  await controller.action('growth-refresh');
+  await controller.update({tokensPerSnack:2000,snackRewardsEnabled:true,autoEatEnabled:true,growthEnabled:true});
+  assert.deepEqual(calls,[
+    {channel:'/api',endpoint:'quiet-companion/action',payload:{id:'snack-fixture',action:'offer-snack'}},
+    {channel:'/api',endpoint:'quiet-companion/action',payload:{action:'offer-snack'}},
+    {channel:'/api',endpoint:'quiet-companion/action',payload:{action:'growth-refresh'}},
+    {channel:'/api',endpoint:'quiet-companion/update-settings',payload:{patch:{tokensPerSnack:2000,snackRewardsEnabled:true,autoEatEnabled:true,growthEnabled:true}}},
+  ]); controller.dispose();
+});

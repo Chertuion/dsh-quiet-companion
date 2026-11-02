@@ -55,6 +55,8 @@
 .qcp-metric dt { color: var(--dsw-alias-label-tertiary, GrayText); font-size: 11px; }
 .qcp-metric dd { font-variant-numeric: tabular-nums; font-size: 16px; margin: 4px 0 0; }
 .qcp-agent-summary { border: .5px solid var(--dsw-alias-border-l3, rgba(127,127,127,.25)); border-radius: 9px; padding: 10px 11px; font-size: 12px; overflow-wrap: anywhere; }
+.qcp-growth-gauge { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.qcp-growth-meter { display: block; width: 100%; height: 10px; accent-color: var(--dsw-alias-label-secondary, Highlight); }
 .qcp-empty { color: var(--dsw-alias-label-tertiary, GrayText); padding: 14px 0; font-size: 12px; }
 @media (max-width: 600px) { .qcp-row { gap: 10px; } .qcp-row-control { max-width: 46%; } .qcp-range { min-width: 100px; } .qcp-range input { width: 80px; } .qcp-select { max-width: 170px; } }
 @media (prefers-reduced-motion: reduce) { .qcp-settings *, .qcp-settings *::before, .qcp-settings *::after { scroll-behavior: auto !important; } }

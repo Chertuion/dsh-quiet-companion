@@ -210,6 +210,60 @@ function AppearanceSection({ snapshot, controller, disabled }) {
         format:value=>value.toFixed(2),onCommit:voiceRate=>controller.update({voiceRate}) }))));
 }
 
+function GrowthGauge({ label, value }) {
+  const known=Number.isFinite(value) && value>=0 && value<=100;
+  return h('div',{className:'qcp-growth-gauge'},h('div',{className:'qcp-memory-toolbar'},
+    h('span',{className:'qcp-field-label'},label),h('span',{className:'qcp-status'},known?`${count(value)} / 100`:'未知')),
+    known?h('meter',{className:'qcp-growth-meter',min:0,max:100,value,'aria-label':label}):null);
+}
+
+function GrowthSection({ snapshot, controller, disabled }) {
+  const settings=snapshot.settings??{},growth=snapshot.growth??{},stats=growth.stats??{};
+  const snacks=Array.isArray(growth.snacks)?growth.snacks.filter(snack=>snack&&typeof snack==='object'&&typeof snack.id==='string'&&snack.id):[];
+  const inventory=factualCount(growth.snackCount)?growth.snackCount:Array.isArray(growth.snacks)?snacks.length:null;
+  const [selected,setSelected]=useState('');
+  useEffect(()=>{if(selected&&!snacks.some(snack=>snack.id===selected)) setSelected('');},[snacks,selected]);
+  const growthEnabled=settings.growthEnabled!==false;
+  const offerDisabled=disabled||!growthEnabled||inventory===null||inventory===0;
+  const stage=typeof growth.stage==='string'&&growth.stage?growth.stage:'待读取';
+  const moodNames={idle:'安静',happy:'开心',shy:'害羞',concern:'关心',tease:'想撒娇',thinking:'思考中',sleep:'休息中'};
+  const moodText=typeof growth.mood==='string' ? (moodNames[growth.mood]??growth.mood) : '未知';
+  return h(React.Fragment,null,
+    h(Card,{title:'陪伴成长'},
+      h(ToggleRow,{label:'启用成长',checked:growthEnabled,disabled,
+        description:'陪伴过程中的成长与虚拟零食。关闭后保留已有成长和库存。',onChange:next=>controller.update({growthEnabled:next})}),
+      h('div',{className:'qcp-form-row'},
+        h('div',{className:'qcp-memory-toolbar'},h('span',{className:'qcp-tag'},`阶段：${stage}`),button('刷新成长',()=>controller.action('growth-refresh'),disabled)),
+        h('dl',{className:'qcp-metrics'},
+          h('div',{className:'qcp-metric'},h('dt',null,'等级'),h('dd',null,factualCount(growth.level)?`Lv. ${count(growth.level)}${typeof growth.levelTitle==='string'&&growth.levelTitle?` · ${growth.levelTitle}`:''}`:'未知')),
+          h('div',{className:'qcp-metric'},h('dt',null,'经验'),h('dd',null,factualCount(growth.experience)?count(growth.experience):'未知'))),
+        factualCount(growth.experience)&&Number.isSafeInteger(growth.nextLevelExperience)&&growth.nextLevelExperience>0
+          ?h('div',{className:'qcp-growth-gauge'},h('p',{className:'qcp-muted'},`升级经验：${count(growth.experience)} / ${count(growth.nextLevelExperience)}`),
+            h('progress',{className:'qcp-growth-meter',value:Math.min(growth.experience,growth.nextLevelExperience),max:growth.nextLevelExperience,'aria-label':'升级经验'})):null,
+        h('div',{className:'qcp-grid'},h(GrowthGauge,{label:'饱腹',value:growth.satiety}),h(GrowthGauge,{label:'精力',value:growth.energy}),
+          typeof growth.mood==='number'?h(GrowthGauge,{label:'心情',value:growth.mood}):h('div',{className:'qcp-growth-gauge'},h('span',{className:'qcp-field-label'},'心情'),h('span',{className:'qcp-status'},moodText))))),
+    h(Card,{title:'零食库存'},h('div',{className:'qcp-form-row'},
+      h('p',{className:'qcp-status'},inventory!==null?`当前库存：${count(inventory)} 份`:'当前库存：待读取'),
+      h('div',{className:'qcp-actions'},h('select',{className:'qcp-select','aria-label':'选择虚拟零食',value:selected,disabled:offerDisabled,
+        onChange:event=>setSelected(event.currentTarget.value)},h('option',{value:''},'自动选一份'),
+        snacks.slice(0,100).map((snack,index)=>h('option',{value:snack.id,key:snack.id},`${typeof snack.name==='string'?snack.name:typeof snack.kind==='string'?snack.kind:'零食'} · ${index+1}`))),
+        button('递一份零食',()=>controller.action('offer-snack',selected?{id:selected}:{}),offerDisabled,'primary')),
+      h('p',{className:'qcp-muted'},'递出后由她决定什么时候吃；过饱或忙碌时会先等一等，不保证立即吃掉。'),
+      typeof growth.status==='string'&&growth.status?h('p',{className:'qcp-status',role:'status'},growth.status):null,
+      h('p',{className:'qcp-muted'},`累计获得 ${count(stats.earnedSnacks)} 份 · 已吃 ${count(stats.eatenSnacks)} 份 · 已记录 ${count(stats.trackedTokens)} token`))),
+    h(Card,{title:'零食奖励规则'},
+      h(ToggleRow,{label:'按 token 获得零食',checked:settings.snackRewardsEnabled!==false,disabled,
+        description:'已上报的真实用量累计达到设定值后，获得本地虚拟零食。',onChange:next=>controller.update({snackRewardsEnabled:next})}),
+      h(ToggleRow,{label:'允许自动吃零食',checked:settings.autoEatEnabled!==false,disabled,
+        description:'由状态决定进食时机；你也可以手动递一份。',onChange:next=>controller.update({autoEatEnabled:next})}),
+      h('div',{className:'qcp-form-row'},
+        h(NumberField,{label:'每份零食所需 token',value:settings.tokensPerSnack??2000,min:100,max:100000,step:100,unit:'token',disabled,
+          onCommit:tokensPerSnack=>controller.update({tokensPerSnack})}),
+        h('p',{className:'qcp-note'},'来源范围：本 Host Agent 步骤及宠物自身调用；未上报用量不推算，不计其他应用。'),
+        h('p',{className:'qcp-muted'},'日常互动也可增加成长，不需要为了成长额外消耗 token。'),
+        h('p',{className:'qcp-muted'},'token 映射仅为虚拟成长奖励，不提供购买或真实付费；使用现有 Harness 配置，不需要额外 API Key 或系统授权。'))));
+}
+
 function UsageSection({ snapshot, controller, disabled }) {
   const settings=snapshot.settings??{}, usage=snapshot.usage??{}, budget=snapshot.budget??{}, agent=snapshot.agent??{};
   const balance=snapshot.balance??{};
@@ -252,8 +306,8 @@ function LoadedSettings({ controller, useSnapshot }) {
   useEffect(()=>controller.open(),[controller]);
   const snapshot=state.snapshot??{};
   const disabled=state.busy||state.status!=='ready';
-  const tabs=[['companion','感知与陪伴'],['appearance','外观与语音'],['memory','记忆'],['usage','进度与用量']];
-  const view={companion:CompanionSection,appearance:AppearanceSection,memory:MemorySection,usage:UsageSection}[tab];
+  const tabs=[['companion','感知与陪伴'],['appearance','外观与语音'],['growth','成长与零食'],['memory','记忆'],['usage','进度与用量']];
+  const view={companion:CompanionSection,appearance:AppearanceSection,growth:GrowthSection,memory:MemorySection,usage:UsageSection}[tab];
   return h('div',{className:'qcp-settings'},
     h('div',{className:'qcp-title-row'},h('div',{className:'qcp-title-copy'},h('h2',null,'安静陪伴'),h('p',{className:'qcp-intro'},'在这里管理她如何感知、交流、记忆与安静陪伴。')),
       h('div',{className:'qcp-actions'},h('span',{className:'qcp-heading-badge'},helperRunning(snapshot)?'宠物已连接':'等待宠物连接'),

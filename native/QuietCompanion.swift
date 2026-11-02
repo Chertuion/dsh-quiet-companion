@@ -352,6 +352,18 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
     private var settingsWindow: NSWindow?
     private var chatWindow: NSWindow?
     private var allMemoryWindow: NSWindow?
+    private var growthWindow: NSWindow?
+    private var growthDetailLabel: NSTextField?
+    private var growthBadge: CompanionGrowthBadge?
+    private var snackOverflowLabel: NSTextField?
+    private var growthState: [String: Any]?
+    private var snackRecords: [String: [String: Any]] = [:]
+    private var snackViews: [String: CompanionSnackView] = [:]
+    private var eatingSnackViews: [String: CompanionSnackView] = [:]
+    private var eatQueue: [(event: [String: Any], view: CompanionSnackView?, kind: String)] = []
+    private var foodAnimationRunning = false
+    private var seenGrowthEvents = Set<String>()
+    private var growthEventOrder: [String] = []
     private var allMemoryText: NSTextView?
     private var observeCheckbox: NSButton!
     private var screenCheckbox: NSButton!
@@ -509,7 +521,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
     }
 
     private func layoutPet() {
-        panel.setContentSize(NSSize(width: 320 * scale, height: 400 * scale))
+        panel.setContentSize(NSSize(width: (growthState == nil ? 320 : 420) * scale, height: 400 * scale))
         let dynamic = settings.dynamicSkinEnabled && animationPlayer?.available == true
         imageView.frame = NSRect(x: (dynamic ? 20 : 55) * scale, y: 4 * scale,
                                 width: (dynamic ? 280 : 210) * scale, height: 270 * scale)
@@ -517,6 +529,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         agentPill.frame = NSRect(x: 35 * scale, y: 275 * scale, width: 250 * scale, height: 22 * scale)
         bubble.text.font = .systemFont(ofSize: 14 * min(scale, 1.2), weight: .medium)
         sleepLabel.frame = NSRect(x: 250 * scale, y: 240 * scale, width: 65 * scale, height: 35 * scale)
+        layoutGrowthTray()
     }
 
     func savePosition() {
@@ -586,6 +599,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
                 self?.updateImage()
             }
         }
+        publishNativeStatus()
         if !previewMode { emit(["type": "interaction", "kind": kind, "timestamp": nowMilliseconds()]) }
     }
 
@@ -625,6 +639,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             ("安静 30 分钟", #selector(snooze)), ("继续陪伴", #selector(resumeObservation)),
             ("喂点零食", #selector(feedPet)), ("让她休息", #selector(sleepPet)),
             ("叫醒她", #selector(wakePet)), ("静音／恢复语音", #selector(toggleVoice)),
+            ("成长与零食…", #selector(showGrowth)),
             ("退出宠物", #selector(quitPet))]
         for (title, action) in entries {
             let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
@@ -662,7 +677,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         settingsChanged()
         showSpeech("已恢复陪伴", mood: "idle", speak: false)
     }
-    @objc private func feedPet() { interact("feed") }
+    @objc private func feedPet() { offerSnack(nil) }
     @objc private func sleepPet() { interact("sleep") }
     @objc private func wakePet() { interact("wake") }
     @objc private func toggleVoice() {
@@ -714,7 +729,9 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
                 imageHit = (bitmap.colorAt(x: px, y: py)?.alphaComponent ?? 1) > 0.08
             }
         }
-        panel.ignoresMouseEvents = !(bubbleHit || imageHit)
+        let foodHit = snackViews.values.contains { $0.canOffer && !$0.isHidden && $0.frame.contains(point) }
+        let growthHit = growthBadge.map { !$0.isHidden && $0.frame.contains(point) } ?? false
+        panel.ignoresMouseEvents = !(bubbleHit || imageHit || foodHit || growthHit)
     }
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didStart utterance: AVSpeechUtterance) {
@@ -953,6 +970,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             "permissionRequestInFlight": permissionRequestInFlight,
             "mouseAuthorized": !previewMode && AXIsProcessTrusted(), "mousePlayActive": mousePlayActive,
             "mouseStatus": mouseStatus,
+            "petSleeping": sleeping,
             "voices": voices.map { ["id": $0.identifier, "name": $0.name, "language": $0.language] }]
         guard let fingerprint = try? JSONSerialization.data(withJSONObject: message, options: [.sortedKeys]), fingerprint != lastNativeStatus else { return }
         lastNativeStatus = fingerprint
@@ -1581,6 +1599,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         if sleeping != nextSleeping {
             sleeping = nextSleeping
             if settings.dynamicSkinEnabled { animationPlayer?.interaction(sleeping ? "sleep" : "wake") }
+            publishNativeStatus()
             if !previewMode { emit(["type": "interaction", "kind": sleeping ? "sleep" : "wake", "automatic": true, "timestamp": nowMilliseconds()]) }
         }
         sleepLabel.isHidden = !sleeping
@@ -1784,6 +1803,187 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         return "未知"
     }
 
+    private func offerSnack(_ id: String?) {
+        stopMousePlay("正在递零食，指针互动已停止。")
+        guard !previewMode else { return }
+        var message: [String: Any] = ["type": "snack-offer"]
+        if let id { message["id"] = id }
+        emit(message)
+    }
+
+    private func layoutGrowthTray() {
+        guard growthState != nil, let content = panel.contentView else { return }
+        if growthBadge == nil {
+            let badge = CompanionGrowthBadge(frame: .zero)
+            badge.onOpen = { [weak self] in self?.showGrowth() }
+            content.addSubview(badge)
+            growthBadge = badge
+            let count = label("", font: .systemFont(ofSize: 11, weight: .medium))
+            count.alignment = .center
+            count.textColor = .secondaryLabelColor
+            content.addSubview(count)
+            snackOverflowLabel = count
+        }
+        growthBadge?.frame = NSRect(x: 322 * scale, y: 209 * scale, width: 92 * scale, height: 99 * scale)
+        snackOverflowLabel?.frame = NSRect(x: 322 * scale, y: 176 * scale, width: 92 * scale, height: 25 * scale)
+        let records = (growthState?["snacks"] as? [[String: Any]] ?? []).filter {
+            guard let id = $0["id"] as? String else { return false }
+            return !id.isEmpty && id.utf8.count <= 256
+        }
+        let visible = Array(records.prefix(8))
+        let wanted = Set(visible.compactMap { $0["id"] as? String })
+        for id in Array(snackViews.keys) where !wanted.contains(id) {
+            snackViews.removeValue(forKey: id)?.removeFromSuperview()
+        }
+        for (index, record) in visible.enumerated() {
+            let id = record["id"] as! String
+            let view: CompanionSnackView
+            if let existing = snackViews[id] { view = existing }
+            else {
+                view = CompanionSnackView(id: id, kind: record["kind"] as? String ?? "cookie")
+                view.onOffer = { [weak self] offered in self?.offerSnack(offered) }
+                content.addSubview(view)
+                snackViews[id] = view
+            }
+            view.frame = NSRect(x: (325 + Double(index % 2) * 44) * scale,
+                                y: (132 - Double(index / 2) * 36) * scale,
+                                width: 32 * scale, height: 32 * scale)
+        }
+        let total = (growthState?["snackCount"] as? NSNumber)?.intValue ?? records.count
+        let overflow = max(0, total - visible.count)
+        snackOverflowLabel?.stringValue = overflow > 0 ? "+\(overflow) 份" : (total == 0 ? "暂无零食" : "零食 \(total) 份")
+    }
+
+    private func growthDescription() -> String {
+        guard let state = growthState else { return "等待 Host 同步成长状态。" }
+        let stats = state["stats"] as? [String: Any] ?? [:]
+        return ["等级：Lv.\(formatted(state["level"])) · \(state["stage"] as? String ?? "")",
+                "称号：\(state["levelTitle"] as? String ?? "—")",
+                "本级经验：\(formatted(state["experience"])) / \(formatted(state["nextLevelExperience"]))",
+                "饱腹：\(formatted(state["satiety"])) / 100",
+                "精力：\(formatted(state["energy"])) / 100",
+                "心情：\(formatted(state["mood"])) / 100",
+                "零食库存：\(formatted(state["snackCount"]))",
+                "累计获得：\(formatted(stats["earnedSnacks"])) · 已吃掉：\(formatted(stats["eatenSnacks"]))",
+                "当前状态：\(state["status"] as? String ?? "—")"].joined(separator: "\n\n")
+    }
+
+    @objc private func showGrowth() {
+        stopMousePlay("正在查看成长，指针互动已停止。")
+        if growthWindow == nil {
+            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 420, height: 445),
+                                  styleMask: [.titled, .closable], backing: .buffered, defer: false)
+            window.title = "成长与零食"
+            window.isReleasedWhenClosed = false
+            window.center()
+            let detail = label(growthDescription(), font: .systemFont(ofSize: 14))
+            detail.frame = NSRect(x: 24, y: 75, width: 372, height: 345)
+            window.contentView!.addSubview(detail)
+            let hint = label("成长和库存以 Host 为准。点击零食只是递给她；太饱、睡觉或专注时，她可能稍后再吃。")
+            hint.frame = NSRect(x: 24, y: 20, width: 372, height: 49)
+            hint.font = .systemFont(ofSize: 12)
+            hint.textColor = .secondaryLabelColor
+            window.contentView!.addSubview(hint)
+            growthDetailLabel = detail
+            growthWindow = window
+        }
+        growthDetailLabel?.stringValue = growthDescription()
+        growthWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func updateGrowth(_ command: [String: Any]) {
+        guard let state = command["state"] as? [String: Any] else { return }
+        let priorRecords = snackRecords
+        var event = command["event"] as? [String: Any]
+        if let id = event?["id"] as? String {
+            if seenGrowthEvents.contains(id) { event = nil }
+            else {
+                seenGrowthEvents.insert(id)
+                growthEventOrder.append(id)
+                while growthEventOrder.count > 128 { seenGrowthEvents.remove(growthEventOrder.removeFirst()) }
+            }
+        } else { event = nil }
+        var eatenView: CompanionSnackView?
+        if event?["type"] as? String == "snack-eaten", let id = event?["snackId"] as? String {
+            eatenView = snackViews.removeValue(forKey: id)
+            eatenView?.removeFromSuperview()
+        }
+        let firstState = growthState == nil
+        growthState = state
+        snackRecords = [:]
+        for record in state["snacks"] as? [[String: Any]] ?? [] {
+            if let id = record["id"] as? String, !id.isEmpty { snackRecords[id] = record }
+        }
+        layoutPet()
+        if firstState, let screen = NSScreen.screens.first(where: { $0.visibleFrame.intersects(panel.frame) }) {
+            let frame = screen.visibleFrame
+            panel.setFrameOrigin(NSPoint(x: min(max(panel.frame.minX, frame.minX), max(frame.minX, frame.maxX - panel.frame.width)),
+                                         y: min(max(panel.frame.minY, frame.minY), max(frame.minY, frame.maxY - panel.frame.height))))
+        }
+        let level = formatted(state["level"])
+        growthBadge?.summary = "Lv.\(level) · \(state["stage"] as? String ?? "")\nXP \(formatted(state["experience"]))/\(formatted(state["nextLevelExperience"]))\n饱腹 \(formatted(state["satiety"]))\n精力 \(formatted(state["energy"])) · 心情 \(formatted(state["mood"]))"
+        let experience = (state["experience"] as? NSNumber)?.doubleValue ?? 0
+        let next = (state["nextLevelExperience"] as? NSNumber)?.doubleValue ?? 0
+        growthBadge?.progress = next > 0 && experience.isFinite && next.isFinite ? experience / next : 0
+        growthBadge?.toolTip = growthDescription()
+        growthDetailLabel?.stringValue = growthDescription()
+        guard let event else { return }
+        switch event["type"] as? String {
+        case "snack-spawned":
+            if let id = event["snackId"] as? String, let view = snackViews[id], !settings.reduceMotion {
+                view.alphaValue = 0
+                NSAnimationContext.runAnimationGroup { context in context.duration = 0.3; view.animator().alphaValue = 1 }
+            }
+        case "snack-eaten":
+            let id = event["snackId"] as? String ?? ""
+            let kind = event["kind"] as? String ?? priorRecords[id]?["kind"] as? String ?? "cookie"
+            eatQueue.append((event: event, view: eatenView, kind: kind))
+            playNextSnackEat()
+        case "level-up":
+            showSpeech("等级提升：Lv.\(level)", mood: "idle", speak: false)
+            if !settings.reduceMotion, let badge = growthBadge {
+                badge.alphaValue = 0.45
+                NSAnimationContext.runAnimationGroup { context in context.duration = 0.6; badge.animator().alphaValue = 1 }
+            }
+        default: break
+        }
+    }
+
+    private func playNextSnackEat() {
+        guard !foodAnimationRunning, !eatQueue.isEmpty, let content = panel.contentView else { return }
+        let pending = eatQueue.removeFirst()
+        let id = pending.event["snackId"] as? String ?? "event-food"
+        let view = pending.view ?? CompanionSnackView(id: id, kind: pending.kind)
+        if view.frame.isEmpty { view.frame = NSRect(x: 349 * scale, y: 96 * scale, width: 32 * scale, height: 32 * scale) }
+        view.canOffer = false
+        // A spawn fade may still be in progress when the Host decides to eat.
+        view.alphaValue = 1
+        content.addSubview(view)
+        eatingSnackViews[id] = view
+        foodAnimationRunning = true
+        animationPlayer?.interaction("feed")
+        let mouth = NSPoint(x: imageView.frame.midX, y: imageView.frame.minY + imageView.frame.height * 0.7)
+        if settings.reduceMotion {
+            view.removeFromSuperview()
+            eatingSnackViews.removeValue(forKey: id)
+            foodAnimationRunning = false
+            playNextSnackEat()
+            return
+        }
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.75
+            view.animator().setFrameOrigin(NSPoint(x: mouth.x - 8 * scale, y: mouth.y - 8 * scale))
+            view.animator().setFrameSize(NSSize(width: 16 * scale, height: 16 * scale))
+            view.animator().alphaValue = 0
+        }, completionHandler: { [weak self, weak view] in
+            view?.removeFromSuperview()
+            self?.eatingSnackViews.removeValue(forKey: id)
+            self?.foodAnimationRunning = false
+            self?.playNextSnackEat()
+        })
+    }
+
     private func updateUsage(_ command: [String: Any]) {
         let usage = command["usage"] as? [String: Any] ?? command
         let balance = command["balance"] as? [String: Any] ?? [:]
@@ -1920,6 +2120,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         case "agent": updateAgent(command)
         case "usage": updateUsage(command)
         case "memory": updateMemory(command)
+        case "growth": updateGrowth(command)
         case "shutdown": shutdown()
         case "open-settings": showSettings()
         default: break
