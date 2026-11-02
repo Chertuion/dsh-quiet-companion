@@ -1,0 +1,472 @@
+{
+  "schemaVersion": 2,
+  "characterId": "orange-book-companion",
+  "columns": 4,
+  "rows": 4,
+  "sheets": {
+    "daily": "sheets/daily.png",
+    "tasks": "sheets/tasks.png",
+    "touch": "sheets/touch.png",
+    "care": "sheets/care.png"
+  },
+  "clips": {
+    "idle": {
+      "frames": [
+        {
+          "sheet": "daily",
+          "row": 0,
+          "column": 0
+        },
+        {
+          "sheet": "daily",
+          "row": 0,
+          "column": 1
+        },
+        {
+          "sheet": "daily",
+          "row": 0,
+          "column": 2
+        },
+        {
+          "sheet": "daily",
+          "row": 0,
+          "column": 3
+        }
+      ],
+      "frameMs": 250,
+      "loop": true
+    },
+    "waiting": {
+      "frames": [
+        {
+          "sheet": "daily",
+          "row": 1,
+          "column": 0
+        },
+        {
+          "sheet": "daily",
+          "row": 1,
+          "column": 1
+        },
+        {
+          "sheet": "daily",
+          "row": 1,
+          "column": 2
+        },
+        {
+          "sheet": "daily",
+          "row": 1,
+          "column": 3
+        }
+      ],
+      "frameMs": 250,
+      "loop": true
+    },
+    "thinking": {
+      "frames": [
+        {
+          "sheet": "daily",
+          "row": 2,
+          "column": 0
+        },
+        {
+          "sheet": "daily",
+          "row": 2,
+          "column": 1
+        },
+        {
+          "sheet": "daily",
+          "row": 2,
+          "column": 2
+        },
+        {
+          "sheet": "daily",
+          "row": 2,
+          "column": 3
+        }
+      ],
+      "frameMs": 250,
+      "loop": true
+    },
+    "working": {
+      "frames": [
+        {
+          "sheet": "daily",
+          "row": 3,
+          "column": 0
+        },
+        {
+          "sheet": "daily",
+          "row": 3,
+          "column": 1
+        },
+        {
+          "sheet": "daily",
+          "row": 3,
+          "column": 2
+        },
+        {
+          "sheet": "daily",
+          "row": 3,
+          "column": 3
+        }
+      ],
+      "frameMs": 250,
+      "loop": true
+    },
+    "working_search": {
+      "frames": [
+        {
+          "sheet": "tasks",
+          "row": 0,
+          "column": 0
+        },
+        {
+          "sheet": "tasks",
+          "row": 0,
+          "column": 1
+        },
+        {
+          "sheet": "tasks",
+          "row": 0,
+          "column": 2
+        },
+        {
+          "sheet": "tasks",
+          "row": 0,
+          "column": 3
+        }
+      ],
+      "frameMs": 250,
+      "loop": true
+    },
+    "working_command": {
+      "frames": [
+        {
+          "sheet": "tasks",
+          "row": 1,
+          "column": 0
+        },
+        {
+          "sheet": "tasks",
+          "row": 1,
+          "column": 1
+        },
+        {
+          "sheet": "tasks",
+          "row": 1,
+          "column": 2
+        },
+        {
+          "sheet": "tasks",
+          "row": 1,
+          "column": 3
+        }
+      ],
+      "frameMs": 250,
+      "loop": true
+    },
+    "success": {
+      "frames": [
+        {
+          "sheet": "tasks",
+          "row": 2,
+          "column": 0
+        },
+        {
+          "sheet": "tasks",
+          "row": 2,
+          "column": 1
+        },
+        {
+          "sheet": "tasks",
+          "row": 2,
+          "column": 2
+        },
+        {
+          "sheet": "tasks",
+          "row": 2,
+          "column": 3
+        }
+      ],
+      "frameMs": 250,
+      "loop": false
+    },
+    "error": {
+      "frames": [
+        {
+          "sheet": "tasks",
+          "row": 3,
+          "column": 0
+        },
+        {
+          "sheet": "tasks",
+          "row": 3,
+          "column": 1
+        },
+        {
+          "sheet": "tasks",
+          "row": 3,
+          "column": 2
+        },
+        {
+          "sheet": "tasks",
+          "row": 3,
+          "column": 3
+        }
+      ],
+      "frameMs": 250,
+      "loop": false
+    },
+    "dragging": {
+      "frames": [
+        {
+          "sheet": "touch",
+          "row": 0,
+          "column": 0
+        },
+        {
+          "sheet": "touch",
+          "row": 0,
+          "column": 1
+        },
+        {
+          "sheet": "touch",
+          "row": 0,
+          "column": 2
+        },
+        {
+          "sheet": "touch",
+          "row": 0,
+          "column": 3
+        }
+      ],
+      "frameMs": 250,
+      "loop": true
+    },
+    "dragging_release": {
+      "frames": [
+        {
+          "sheet": "touch",
+          "row": 1,
+          "column": 0
+        },
+        {
+          "sheet": "touch",
+          "row": 1,
+          "column": 1
+        },
+        {
+          "sheet": "touch",
+          "row": 1,
+          "column": 2
+        },
+        {
+          "sheet": "touch",
+          "row": 1,
+          "column": 3
+        }
+      ],
+      "frameMs": 250,
+      "loop": false
+    },
+    "head_pat": {
+      "frames": [
+        {
+          "sheet": "touch",
+          "row": 2,
+          "column": 0
+        },
+        {
+          "sheet": "touch",
+          "row": 2,
+          "column": 1
+        },
+        {
+          "sheet": "touch",
+          "row": 2,
+          "column": 2
+        },
+        {
+          "sheet": "touch",
+          "row": 2,
+          "column": 3
+        }
+      ],
+      "frameMs": 250,
+      "loop": false
+    },
+    "poke": {
+      "frames": [
+        {
+          "sheet": "touch",
+          "row": 3,
+          "column": 0
+        },
+        {
+          "sheet": "touch",
+          "row": 3,
+          "column": 1
+        },
+        {
+          "sheet": "touch",
+          "row": 3,
+          "column": 2
+        },
+        {
+          "sheet": "touch",
+          "row": 3,
+          "column": 3
+        }
+      ],
+      "frameMs": 250,
+      "loop": false
+    },
+    "skirt": {
+      "frames": [
+        {
+          "sheet": "care",
+          "row": 0,
+          "column": 0
+        },
+        {
+          "sheet": "care",
+          "row": 0,
+          "column": 1
+        },
+        {
+          "sheet": "care",
+          "row": 0,
+          "column": 2
+        },
+        {
+          "sheet": "care",
+          "row": 0,
+          "column": 3
+        }
+      ],
+      "frameMs": 250,
+      "loop": false
+    },
+    "eat_token": {
+      "frames": [
+        {
+          "sheet": "care",
+          "row": 1,
+          "column": 0
+        },
+        {
+          "sheet": "care",
+          "row": 1,
+          "column": 1
+        },
+        {
+          "sheet": "care",
+          "row": 1,
+          "column": 2
+        },
+        {
+          "sheet": "care",
+          "row": 1,
+          "column": 3
+        }
+      ],
+      "frameMs": 250,
+      "loop": false
+    },
+    "idle_stretch": {
+      "frames": [
+        {
+          "sheet": "care",
+          "row": 2,
+          "column": 0
+        },
+        {
+          "sheet": "care",
+          "row": 2,
+          "column": 1
+        },
+        {
+          "sheet": "care",
+          "row": 2,
+          "column": 2
+        },
+        {
+          "sheet": "care",
+          "row": 2,
+          "column": 3
+        }
+      ],
+      "frameMs": 250,
+      "loop": false
+    },
+    "idle_yawn": {
+      "frames": [
+        {
+          "sheet": "care",
+          "row": 3,
+          "column": 0
+        },
+        {
+          "sheet": "care",
+          "row": 3,
+          "column": 1
+        },
+        {
+          "sheet": "care",
+          "row": 3,
+          "column": 2
+        },
+        {
+          "sheet": "care",
+          "row": 3,
+          "column": 3
+        }
+      ],
+      "frameMs": 250,
+      "loop": false
+    }
+  },
+  "stateMap": {
+    "IDLE": "idle",
+    "THINKING": "thinking",
+    "WORKING": "working",
+    "WAITING": "waiting",
+    "SUCCESS": "success",
+    "ERROR": "error",
+    "DISCONNECTED": "idle"
+  },
+  "workingActivityMap": {
+    "searching": "working_search",
+    "commanding": "working_command",
+    "editing": "working",
+    "testing": "working_command",
+    "using-tool": "working"
+  },
+  "hitRegions": {
+    "head": [
+      0.2,
+      0.02,
+      0.6,
+      0.3
+    ],
+    "body": [
+      0.18,
+      0.32,
+      0.64,
+      0.32
+    ],
+    "skirt": [
+      0.15,
+      0.64,
+      0.7,
+      0.34
+    ]
+  },
+  "anchors": {
+    "mouth": [
+      0.5,
+      0.25
+    ]
+  }
+}

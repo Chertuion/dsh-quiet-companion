@@ -1,4 +1,4 @@
-Native companion component — 0.3.0 — 2026-11-02
+Native companion component — 0.4.0 — 2026-11-02
 
 Build
   ./build.sh
@@ -9,23 +9,75 @@ Documents. cp -X and ditto --noextattr --norsrc copy resources without metadata.
 No global xattr removal, quarantine bypass, or production notarization occurs.
 An optional first argument copies the completed bundle to that destination.
 
-Images and licensed animations
-idle.png and shy.png are copied from ../assets when present. Optional animation
-resources are copied from ../assets/animations; if that source is absent, a
-previously packaged native/QuietCompanion.app/Contents/Resources/pet/animations
-is used. Runtime resource layout:
+Orange character assets and atlas schema
+The only build source is ../assets/orange-character. Missing or invalid assets
+stop the build before Swift compilation. No previous bundled resources,
+../assets/animations, or legacy loose art are used as a fallback. Only the
+manifest, idle.png, shy.png and its referenced PNG sheets enter the new app:
   Contents/Resources/pet/idle.png
   Contents/Resources/pet/shy.png
-  Contents/Resources/pet/animations/pet-manifest.json
-  Contents/Resources/pet/animations/pet/<clip>/<frame>.webp
---assets-dir PATH can override Contents/Resources/pet.
-PetAnimation.swift uses manifest frameMs/loop/stateMap/workingActivityMap.
-It caches at most twelve decoded frames from one clip and clears them when
-switching clips. Idle/thinking/working/waiting/success/error, head/body/tail,
-feeding, dragging and drag-release use actual supplied frame sequences.
-The source attribution and MIT license are included with those assets.
-A settings switch selects the dynamic character or the supplied still art.
-This is frame animation, not Live2D.
+  Contents/Resources/pet/pet-manifest.json
+  Contents/Resources/pet/sheets/<name>.png
+--assets-dir PATH may override this pet root, but the same identity/schema
+validation applies to both animated and still modes. An unsupported character,
+incomplete manifest or invalid PNG produces an orange neutral sun symbol;
+it never falls back to the previous blue-haired character.
+
+Required manifest structure (all sixteen clips must be provided):
+  schemaVersion: 2
+  characterId: "orange-book-companion"
+  columns: 4
+  rows: 4
+  sheets: {"sheet-id": "sheets/file.png", ...}
+  clips: {
+    "idle": {
+      "frames": [
+        {"sheet":"sheet-id", "row":0, "column":0},
+        {"sheet":"sheet-id", "row":0, "column":1},
+        {"sheet":"sheet-id", "row":0, "column":2},
+        {"sheet":"sheet-id", "row":0, "column":3}
+      ],
+      "frameMs":250,
+      "loop":true
+    }, ...
+  }
+  stateMap: {"IDLE":"idle", "THINKING":"thinking", "WORKING":"working",
+             "WAITING":"waiting", "SUCCESS":"success", "ERROR":"error"}
+  workingActivityMap: {"search":"working_search", "command":"working_command"}
+Required clip keys are idle, waiting, thinking, working, working_search,
+working_command, success, error, dragging, dragging_release, head_pat, poke,
+skirt, eat_token, idle_stretch and idle_yawn. Each has exactly four frames,
+row/column 0..3, a finite frameMs in 16..5000 and a boolean loop. Choose loop
+false for temporary interactions that should return to the active agent pose;
+dragging and ordinary activity clips can loop. All state/activity targets
+must exist, and stateMap.IDLE must equal idle. A legacy tail clip is rejected.
+
+Sheets must be valid PNG files, each at least 4x4 and at most 4096x4096, with
+all sheets sharing the same dimensions. They need not be divisible by four:
+source cell edges use floor(column*width/4) and floor(row*height/4), so a
+1254x1254 sheet has 313/314-pixel crops and a stable 313.5x313.5 display size.
+Keep a consistent character scale, canvas and baseline across all cells.
+Static idle.png/shy.png can have a different aspect ratio and are also bounded
+to 4096px. Paths must be relative PNG paths that resolve inside this source.
+
+Optional manifest geometry uses normalized 0..1 coordinates from each cell's
+top-left corner, applied to the actual aspect-fit display rectangle:
+  hitRegions: {"head":[0.20,0.02,0.60,0.30],
+               "body":[0.22,0.32,0.56,0.31],
+               "skirt":[0.10,0.63,0.80,0.35]}
+  anchors: {"mouth":[0.50,0.23]}
+These shown values are the defaults. Hit rectangles must stay inside the cell;
+the mouth anchor controls the visible snack's destination. Transparent pixels
+remain click-through. Interactions emit head/body/skirt; an old inbound tail
+name is accepted only as an alias for skirt and never emitted.
+
+PetAnimation.swift reads actual PNG keyframes and manifest timing/state maps.
+The cache holds at most four decoded sheets within 64 MiB plus at most twelve
+current-clip frame images; switching clips clears that clip's frame cache.
+Reduced motion uses only the first frame of each requested pose. The settings
+switch selects this same orange character's dynamic atlas or supplied still
+art. This is four-keyframe sprite animation, not Live2D or the prior thousands
+of WebP frames; all sixteen states use the new character resources.
 
 Privacy and activation
 Observation, screen capture, system audio, voice output and memory default off.
@@ -71,7 +123,8 @@ The memory editor edits only manually pinned factsText. A separate read-only
 window displays all learned and pinned facts with their actual ids and slots,
 so the user can copy a target for /forget or /忘记 in chat. Learned facts are
 never fed back through the manual-pin editor. Counts show facts/pinned/episodes.
-Head/body/tail/feed/sleep/wake/drag/landing emit interactions to the parent.
+Head/body/skirt/sleep/wake/drag/landing emit interactions to the parent;
+feeding emits the snack-offer intent documented below.
 Native local poses do not fabricate model dialogue. TTS uses system voices
 and is opt-in; parent speech must explicitly contain speak:true.
 
@@ -170,7 +223,10 @@ and consent settings; status uses synthetic false authorization values.
 
 Safe QA
   <staged app>/Contents/MacOS/QuietCompanion --self-test
-Self-test checks default-off settings and decodes a real first WebP frame.
+Self-test checks default-off settings, the orange manifest and all 16x4
+PNG atlas cells, reporting pngDecoded, characterId, clipCount, frameCount
+and allFramesDecoded. ImageIO decoding does
+not create an NSImage or access WindowServer in this non-UI test.
 It does not create NSApplication, observe activity, capture screen/system audio,
 request permissions, speak, or call a model.
 --preview opens the UI with all capture, speech and outbound chat/interaction

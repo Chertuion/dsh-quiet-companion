@@ -301,7 +301,7 @@ function AppearanceSection({ snapshot, controller, disabled }) {
   const appearanceDisabled = disabled || !helperRunning(snapshot);
   return h(React.Fragment, null,
     h(Card, { title: '角色与桌面' },
-      h(ToggleRow, { label: '动态鲸尾女仆', checked: settings.dynamicSkinEnabled !== false, disabled,
+      h(ToggleRow, { label: '动态橙发花饰角色', checked: settings.dynamicSkinEnabled !== false, disabled,
         description: '使用逐帧动作；关闭后显示参考立绘。', onChange: next => controller.update({ dynamicSkinEnabled: next }) }),
       h(ToggleRow, { label: '减少动态效果', checked: settings.reduceMotion, disabled,
         description: '减少漂浮与连续动作，保持更安静的桌面表现。', onChange: next => controller.update({ reduceMotion: next }) }),

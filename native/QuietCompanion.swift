@@ -331,8 +331,7 @@ private final class PetImageView: NSImageView {
         if event.clickCount >= 2 { companion?.showChat() }
         else {
             let local = convert(event.locationInWindow, from: nil)
-            let kind = local.y > bounds.height * 0.68 ? "head" : (local.x > bounds.width * 0.67 && local.y < bounds.height * 0.55 ? "tail" : "body")
-            companion?.interact(kind)
+            companion?.interact(at: local)
         }
     }
     override func rightMouseDown(with event: NSEvent) {
@@ -498,7 +497,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         imageView.imageScaling = .scaleProportionallyUpOrDown
         bubble = BubbleView(frame: .zero)
         sleepLabel = label("z Z", font: .systemFont(ofSize: 23, weight: .light))
-        sleepLabel.textColor = .systemBlue
+        sleepLabel.textColor = .systemOrange
         sleepLabel.isHidden = true
         content.addSubview(imageView)
         content.addSubview(bubble)
@@ -539,24 +538,32 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
     }
 
     private func updateImage() {
-        if settings.dynamicSkinEnabled, let animationPlayer, animationPlayer.available {
+        // Both animated and still modes require the same validated identity.
+        // An old --assets-dir must never bring the previous character back.
+        guard let animationPlayer, animationPlayer.available else {
+            imageView.image = NSImage(systemSymbolName: "sun.max.fill", accessibilityDescription: "陪伴角色")
+            imageView.contentTintColor = .systemOrange
+            petBitmap = imageView.image?.tiffRepresentation.flatMap { NSBitmapImageRep(data: $0) }
+            return
+        }
+        if settings.dynamicSkinEnabled {
             animationPlayer.mood(currentMood)
             return
         }
         let name = currentMood == "shy" ? "shy.png" : "idle.png"
-        imageView.image = NSImage(contentsOf: assetsDirectory.appendingPathComponent(name))
-            ?? NSImage(systemSymbolName: "drop.fill", accessibilityDescription: "陪伴小鲸")
-        if !FileManager.default.fileExists(atPath: assetsDirectory.appendingPathComponent(name).path) {
-            imageView.contentTintColor = .systemBlue
-        } else { imageView.contentTintColor = nil }
-        if let data = imageView.image?.tiffRepresentation { petBitmap = NSBitmapImageRep(data: data) }
+        if let image = NSImage(contentsOf: assetsDirectory.appendingPathComponent(name)) {
+            imageView.image = image
+            imageView.contentTintColor = nil
+        } else {
+            imageView.image = NSImage(systemSymbolName: "sun.max.fill", accessibilityDescription: "陪伴角色")
+            imageView.contentTintColor = .systemOrange
+        }
+        petBitmap = imageView.image?.tiffRepresentation.flatMap { NSBitmapImageRep(data: $0) }
     }
 
     private func configureAnimation() {
         animationPlayer?.stop()
-        animationPlayer = nil
-        guard settings.dynamicSkinEnabled else { return }
-        let player = PetAnimationPlayer(root: assetsDirectory.appendingPathComponent("animations", isDirectory: true)) { [weak self] frame in
+        let player = PetAnimationPlayer(root: assetsDirectory) { [weak self] frame in
             guard let self, self.settings.dynamicSkinEnabled else { return }
             self.imageView.image = frame
             self.imageView.contentTintColor = nil
@@ -565,9 +572,30 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             }
         }
         animationPlayer = player
-        player.setReducedMotion(settings.reduceMotion)
-        player.setState("IDLE")
+        player.setReducedMotion(settings.reduceMotion || !settings.dynamicSkinEnabled)
         layoutPet()
+        if settings.dynamicSkinEnabled, player.available { player.setState("IDLE") }
+        else { updateImage() }
+    }
+
+    /// Actual aspect-fit image bounds; coordinates here use AppKit's bottom-left origin.
+    private var drawnImageRect: NSRect {
+        guard let image = imageView.image, image.size.width > 0, image.size.height > 0 else { return .zero }
+        let fit = min(imageView.bounds.width / image.size.width, imageView.bounds.height / image.size.height)
+        let size = NSSize(width: image.size.width * fit, height: image.size.height * fit)
+        return NSRect(x: (imageView.bounds.width - size.width) / 2,
+                      y: (imageView.bounds.height - size.height) / 2, width: size.width, height: size.height)
+    }
+
+    private func normalizedImagePoint(_ point: NSPoint) -> CGPoint? {
+        let rect = drawnImageRect
+        guard rect.width > 0, rect.height > 0, rect.contains(point) else { return nil }
+        return CGPoint(x: (point.x - rect.minX) / rect.width, y: 1 - (point.y - rect.minY) / rect.height)
+    }
+
+    func interact(at point: NSPoint) {
+        guard let normalized = normalizedImagePoint(point) else { return }
+        interact(animationPlayer?.interactionRegion(at: normalized) ?? (normalized.y < 0.32 ? "head" : (normalized.y >= 0.63 ? "skirt" : "body")))
     }
 
     private func animatePet() {
@@ -582,7 +610,9 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         sleepLabel.isHidden = !sleeping
     }
 
-    func interact(_ kind: String) {
+    func interact(_ input: String) {
+        // Accept a legacy command, but expose only the current skirt interaction.
+        let kind = input == "tail" ? "skirt" : input
         if kind == "sleep" { forcedSleep = true; sleeping = true }
         else { forcedSleep = false; sleeping = false }
         sleepLabel.isHidden = !sleeping
@@ -590,7 +620,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         updateImage()
         if settings.dynamicSkinEnabled, animationPlayer?.available == true { animationPlayer?.interaction(kind) }
         else if !settings.reduceMotion {
-            let angle: CGFloat = kind == "tail" ? -6 : (kind == "head" ? 3 : (kind == "feed" ? -2 : 0))
+            let angle: CGFloat = kind == "skirt" ? -6 : (kind == "head" ? 3 : (kind == "feed" ? -2 : 0))
             imageView.animator().frameCenterRotation = angle
             poseTimer?.invalidate()
             poseTimer = Timer.scheduledTimer(withTimeInterval: 1.2, repeats: false) { [weak self] _ in
@@ -626,7 +656,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
 
     private func makeStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        statusItem.button?.image = NSImage(systemSymbolName: "drop.circle", accessibilityDescription: "安静陪伴")
+        statusItem.button?.image = NSImage(systemSymbolName: "sun.max", accessibilityDescription: "安静陪伴")
         statusItem.button?.toolTip = "安静陪伴：点击菜单可找回宠物"
         statusItem.menu = petMenu()
     }
@@ -716,18 +746,11 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         let point = panel.convertPoint(fromScreen: NSEvent.mouseLocation)
         let bubbleHit = !bubble.isHidden && bubble.frame.contains(point)
         let imagePoint = imageView.convert(point, from: panel.contentView)
-        var imageHit = imageView.bounds.contains(imagePoint)
-        if imageHit, let bitmap = petBitmap, let image = imageView.image {
-            let fit = min(imageView.bounds.width / image.size.width, imageView.bounds.height / image.size.height)
-            let width = image.size.width * fit, height = image.size.height * fit
-            let x = (imagePoint.x - (imageView.bounds.width - width) / 2) / width
-            let y = (imagePoint.y - (imageView.bounds.height - height) / 2) / height
-            if x < 0 || x >= 1 || y < 0 || y >= 1 { imageHit = false }
-            else {
-                let px = min(bitmap.pixelsWide - 1, max(0, Int(x * Double(bitmap.pixelsWide))))
-                let py = min(bitmap.pixelsHigh - 1, max(0, Int((1 - y) * Double(bitmap.pixelsHigh))))
-                imageHit = (bitmap.colorAt(x: px, y: py)?.alphaComponent ?? 1) > 0.08
-            }
+        var imageHit = false
+        if let normalized = normalizedImagePoint(imagePoint), let bitmap = petBitmap {
+            let px = min(bitmap.pixelsWide - 1, max(0, Int(normalized.x * Double(bitmap.pixelsWide))))
+            let py = min(bitmap.pixelsHigh - 1, max(0, Int(normalized.y * Double(bitmap.pixelsHigh))))
+            imageHit = (bitmap.colorAt(x: px, y: py)?.alphaComponent ?? 1) > 0.08
         }
         let foodHit = snackViews.values.contains { $0.canOffer && !$0.isHidden && $0.frame.contains(point) }
         let growthHit = growthBadge.map { !$0.isHidden && $0.frame.contains(point) } ?? false
@@ -813,7 +836,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         general.addSubview(button("继续陪伴", action: #selector(resumeObservation), frame: NSRect(x: 421, y: 271, width: 177, height: 34)))
         agentCheckbox = check(general, "显示当前 Harness 智能体进度", 216, #selector(agentToggled))
         agentDetailLabel = put(general, agentSummary, 82, 122)
-        _ = put(general, "单击头／身体／尾巴可互动；双击聊天；拖动后可吸附边缘。隐藏后可从菜单栏找回。", 24, 48)
+        _ = put(general, "单击头／身体／裙摆可互动；双击聊天；拖动后可吸附边缘。隐藏后可从菜单栏找回。", 24, 48)
 
         let modelView = tab("模型与画面")
         _ = put(modelView, "跟随 Harness 默认模型", 559, 32, .systemFont(ofSize: 18, weight: .semibold))
@@ -861,7 +884,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         voiceView.addSubview(button("喂点零食", action: #selector(feedPet), frame: NSRect(x: 24, y: 169, width: 175, height: 34)))
         voiceView.addSubview(button("休息", action: #selector(sleepPet), frame: NSRect(x: 221, y: 169, width: 178, height: 34)))
         voiceView.addSubview(button("叫醒她", action: #selector(wakePet), frame: NSRect(x: 421, y: 169, width: 177, height: 34)))
-        _ = put(voiceView, "动态角色和参考立绘都可以摸头、戳身体、轻碰尾巴、喂食和拖动。互动话语由当前默认模型结合情境生成。", 64, 76)
+        _ = put(voiceView, "动态角色和参考立绘都可以摸头、戳身体、轻碰裙摆、喂食和拖动。互动话语由当前默认模型结合情境生成。", 64, 76)
 
         let memoryView = tab("记忆")
         memoryCheckbox = check(memoryView, "允许保留陪伴记忆", 555, #selector(memoryToggled))
@@ -1368,7 +1391,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
     @objc private func agentToggled() { settings.agentProgressEnabled = agentCheckbox.state == .on; settingsChanged() }
     @objc private func reduceMotionToggled() {
         settings.reduceMotion = reduceMotionCheckbox.state == .on
-        animationPlayer?.setReducedMotion(settings.reduceMotion)
+        animationPlayer?.setReducedMotion(settings.reduceMotion || !settings.dynamicSkinEnabled)
         settingsChanged()
     }
     @objc private func dynamicSkinToggled() {
@@ -1962,8 +1985,12 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         content.addSubview(view)
         eatingSnackViews[id] = view
         foodAnimationRunning = true
-        animationPlayer?.interaction("feed")
-        let mouth = NSPoint(x: imageView.frame.midX, y: imageView.frame.minY + imageView.frame.height * 0.7)
+        if settings.dynamicSkinEnabled { animationPlayer?.interaction("feed") }
+        let mouthAnchor = animationPlayer?.mouthAnchor ?? CGPoint(x: 0.50, y: 0.23)
+        let imageRect = drawnImageRect
+        let mouthInImage = NSPoint(x: imageRect.minX + imageRect.width * mouthAnchor.x,
+                                   y: imageRect.minY + imageRect.height * (1 - mouthAnchor.y))
+        let mouth = imageView.convert(mouthInImage, to: content)
         if settings.reduceMotion {
             view.removeFromSuperview()
             eatingSnackViews.removeValue(forKey: id)
@@ -2096,7 +2123,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             if let value = incoming["memoryEnabled"] as? Bool { settings.memoryEnabled = value }
             if let value = incoming["agentProgressEnabled"] as? Bool { settings.agentProgressEnabled = value }
             if let value = incoming["reduceMotion"] as? Bool { settings.reduceMotion = value }
-            animationPlayer?.setReducedMotion(settings.reduceMotion)
+            animationPlayer?.setReducedMotion(settings.reduceMotion || !settings.dynamicSkinEnabled)
             if let value = incoming["dynamicSkinEnabled"] as? Bool, value != settings.dynamicSkinEnabled {
                 settings.dynamicSkinEnabled = value
                 if !previewMode { defaults.set(value, forKey: "dynamicSkinEnabled") }
@@ -2148,11 +2175,12 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
 
 if CommandLine.arguments.contains("--self-test") {
     let settings = CompanionSettings()
-    let animationRoot = Bundle.main.resourceURL!.appendingPathComponent("pet/animations", isDirectory: true)
+    let animationRoot = Bundle.main.resourceURL!.appendingPathComponent("pet", isDirectory: true)
     let animation = PetAnimationPlayer(root: animationRoot) { _ in }
-    let decodedFrame = animation.firstFrameDecodes()
+    let decodedFrames = animation.allFramesDecode()
     let passed = !settings.observationEnabled && !settings.screenEnabled && !settings.videoAudioEnabled
-        && !settings.voiceEnabled && !settings.memoryEnabled && !settings.mousePlayEnabled && animation.available && decodedFrame
+        && !settings.voiceEnabled && !settings.memoryEnabled && !settings.mousePlayEnabled && animation.available && decodedFrames
+        && animation.clipCount == 16 && animation.frameCount == 64
     emit(["type": "ready", "protocolVersion": 1, "selfTest": true])
     emit(["type": "self-test", "passed": passed,
           "captureDefault": false, "metadataDefault": false, "minimumIntervalSeconds": 1,
@@ -2160,7 +2188,10 @@ if CommandLine.arguments.contains("--self-test") {
           "screenshotFeatureAvailable": screenshotFeatureAvailable,
           "systemAudioDefault": settings.videoAudioEnabled, "voiceDefault": settings.voiceEnabled,
           "memoryDefault": settings.memoryEnabled, "defaultModel": "harness",
-          "animationManifest": animation.available, "webpDecoded": decodedFrame,
+          "animationManifest": animation.available, "pngDecoded": decodedFrames,
+          "characterId": animation.characterID ?? "unavailable",
+          "clipCount": animation.clipCount, "frameCount": animation.frameCount,
+          "allFramesDecoded": decodedFrames,
           "maximumDecodedFrameCache": 12, "mousePlayDefault": settings.mousePlayEnabled,
           "pointerWarpInSelfTest": false, "maximumMousePlaySeconds": 1.5])
     if !passed { exit(1) }
