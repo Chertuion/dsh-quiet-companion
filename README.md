@@ -1,104 +1,347 @@
+<div align="center">
+
 # 安静陪伴 · Quiet Companion
 
-让桌面伙伴留意你正在做的事，在合适的时候聊两句，也懂得安静陪着你。
+**在你工作、浏览和看视频时，能聊两句，也懂得安静陪着你的桌面伙伴。**
 
-**DeepSeek Harness 的 macOS 桌面陪伴插件**：橙发花饰、约二头身的 Q 版伙伴沿用 Harness 当前默认模型，支持文字交流、跨启动记忆、Agent 进度，以及真实 token 对应的虚拟零食和成长。
+[发行版本](https://github.com/Chertuion/dsh-quiet-companion/releases) · [使用指南](docs/guide.md) · [更新记录](CHANGELOG.md) · [问题反馈](https://github.com/Chertuion/dsh-quiet-companion/issues)
 
-<p align="center">
-  <img src="docs/assets/companion-compact.png" width="320" alt="橙发角色身边分布着零食，右侧成长状态栏已收起">
-</p>
+<img src="docs/assets/orange-q-character.png" width="240" alt="0.5候选的橙发花饰Q版角色美术预览，怀抱书本，穿白橙色裙装">
 
-<p align="center">上图为 0.4.1 的旧橙发界面与合成库存示意，并非本次 Q 版实机预览；右侧成长状态栏默认隐藏。0.5.0 的实际预览待发布前验收。</p>
+*上图为 0.5 候选的角色美术预览，尚非桌面运行截图。*
 
-## 安装
+</div>
 
-**本次候选版本：`0.5.0-beta.1`，发布与桌面验收待完成。** 对应标签在 GitHub 公开后再安装；此前版本与本次验证范围见 [开发记录](docs/development.md)。
-适用：Apple Silicon Mac、macOS 14+、DeepSeek Harness 官方桌面版 **0.2.1-rc.5**。其他平台和 Harness 版本尚未验证。
+安静陪伴是运行在 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 中的 **macOS 桌面陪伴插件**。她沿用 Harness 当前默认模型，结合经你开启的应用、画面和视频对白上下文，选择合适的时候关心或调侃；文字交流、可管理的记忆、真实 Agent 状态和身边的虚拟零食，共同构成日常陪伴。
 
-1. 在 Harness 中打开 **插件 → 添加插件**。
-2. 粘贴固定版本地址并安装：
+角色风格是安静、体贴，带一点黏人与俏皮。主动回应由事件与上下文决定，模型可以选择保持安静。角色随 Harness 启停，使用官方桌面版时不需要一直开着终端。
+
+> **版本状态**：当前已发布、可安装的测试版为 [`v0.4.1-beta.1`](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.4.1-beta.1)。本分支为 **`0.5.0-beta.1` 候选**，新增 Q 版动作、网格微动与语音口型；这些新增内容已完成构建及部分测试，桌面视觉验收和正式标签发布仍待完成。本文描述候选实现，标为“0.5新增”的功能不会出现在0.4.1安装包中。
+
+## 目录
+
+- [她能做什么](#她能做什么)
+- [Q版动作与语音口型〔0.5新增〕](#q-animation)
+- [支持环境](#支持环境)
+- [安装到官方桌面版](#安装到官方桌面版)
+- [第一次使用](#第一次使用)
+- [日常操作与设置](#日常操作与设置)
+- [零食成长与用量口径](#零食成长与用量口径)
+- [记忆如何工作](#记忆如何工作)
+- [权限与数据去向](#权限与数据去向)
+- [更新卸载与恢复](#更新卸载与恢复)
+- [常见问题](#常见问题)
+- [第三方项目与来源](#第三方项目与来源)
+- [开发与验证](#开发与验证)
+- [许可与反馈](#许可与反馈)
+
+## 她能做什么
+
+### 沿用默认模型交流
+
+双击角色可以文字聊天，摸头、轻戳、碰裙摆等互动也可以触发模型回应。模型沿用 Harness 的当前默认配置，不需要在插件里重复填写 API Key；更换默认模型后，插件跟随实际的供应商与模型标识。
+
+陪伴对白由模型生成。启动说明、权限状态、升级提示等界面信息由本机程序提供。聊天、主动评论和记忆整理会产生正常模型调用费用，使用前可在设置里查看或调整插件自己的日预算。
+
+### 根据情境主动说话，也能保持安静
+
+开启观察后，应用切换、明显画面变化、新的视频对白、用户互动和任务事件会成为判断线索。系统结合事件新鲜度、最近是否与她交流、此前发言是否被忽略、会议应用、离开状态和预算，决定是否请求模型回应。
+
+感知采样有检查间隔，主动发言没有“每隔几分钟必须说一句”的循环。模型还可以判断没有值得说的内容。你可以增加安静应用、暂停观察，或临时安静30分钟；手动聊天仍可独立使用，但同样受模型可用性和插件预算限制。
+
+### 看当前画面，结合视频对白理解上下文
+
+画面理解需要你单独开启、同意向当前默认模型发送图片，并授予 macOS 屏幕录制权限。默认模型还须明确支持图片输入，且 Host 附件服务可用。
+
+当前实现优先采样前台应用窗口，必要时退回排除宠物的显示器画面。本机先判断变化，有事件需要理解时才选择最近最多 **3个关键帧**交给模型；默认采样间隔3秒，可设为1–30秒。实际速度还受系统调度、画面捕获和模型响应影响。
+
+“听视频对白”是另一个独立功能：通过 macOS 捕获系统播放声，在本机离线转写，再将可用的短转写交给默认模型。支持选择普通话与美国英语，取决于本机识别资源是否可用。当前没有持续麦克风对话、用户开口打断 AI，或对整段视频逐帧、无延迟的理解能力。
+
+### 在桌面查看真实 Agent 状态
+
+角色顶部与“进度与用量”页显示当前 Host 实际提供的思考、工具执行、等待回答、等待审批、完成和错误状态，并在有数据时展示任务名称、工具、轮次和已观察到的步骤。
+
+进度来自 Harness 会话事件。上游没有提供总步骤或完成率时，界面显示阶段和已知信息，不生成一个看似精确的百分比。当前 Host 的子 Agent 事件可以参与统计；其他应用或其他 Harness 进程不在本插件的监听范围内。
+
+### 身边的零食与温和成长
+
+启用后新上报的真实 token 可以积累为虚拟零食。零食出现在角色左右和脚边，她会根据饱腹、精力、休息和任务状态选择什么时候吃；你也可以点击零食递给她。
+
+成长包括等级、经验、熟悉阶段、饱腹、精力和心情。右侧成长栏默认隐藏，完整信息在设置中查看。日常互动也能获得经验，无需为了成长增加模型消费；当前没有购买、充值、死亡或久别扣除关系等级的机制。详细规则见[零食成长与用量口径](#零食成长与用量口径)。
+
+<a id="q-animation"></a>
+
+### Q 版动作与语音口型〔0.5新增〕
+
+橙发花饰、抱书的 Q 版角色提供 **24类动作 × 每类8个关键姿势，共192帧画稿**：
+
+| 类别 | 动作 |
+| --- | --- |
+| 日常 | 待机、等待、伸懒腰、哈欠、左右看、招手、睡眠 |
+| 任务与交流 | 思考、书写、检索翻书、命令操作、成功、错误、回复、等待审批 |
+| 互动 | 拖动、落地、摸头、轻戳、轻扶裙摆、进食 |
+| 情绪 | 害羞、关心、俏皮 |
+
+关键姿势采用可变时长播放，并叠加 SpriteKit 的轻微呼吸、头部与发缘网格形变，渲染目标为30fps。192帧是画稿数量，30fps是渲染目标；目前没有分层骨骼、Live2D 模型或 Live2D SDK，视觉流畅度仍待桌面验收。
+
+开启本机朗读后，嘴部跟随 **实际播放的 TTS 音量**开合：由 PCM 的短窗 RMS 和播放器时钟驱动，不依赖文字长度，不使用麦克风，也不判断音素。静态立绘同样支持口型；“减少动态”会同时停止网格微动和嘴部动画。朗读默认关闭，口型开关默认开启，开启口型不会自动播放声音。
+
+[0.4.1布局示意](docs/assets/companion-compact.png)保留用于查看“角色周围零食＋收起成长栏”的布局，图中为旧版角色与合成库存，不能用作新版 Q 版或真实用量的验收证据。动作比较与 Live2D 后续所需条件见[调研记录](docs/research.md)。
+
+## 支持环境
+
+| 项目 | 当前范围 |
+| --- | --- |
+| 系统与芯片 | Apple Silicon Mac，macOS 14及以上；当前原生组件为 arm64 |
+| Harness | 官方桌面版 `0.2.1-rc.5`，插件声明的 Host 版本也为该版本 |
+| 安装位置 | 官方桌面版的 `desktop` profile |
+| 模型 | Harness 当前默认模型；图片功能另需明确的图片输入能力 |
+| 安装工具 | 桌面应用内安装即可，不要求额外安装 Node.js、pnpm、Xcode 或 Swift |
+| 尚未验证 | Intel Mac、Windows、Linux、其他 Harness 版本和浏览器 WebUI 配置 |
+
+桌面端与 WebUI 使用不同 profile。在 WebUI 中安装，不会自动装到官方桌面版。客户端清单中的 `platform: web` 表示使用 Host 的共享网页界面模块，本插件的原生角色仍依赖上述 macOS 环境。
+
+本项目是独立社区插件，与 DeepSeek 官方无隶属关系。原生组件使用本地 ad-hoc 签名，尚未做 Developer ID 公证。
+
+## 安装到官方桌面版
+
+### 应用内安装〔推荐〕
+
+1. 打开官方 DeepSeek Harness 桌面应用，点击 **插件 → 添加插件**。
+2. 安装当前已发布版本，填入：
 
    ```text
-   github:Chertuion/dsh-quiet-companion#v0.5.0-beta.1
+   github:Chertuion/dsh-quiet-companion#v0.4.1-beta.1
    ```
 
-3. 启用插件，重新打开 Harness；进入 **设置 → 安静陪伴**。
+3. 安装后启用插件，按应用提示重新打开 Harness。
+4. 打开 **设置 → 安静陪伴**，确认原生组件已连接。
 
-也可从 [Releases](https://github.com/Chertuion/dsh-quiet-companion/releases) 下载 `.tgz`，把完整本机路径填入安装框，无需解压。安装包已有预编译原生组件，无需 Xcode、Swift 或手动保持终端运行。
+当前安装地址得到的是0.4.1旧橙发版本。**Q 版0.5候选尚未发布标签，暂不提供它的安装命令。** 候选通过验收后，会先公开 GitHub 标签和安装包，再更新这里的安装地址。仓库分支可以查看开发进展，不等同于已验收发行版。
 
-旧版请先停用、卸载插件包，再安装新地址。本插件自己的设置、记忆和成长记录保存在包目录之外，升级不会主动清除。原生组件采用本地 ad-hoc 签名，尚未进行 Developer ID 公证。
+### 使用 Release 安装包
 
-## 可以怎么陪你
+在对应 [Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.4.1-beta.1) 的 **Assets** 中下载 [`dsh-quiet-companion-0.4.1-beta.1.tgz`](https://github.com/Chertuion/dsh-quiet-companion/releases/download/v0.4.1-beta.1/dsh-quiet-companion-0.4.1-beta.1.tgz)，无需解压，把下载文件的完整本机路径填入“添加插件”。GitHub 自动生成的 Source code ZIP/TAR 是源码快照，不是此预编译安装包。
 
-- **聊两句**：默认模型生成回应，无需重复填写 API Key；人设安静、体贴，带一点黏人与俏皮吐槽。
-- **记得相处**：保存有用户原文依据的偏好、约定与文字经历，支持置顶、纠正、检索和遗忘。
-- **一起做事**：显示当前 Host Agent 的思考、工具执行、待确认、完成和错误状态。
-- **顺手投喂**：真实用量对应的零食出现在角色左右；她根据饱腹、休息和任务状态决定何时吃。日常互动也能增加经验。
-- **按需看画面**：授权后，在有新事件需要理解时，将近期关键帧交给支持图片的默认模型。
-- **听视频对白**：可选系统播放声的本机离线转写，以及 macOS 系统语音朗读。
+### 使用桌面应用自带的 CLI
 
-主动交流由应用变化、画面变化、视频对白、互动或任务事件触发，模型可以保持安静，没有固定周期轮播的闲聊台词。
+先启动过一次桌面应用，让它初始化配置；执行命令前完全退出 Harness。下面是默认 macOS 安装路径的例子：
 
-本次 Q 版素材提供 **24 种语义动作 × 每种 8 个关键姿势，共 192 帧画稿**，涵盖害羞、关心、俏皮、睡眠、回复与待审批等状态。动作采用可变时长播放，SpriteKit 以 **30fps 为渲染目标**叠加轻微网格形变；这不代表每秒有 30 张独立画稿，也不是 Live2D。
+```sh
+"/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh" \
+  plugin --profile desktop add github:Chertuion/dsh-quiet-companion#v0.4.1-beta.1
+```
 
-开启本机语音朗读后，嘴部可跟随**实际播放的 TTS PCM 音量（RMS）**开合；不是音素口型，不读取麦克风。朗读默认关闭，口型开关默认开启；静态立绘也支持口型，“减少动态”会同时停用网格微动与嘴部动画。效果与验收边界见 [外观与朗读](docs/guide.md#外观动态与朗读口型)。麦克风连续对话、语音打断及完整角色卡、日记、纪念日尚未接入，详见 [功能与调研边界](docs/research.md)。
+随后重新打开应用。这里使用的是**桌面应用自带的 CLI**，不要用独立 npm 安装的 `dsh` 去修改桌面端 profile。自定义安装位置请调整路径；参考 [Harness 官方桌面端说明](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-rc.5/apps/desktop/README.zh.md)。
 
-## 日常操作
+## 第一次使用
 
-| 想做什么 | 操作 |
+1. **先试文字交流**：双击角色，确认 Harness 默认模型能正常回应。没有配置模型时，本地角色仍可显示，模型交流需要可用的默认模型。
+2. **再开需要的感知**：“感知与陪伴”中开启观察；画面与系统声音各自单独开启，并按需完成确认和系统授权。
+3. **调整桌面表现**：“外观与语音”中改变大小、透明度和动态。需要说话声音时再开启朗读；0.5候选另有口型开关。
+4. **查看成长与记忆**：“成长与零食”里查看库存；“记忆”里查看事实、来源和置顶内容。
+5. **选择打扰程度**：增加会议或安静应用；临时不希望采集时使用“暂停观察”或“安静30分钟”。
+
+插件沿用现有 Harness 模型配置，不单独收取模型密钥。画面、系统声音、应用感知、朗读和鼠标互动默认关闭；记忆、成长、零食奖励、自动进食、Agent 提示和动态角色默认开启。
+
+## 日常操作与设置
+
+### 桌面操作
+
+| 操作 | 效果 |
 | --- | --- |
-| 聊天与互动 | 双击角色聊天；单击头部、身体或裙摆互动 |
-| 调整外观 | 拖动角色；在“外观与语音”调整大小、透明度和动态 |
-| 递零食 | 点击身边的零食，或在“成长与零食”递一份 |
-| 显示成长数值 | 在“成长与零食”打开“显示桌面成长状态栏”，或使用角色右键菜单 |
-| 暂时安静 | 右键暂停观察或安静30分钟 |
-| 找回角色 | 使用菜单栏入口，或在设置中重启宠物 |
+| 单击头部、身体或裙摆 | 播放本地互动动作，并可触发模型交流 |
+| 双击角色 | 打开文字聊天 |
+| 拖动并松开 | 移动、贴边与位置记忆；0.5包含悬空和落地动作，拖动时停止朗读 |
+| 点击身边零食 | 递出指定零食，能否进食仍由本机规则判断 |
+| 右键角色或菜单栏入口 | 找回角色、聊天、设置、暂停、静音、休息、叫醒或退出 |
+| 隐藏成长栏 | 收起右侧数值与库存标签，零食、成长计算和顶部 Agent 状态继续保留 |
 
-右侧成长栏默认收起，窗口也会缩窄；零食、成长计算和顶部 Agent 进度继续工作。完整数值与库存可在设置查看。更多用法见 [使用指南](docs/guide.md)。
+### 五个设置分区
 
-## 权限与数据
-
-| 功能 | 默认状态与使用条件 |
+| 分区 | 可以调整或查看 |
 | --- | --- |
-| 应用感知 | 关闭；开启后读取前台应用与空闲状态 |
-| 画面理解 | 关闭；需要屏幕录制权限和本次默认模型的发送同意，每次最多近期3个关键帧 |
-| 系统声音 | 关闭；需要播放声捕获与本机离线识别可用，不使用麦克风，不回退到联网识别 |
-| 语音朗读 | 关闭；使用 macOS 系统语音 |
-| 朗读口型 | 开关默认开启；只随本机朗读的播放音量变化，不新增采集或系统权限 |
-| 撒娇抢鼠标 | 关闭；需要单独同意和辅助功能授权，最长1.5秒，移动鼠标或按 Esc 即停止 |
-| 记忆与成长 | 默认开启，本机保存，可分别关闭和管理，不需要新的系统权限 |
+| 感知与陪伴 | 默认模型信息、观察、画面、系统声音、识别语言、采样间隔、安静应用、鼠标撒娇 |
+| 外观与语音 | 显示/隐藏、大小、透明度、动态、减少动态、朗读声音与语速；0.5新增语音口型 |
+| 成长与零食 | 成长/奖励/自动进食开关、每份零食所需 token、库存、状态、递食与桌面成长栏 |
+| 记忆 | 自动记忆开关、置顶编辑、事实与原文来源、单条遗忘和清空 |
+| 进度与用量 | 当前 Agent、插件自己的今日用量与预算、费用估算，以及可用的账户余额 |
 
-**选中送给模型的关键帧会经过 Harness 附件服务，可能持久保存在本机共享附件缓存中；插件不承诺自动删除该缓存。** 系统音频不保存原始录音。模型服务由 Harness 当前默认配置决定，插件不读取或保存模型密钥。
+### 隐藏、休息和暂停有何区别
 
-数据位于 `$DSH_HOME/quiet-companion/`，默认 `DSH_HOME` 为 `~/.dsh`。暂停观察会停止新的采集并清理插件的短期画面与转写；已有记忆可另行清除。详见 [数据与权限](docs/guide.md#数据与权限)。
+| 操作 | 改变什么 |
+| --- | --- |
+| 隐藏角色 | 隐藏窗口，观察与后台模型判断另行管理；0.5同时停止动画和朗读 |
+| 让她休息 | 影响进食/精力，不关闭观察；0.5维持休息标记，朗读时可临时切回复姿势，结束后恢复睡姿，明确叫醒解除 |
+| 暂停观察 | 停止新感知、取消插件请求，清理短期画面、转写与应用状态；已有对话历史、记忆和成长保留 |
+| 安静30分钟 | 保持观察开关不变，暂缓30分钟；到期后仅仍开启且授权有效的感知继续，已暂停或重启后关闭的感知不会自动开启 |
+| 关闭记忆或成长 | 分别暂停相关自动功能，保留旧记录，仍可查看和手动管理 |
+
+完整参数与操作见[使用指南](docs/guide.md)。
+
+## 零食成长与用量口径
+
+### 零食如何产生
+
+默认每 **2000个已上报 token** 奖励一份，可设100–100000。来源是监听启用后**当前 Host** 的 Agent/子 Agent 结算与伙伴自身调用；按事件身份去重，不补算历史，不统计其他应用，缺少完整用量时不猜测发奖。
+
+桌面最多展示8份稳定位置的零食；库存可保留64份具名实体，超出的数量计入储备。桌面看不见的库存仍可在“成长与零食”页查看，状态同步不会让已有零食每次重新排列。
+
+### 她什么时候吃
+
+- 自动进食开启、有库存，且不处于忙碌、等待回答/审批、权限弹窗、休息或低精力状态。
+- 普通自动进食要求饱腹不高于60；已有模型交流提出“想吃”时可放宽至75，手动递食可至80。
+- 新零食自动进食前至少展示4秒；手动递食可跳过这4秒，但两次进食都至少相隔90秒。
+- 安静时段或近期“等一等”的模型意图会暂缓进食。已有交流可以携带吃/等待意图，本机门禁仍作最终判断。
+
+吃一份增加20经验。日常互动也可成长，但有5分钟奖励间隔与重复递减。等级、熟悉阶段、饱腹、精力和心情是角色的游戏数值；跨启动状态最多补算6小时。成长计算、奖励结算与本地自动进食本身不新增模型请求。
+
+### 三种数字分别代表什么
+
+| 显示 | 统计范围与限制 |
+| --- | --- |
+| 成长累计 token / 零食 | 当前 Host 新上报的 Agent/子 Agent及伙伴调用，用来结算虚拟奖励 |
+| 插件今日用量 / 日预算 | 伙伴生成与记忆整理调用；默认日 token 预算100000，费用上限默认不启用。结算后达到预算会阻止后续模型请求，也包括手动回复；最后一次结算可能越过阈值，不能限制整个 Host 的调用 |
+| 账户余额 | 只在默认供应商为 `deepseek-account` 且现有账户服务可用时查询；不支持的模型服务显示不可用 |
+
+费用按用户填写的输入/输出单价估算，缺失用量或未配置单价时保持未知，不能当作提供商的完整账单。零食是本地虚拟奖励，没有购买、支付或真实货币兑换。
+
+## 记忆如何工作
+
+记忆使用本机知识图谱和中文词法检索，保留最多 **999条事实与200个文字回合**。手动聊天后，默认模型可以整理偏好、约定和经历；自动事实必须有用户原文证据，助手猜测不会直接成为用户事实。整理可能产生额外模型调用，并纳入本插件预算。
+
+| 想做什么 | 方法 |
+| --- | --- |
+| 长期保留偏好或约定 | 在“记忆”中手动置顶，或在聊天中明确表达需要记住的内容 |
+| 核对一条记忆 | 查看类型、主题键、ID和可用的用户原句来源 |
+| 更正 | 明确表达新偏好，或编辑置顶内容；旧主题可单独遗忘 |
+| 忘记一条 | 点击“遗忘”，或输入 `/forget 条目ID或主题键或完整事实`、`/忘记 内容` |
+| 清空 | 在记忆页清除本插件的事实、回合和当前对话上下文 |
+| 暂停自动记忆 | 关闭记忆，停止自动新增和检索；旧内容保留，手动置顶仍可编辑保存 |
+
+遗忘会删除关联的来源回合并取消旧整理任务。当前检索是中文词法检索，不使用额外的向量嵌入服务。
+
+原始图片和音频不写入插件的记忆库。**记忆开启时，手动文字聊天会保存用户与助手的文字回合；如果回应谈到已授权画面或对白，相关派生文字也可能保留。** 当前尚未接入独立日记、纪念日、角色卡导入、多角色人格或无限长期记忆。
+
+## 权限与数据去向
+
+### 开关与授权
+
+| 能力 | 默认 | 开启后使用什么 |
+| --- | --- | --- |
+| 应用感知 | 关闭 | 前台应用名称、标识与空闲状态；不记录键盘输入或浏览历史 |
+| 画面理解 | 关闭 | 独立的模型发送同意＋屏幕录制授权；向当前支持图片的默认模型提交选定关键帧 |
+| 系统声音理解 | 关闭 | 独立同意、播放声捕获与 Speech 授权；只使用本机可用的离线转写，不调用麦克风 |
+| 本机朗读 | 关闭 | macOS 已安装的系统声音，不增加语音云 API |
+| 口型〔0.5〕 | 开关开启 | 只处理插件自己朗读的音量；实际朗读发生时才可见，不新增采集权限 |
+| 鼠标撒娇 | 关闭 | 独立同意和辅助功能授权；短暂轻拉指针，不点击或输入 |
+| 记忆与成长 | 开启 | 本机文字记忆与虚拟状态；相关摘要可随已有调用进入默认模型上下文 |
+
+鼠标撒娇默认在20分钟未与她互动、且出现新的电脑活动时尝试，两次至少间隔30分钟；可将未互动门槛设为5–120分钟。每次最长1.5秒、轻拉不超过160像素，真实鼠标移动、滚动、按键或 Esc 会立即结束。按住鼠标、拖拽、会议、密码输入、系统确认或等待 Agent 确认等情形下不执行。
+
+### 数据保存与清理
+
+本插件主要状态位于 `$DSH_HOME/quiet-companion/`，未设置 `DSH_HOME` 时为 `~/.dsh/quiet-companion/`，包括设置、文字记忆、用量和成长。目录/文件使用私有权限，内容为本机明文。原生显示位置、大小与部分偏好另由 macOS UserDefaults 保存，系统授权由 macOS 管理。
+
+**选中发送的关键帧会交给 Harness 附件服务，可能持久保存在共享的 `$DSH_HOME/attachments`。插件不承诺自动删除这一共享缓存。** 未选中的短期帧只在插件内存中保留；系统声音不保存原始录音，短转写短期保留后过期。
+
+模型调用通过 Harness 的服务完成，插件不复制或保存模型密钥；选中的文字、相关记忆、图片和转写会发送给当前默认模型服务。变更实际供应商/模型标识后，画面与声音发送同意会撤销，需要重新开启。
+
+暂停会停止新采集并清理短期画面/转写，不删除已有记忆或成长，也不能撤回已发送的内容。清除记忆、卸载插件、删除插件状态目录，均不等于清除 Host 附件缓存、原生偏好、系统授权或模型提供商的记录。更多说明见[数据与权限](docs/guide.md#权限与数据)。
+
+## 更新卸载与恢复
+
+应用内更新按 Harness 提示进行。旧版需要手动替换时，先停用并卸载插件包，再添加目标**已发布版本**；命令行操作前完全退出对应 Host，完成后重新打开。
+
+插件包外的设置、记忆和成长记录不会因正常替换安装主动清除。请勿为更新删除整个 `.dsh`。原生组件退出或“重启宠物”后，应用、画面和声音感知会安全关闭，需要你重新开启；历史记忆与成长继续保留。
+
+回退时使用旧 Release 的固定版本地址或对应 `.tgz`。跨版本数据兼容范围应先看[更新记录](CHANGELOG.md)，不要同时安装不同来源的同名插件。
 
 ## 常见问题
 
-**为什么她不主动说话？**
-观察默认关闭；没有新事件、会议中、离开电脑或安静时段也会减少打扰，这些情况下仍可主动聊天。达到本插件预算后，手动聊天也暂停模型回应，需要调整预算或等次日恢复。
-
-**有零食，为什么不马上吃？**
-她可能太饱、在睡觉、处理任务或等待确认；自动进食还需至少展示4秒，两次进食至少相隔90秒。点击零食是递食请求。
-
-**要为了成长多消耗 token 吗？**
-不用。默认每2000个已上报 token 奖励一份，可调整；日常互动也能增加经验。成长计算不另发模型请求，聊天和互动回应仍可能产生正常模型费用。
-
-**会统计其他应用的用量吗？**
-仅统计启用后当前 Harness Host 的 Agent、子 Agent 及伙伴调用实际上报的用量，不回放历史、不猜测缺失数据。预算页只限制本插件自己的调用，不能替整个 Host 限额。
-
-画面、声音、记忆和角色找回等问题详见 [完整指南与排错](docs/guide.md)。
-
-## 致谢与许可
-
-| 实际复用 | 使用方式 |
+| 现象 | 先检查什么 |
 | --- | --- |
-| [MCP Memory](https://github.com/modelcontextprotocol/servers/tree/194cc86e3ae6400958555bd4116849d822d69263/src/memory) | 使用知识图谱管理器，增加用户证据、置顶、纠正与遗忘包装 |
-| [Orama](https://github.com/oramasearch/orama/tree/2fe41e163c2bdd7830eed7496c69134aea8ee3ba/packages/orama) | 本机中文词法检索与排序，不使用外部嵌入服务 |
-| [角色扮演插件](https://github.com/ajuwm/dsh-roleplay-plugin/tree/c2f4844e8e342c9a0079b7d4df419adb774bccef) | 提取适配食品恢复规则，复用关系分级与重复互动递减纯函数 |
+| 安装后没有角色 | 核对 arm64/macOS/Host版本和 desktop profile；确认插件启用，尝试“显示宠物”或“重启宠物” |
+| 设置中没有“安静陪伴” | 确认装在当前官方桌面端，重新打开 Harness，查看安装详情；WebUI配置不自动同步到桌面端 |
+| 不主动说话 | 观察、安静时段、会议/安静应用、离开状态、默认模型与预算；没有新事件也可能保持安静 |
+| 文字聊天也不回应 | 检查 Harness 默认模型、连接状态和插件日预算；预算会同时限制手动回复 |
+| 画面开关不可用 | 当前默认模型须声明图片能力，Host附件服务和系统授权也需可用；切换模型后重新同意 |
+| 视频有声音却听不懂 | 检查独立系统声音开关、识别语言和本机离线资源；失败时显示状态，不自动改用联网识别或麦克风 |
+| 零食没有出现 | 只计算监听启用后实际已上报的当前Host用量，检查成长/奖励开关和阈值；不会补造历史用量 |
+| 有零食但不吃 | 查看休息、饱腹、精力、任务等待、安静时段和90秒冷却；递食请求也受门禁限制 |
+| 0.5口型开启却不动 | 确认安装版本、朗读已启用、声音可用、角色可见，且未开启“减少动态”；口型自身不会开启朗读 |
+| 余额/费用显示未知 | 余额仅支持现有DeepSeek账户服务；费用是有单价且有用量时的估算，未知不等于0元 |
 
-完整版本、间接与 SDK 内嵌依赖、版权及改动范围见 [第三方声明](THIRD_PARTY_NOTICES.md)、[许可核查](docs/license-audit.md) 和 [原始许可](third_party/)。
+**终端可以关吗？** 官方桌面版安装和使用不需要保留终端；Harness 必须继续运行。插件没有额外注册开机登录项或 LaunchAgent，Host 退出后不会独立观察。
 
-当前自有代码为 `UNLICENSED`，整个项目没有统一授予 MIT 许可；第三方部分仍按各自许可提供。角色素材由图像工具依据用户提供的 AI 参考图生成，软件许可不覆盖图片，项目未另授素材再分发许可。仅调研项目没有被当作已集成依赖。本项目与 DeepSeek 官方无隶属关系。
+完整排错、权限恢复和记忆操作见[使用指南](docs/guide.md#常见问题)。反馈时请附版本、系统/芯片、安装方式、脱敏状态与复现步骤；不要公开模型密钥、完整配置或私人屏幕内容。
+
+## 第三方项目与来源
+
+以下逐项链接当前实际采用的 GitHub 项目，并说明调用、适配与随包来源。**引用链接不替代原许可**；完整版权、许可正文、固定提交与改动范围见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)、[许可核查](docs/license-audit.md) 和 [third_party/](third_party/)。
+
+### 直接依赖与提取适配
+
+| 项目与采用版本 | 在本插件中的用途 | 许可记录 |
+| --- | --- | --- |
+| [MCP Memory · server-memory 2.0.1](https://github.com/modelcontextprotocol/servers/tree/194cc86e3ae6400958555bd4116849d822d69263/src/memory) | 调用知识图谱管理器保存实体、观察与关系；证据核验、置顶、纠正和遗忘由本插件包装 | [完整MCP许可](third_party/MCP-MEMORY-LICENSE.txt)，含Apache过渡及保留MIT说明 |
+| [Orama 3.1.18](https://github.com/oramasearch/orama/tree/2fe41e163c2bdd7830eed7496c69134aea8ee3ba/packages/orama) | 本机全文检索，增加中文单字/双字词和近期/重要性排序 | Apache-2.0；[原始声明](third_party/ORAMA-LICENSE.md) |
+| [dsh-roleplay-plugin · c2f4844](https://github.com/ajuwm/dsh-roleplay-plugin/tree/c2f4844e8e342c9a0079b7d4df419adb774bccef) | 提取适配4种食品及恢复规则，复用 `axisTier`、`repeatDimOf`；用于熟悉阶段与重复互动递减 | MIT；[完整原文](third_party/ROLEPLAY-GROWTH-LICENSE.txt)、[本地适配文件](third_party/roleplay-game-core.mjs) |
+
+roleplay 的完整角色卡、日记、纪念日、多角色关系、小游戏和 Windows 桌宠服务没有随本项目移植。当前 token 去重、库存、经验、门禁、持久化和 macOS 展示另由本项目实现。
+
+### 间接依赖与 SDK 附带来源
+
+当前插件 lock 图包含2项直接与3项间接 npm 包。SDK另将下列代码编入自己的发布文件，它们不会在本插件 lock 中全部表现为独立节点；声明映射附带的类型文件也单独列出。
+
+| 层级 | 组件与实际版本 | 官方 GitHub 来源 | 完整许可入口 |
+| --- | --- | --- | --- |
+| 间接 | `@modelcontextprotocol/server@2.4.0` | [typescript-sdk 固定源码](https://github.com/modelcontextprotocol/typescript-sdk/tree/951fe5603a7ec0b2dcb6a0b95d92cd86f93ad9e5) | [SDK原文](third_party/modelcontextprotocol-server-LICENSE) |
+| 间接 | `@modelcontextprotocol/core@2.4.0` | [同一SDK固定源码](https://github.com/modelcontextprotocol/typescript-sdk/tree/951fe5603a7ec0b2dcb6a0b95d92cd86f93ad9e5) | [同字节许可](third_party/modelcontextprotocol-server-LICENSE) |
+| 间接 | `zod@4.6.7` | [colinhacks/zod](https://github.com/colinhacks/zod/tree/b500a2ee95134f81d74da7911d7378dd2853d042/packages/zod) | [MIT原文](third_party/zod-LICENSE) |
+| SDK内嵌 | `ajv-formats@3.0.1` | [ajv-validator/ajv-formats](https://github.com/ajv-validator/ajv-formats/tree/1fb3fa7d967f919ff924bb34aef73a2f39ab0de3) | [MIT原文集合](third_party/SDK-BUNDLED-THIRD-PARTY-LICENSES.txt) |
+| SDK内嵌 | `ajv@8.18.0` | [ajv-validator/ajv](https://github.com/ajv-validator/ajv/tree/142ce84b807c4fe66e619c22480a28d0e4bd50fa) | [MIT原文集合](third_party/SDK-BUNDLED-THIRD-PARTY-LICENSES.txt) |
+| SDK内嵌 | `@cfworker/json-schema@4.1.1` | [cfworker/cfworker](https://github.com/cfworker/cfworker/tree/5409fdc2bd144f68e8b28c61c71fcb16600000a6) | [MIT原文集合](third_party/SDK-BUNDLED-THIRD-PARTY-LICENSES.txt) |
+| SDK内嵌 | `content-type@1.0.5` | [jshttp/content-type](https://github.com/jshttp/content-type/tree/6115a4064e4dfd9845241c3f89c233ee2423deeb) | [MIT原文集合](third_party/SDK-BUNDLED-THIRD-PARTY-LICENSES.txt) |
+| SDK内嵌 | `fast-deep-equal@3.1.3` | [epoberezkin/fast-deep-equal](https://github.com/epoberezkin/fast-deep-equal/tree/d807ffc5013e710deb1c63d463a03f729bcd144d) | [MIT原文集合](third_party/SDK-BUNDLED-THIRD-PARTY-LICENSES.txt) |
+| SDK内嵌 | `fast-uri@3.1.8` | [fastify/fast-uri](https://github.com/fastify/fast-uri/tree/ead3ab7bb134c989e972c8174632d0670023f269) | [BSD-3-Clause原文集合](third_party/SDK-BUNDLED-THIRD-PARTY-LICENSES.txt) |
+| SDK内嵌 | `json-schema-traverse@1.0.0` | [epoberezkin/json-schema-traverse](https://github.com/epoberezkin/json-schema-traverse/tree/6b45983cd76270042cc79527da5c8972f13599ec) | [MIT原文集合](third_party/SDK-BUNDLED-THIRD-PARTY-LICENSES.txt) |
+| SDK附带声明 | `json-schema-typed@8.0.2` | [RemyRylan/json-schema-typed](https://github.com/RemyRylan/json-schema-typed/tree/613f3ab84c8e1b14de492534bfcb81d1499610a3) | [BSD-2-Clause原文](third_party/JSON-SCHEMA-TYPED-LICENSE.txt) |
+
+`json-schema-typed` 来自 SDK 的类型声明映射，不是第8个运行时内嵌库。上游最新版许可不能替代已采用的8.0.2许可。本表记录当前核查版本，安装器后续按传递依赖范围重新解析时，仍需复核实际安装图。
+
+### Host、共享界面与开发基础
+
+| 来源 | 使用方式与分发边界 |
+| --- | --- |
+| [DeepSeek Harness 0.2.1-rc.5](https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.2.1-rc.5) | 提供插件生命周期、模型、附件、会话事件、账户与设置服务；插件不重新分发整个Host |
+| [官方 decoration 模板](https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.2.1-rc.5/packages/preset/agent-preset/skills/cordis-plugin-development/templates/decoration)与[客户端消费示例](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-rc.5/apps/web/tests/fixtures/plugins/fixture-input-extension/client.js) | 参考模块工厂、共享模块与注册协议；设置页、controller和样式由本项目另写；[Host MIT原文](third_party/DSH-HARNESS-LICENSE.txt)完整保留 |
+| [Host UI primitives](https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.2.1-rc.5/packages/client/ui-primitives)与[settings插槽](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-rc.5/packages/client/ui-settings/src/client/contract/slots.ts) | 使用Host提供的Button、Switch、connection、locale与设置注册；没有另复制整套界面依赖 |
+| [React / ReactDOM / scheduler](https://github.com/react/react/tree/v18.3.1) | 使用Host共享React，Host负责挂载/调度；本次Host中分别为18.3.1/18.3.1/0.23.2，插件未另打包React；ReactDOM也用于本机SSR测试 |
+| [clsx 2.1.1](https://github.com/lukeed/clsx/tree/v2.1.1) | Host的Button/Switch使用它合并样式，插件没有单独导入或复制 |
+| [Cordis上游](https://github.com/cordiverse/cordis)与[Harness内的fork](https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.2.1-rc.5/vendor/cordis) | 通过Host的 `@deepseek-ai/cordis@4.0.5` 获得上下文与生命周期；采用fork保留Shigma等原MIT声明，未另打包到插件 |
+| [loose-envify 1.4.0](https://github.com/zertosh/loose-envify)、[js-tokens 4.0.0](https://github.com/lydell/js-tokens) | Host共享React发布/构建图中的基础，未由本插件独立调用或打包；生产内联由Host负责 |
+| [Node.js](https://github.com/nodejs/node) | 使用Host提供的运行时与内置模块；开发验证使用Node.js 24，无额外Node运行时随包复制 |
+
+原生窗口、捕获、离线识别、网格和播放使用 macOS 的 AppKit、ScreenCaptureKit、Speech、SpriteKit、AVFoundation 等系统框架。没有为这些功能引入第三方动画引擎、口型服务或 Live2D SDK。
+
+### 体验调研、README参考与历史素材
+
+以下链接保留来源，但与上述实际代码使用分开：
+
+| 项目 | 本次参考范围 |
+| --- | --- |
+| [DSH 大肥鱼](https://github.com/QCYTSN/dsh-dafeiyu) | README的客户端区分、安装、常用设置、平台、排错与素材说明组织 |
+| [小鲸鱼记账挂件](https://github.com/MeteorNOX/DeepSeek-Balance-Whale-Widget) | README的功能分组、数据来源、统计口径与凭据说明组织 |
+| [DSH Plugin Hub](https://github.com/dshplugin/dsh-plugin-hub) | README按用户任务配图、安装/更新/反馈入口与社区项目身份说明 |
+| [dsh-roleplay-plugin](https://github.com/ajuwm/dsh-roleplay-plugin) | README先讲陪伴体验，再展开机制的结构；实际提取规则已在上表另外列明 |
+| [Open-LLM-VTuber](https://github.com/Open-LLM-VTuber/Open-LLM-VTuber) | 视觉与语音伙伴的产品调研，未集成其服务、代码、Live2D或语音管线 |
+| [CrossPet](https://github.com/lokicorvus/crosspet/tree/5c64326b6e7fc175eda0360c0bb5c4732541d138) | 桌宠展示与文档调研，未复制图片、配置、提示词或代码 |
+| [xp-level-system](https://www.npmjs.com/package/xp-level-system)、[xp-parser](https://www.npmjs.com/package/xp-parser) | 等级方案调研，未安装或打包，当前XP逻辑由本项目实现 |
+
+本次只借鉴文档框架，正文按本插件实现重新编写，没有复制这些项目的截图、宣传结论或角色素材。固定调研版本与采纳说明见[README结构调研](docs/readme-reference.md)。
+
+历史0.2/0.3版本曾使用 [QCYTSN/dsh-dafeiyu](https://github.com/QCYTSN/dsh-dafeiyu/tree/084323845ab82b68d5388d5c638bec09d8544a8a)和 [PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet/tree/549fff2ea33c2acfb16612c76912c6137da4a758)的旧动作素材，当前橙发版本已替换，旧发布保留当时的来源与许可。当前参考图按用户说明为AI图，Q版立绘与图集由图像工具生成/编辑；来源、提示、散列和嘴框记录见 [ASSET_SOURCE.md](assets/orange-character/ASSET_SOURCE.md)。软件许可不自动覆盖图片，历史动画的MIT也不转授当前素材权利。
 
 ## 开发与验证
 
@@ -109,4 +352,23 @@ npm test
 ./native/build.sh
 ```
 
-原生构建需要 macOS/Xcode 命令行工具；完整设置页渲染测试需使用 Host 的 React。0.5.0 的最终测试与实机预览待验收；历史自动测试、原生协议及真实用量证据的范围见 [开发与验证](docs/development.md)。版本变化见 [更新记录](CHANGELOG.md)。
+源码开发需要Node.js 24及macOS/Xcode命令行工具。完整SSR测试需要可用的Host React，例如设置 `DSH_HARNESS_DIR=/path/to/deepseek-harness`；未提供时相关检查会跳过。安装发行包无需这些开发工具。
+
+| 路径 | 内容 |
+| --- | --- |
+| `client/`、`client.js` | 设置界面源码与离线预构建产物，共享Host React/UI |
+| `lib/` | 默认模型调用、事件策略、记忆、用量、成长和设置通信 |
+| `native/` | macOS原生角色、感知、播放、动作及预编译组件 |
+| `assets/orange-character/` | 当前Q版素材、清单、生成来源与口型校准 |
+| `third_party/` | 提取适配模块与完整第三方许可 |
+| `docs/` | 详细指南、来源、许可审计与分层验证记录 |
+
+0.5候选已通过136项自动测试（0失败、0跳过）、原生构建、严格签名、24动作/192帧解码及一次真实短句的PCM播放时钟/RMS测试。连续动画、嘴部视觉同步、实际桌面安装等仍需完成验收；不能由这些自动测试推导画面理解、系统转写或全部用户体验都已实测。
+
+构建与协议命令、测试范围和历史实机证据见[开发与验证](docs/development.md)。本次文档更新不改变模型、权限、记忆、成长或原生运行逻辑。
+
+## 许可与反馈
+
+自有代码当前为 **`UNLICENSED`**，仓库没有统一授予MIT许可；第三方部分继续遵守各自原许可。角色素材另见[素材来源](assets/orange-character/ASSET_SOURCE.md)，未随软件许可额外授予再分发权。引用、调研或保留原许可，也不表示获得上游作者的背书。
+
+欢迎通过 [Issues](https://github.com/Chertuion/dsh-quiet-companion/issues) 反馈问题或建议。涉及外部代码、模型或素材的改动，请同时给出来源、具体版本、适用许可和修改范围，便于持续维护完整的归属记录。

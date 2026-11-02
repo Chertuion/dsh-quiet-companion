@@ -1,6 +1,6 @@
 # 许可核查记录
 
-本记录保留 `0.4.1-beta.1` 对实际package-lock、已安装包、官方npm发布包与固定上游源码的核查，并记录 `0.5.0-beta.1` Q 版候选的素材变化。新版沿用下列软件版本，最终bundle与发布后安装复核仍待完成，不把旧版包文件比对结论直接套用新版。它是来源与文本保留检查，不是法律全合规保证。完整归属及原文入口见 [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)。
+本记录保留 `0.4.1-beta.1` 对实际package-lock、已安装包、官方npm发布包与固定上游源码的核查，并记录 `0.5.0-beta.1` Q 版候选的素材变化。新版沿用下列软件版本；候选bundle已单独比对，发布后实际安装复核仍待完成，不把旧版安装结论直接套用新版。它是来源与文本保留检查，不是法律全合规保证。完整归属及原文入口见 [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md)。
 
 ## 沿用的固定版本
 
@@ -35,9 +35,27 @@
 
 Apache条件包括保留许可与相关声明；后续若修改上游文件需标注，若上游提供NOTICE则按原条件保留适用内容。本次采用路径未发现独立上游NOTICE，不虚构缺漏。MIT与BSD的作者/条件/免责声明仍以原文为准。
 
+## 2026-11-03 README与来源补充核查
+
+本轮从当前候选的package/lock、运行导入、SDK发布文件/source map、共享Host界面与原生框架重新核对README引用。插件自己的图仍为2项直接加3项间接npm节点；SDK内嵌运行时代码来源仍为前述7项，没有因为增加引用而新增运行时依赖。
+
+### 新补齐的SDK附带类型声明
+
+`json-schema-typed@8.0.2` 来自 [RemyRylan/json-schema-typed固定提交613f3ab](https://github.com/RemyRylan/json-schema-typed/tree/613f3ab84c8e1b14de492534bfcb81d1499610a3)，采用版本为BSD-2-Clause。SDK的两份 `types-DqbrgVmG.d.cts.map`、`types-DDiDRBhz.d.mts.map` 各内嵌56926字节 `draft_2020_12.d.ts`，与经registry SHA-512核验的官方npm包逐字节相同；声明SHA-256为 `104fae9b53b5eaa040d9ce626e1bf0b3e6e27d269a899a98a4a28358cdcbc155`。它不是第8个运行时库，也不增加插件lock节点。
+
+完整原文已保存为 [JSON-SCHEMA-TYPED-LICENSE.txt](../third_party/JSON-SCHEMA-TYPED-LICENSE.txt)，2859字节，SHA-256 `bbe87b573c12bda5baf18742117330efa177e0886b3b0a278dacf8f236e1e129`，保留npm的CRLF。GitHub同提交许可使用LF，文本一致但字节散列不同；没有拿main后来改用的BSD-3-Clause覆盖8.0.2。原文还保留所列各版JSON Schema文档作者与IETF等版权。来源与散列字段可见[公开核查元数据](json-schema-typed-provenance.json)。
+
+### Host、模板与共享UI
+
+README补列 [Harness采用tag](https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.2.1-rc.5)、[官方decoration模板](https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.2.1-rc.5/packages/preset/agent-preset/skills/cordis-plugin-development/templates/decoration)、[共享模块消费fixture](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-rc.5/apps/web/tests/fixtures/plugins/fixture-input-extension/client.js)、React/ReactDOM/scheduler、Host primitives及其clsx、Cordis采用fork和Node来源。引用范围限于插件实际使用的接口与共享基础；没有把Host整棵依赖图称为插件自己的依赖。
+
+官方Host根MIT原文另外保留为 [DSH-HARNESS-LICENSE.txt](../third_party/DSH-HARNESS-LICENSE.txt)，1065字节，SHA-256 `ebb4f09972aee8608be255debaf78451a68e95c290f55c240dec2ecfa16ea6be`，与固定tag逐字节一致，包含2026 DeepSeek版权。Host的Cordis vendor仍保留[自身MIT/Shigma版权](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-rc.5/vendor/cordis/LICENSE)，不能用Host根版权替代其原作者。
+
+本插件共享Host React/UI，没有重新打包React、clsx或Cordis。系统框架未变成GitHub依赖，没有新增外部Live2D、动画或音频库。已有第三方许可全文没有因本轮整理被删除、改写或覆盖；新增两份分别按采用来源独立保留。README框架调研另见[四个DSH样本与采用说明](readme-reference.md)。
+
 ## 素材与历史边界
 
-0.4.1曾核对两张普通/害羞立绘、四张图集及manifest与原生包内7个文件逐字匹配。0.5.0候选替换为约二头身Q版的两张立绘、12张图集、24个语义动作及192帧画稿；最终bundle匹配须重新核对，不能沿用那7个文件的结果。构建仍使用 `assets/orange-character/` 白名单，没有旧鲸尾动画目录。
+0.4.1曾核对两张普通/害羞立绘、四张图集及manifest与原生包内7个文件逐字匹配。0.5.0候选替换为约二头身Q版的两张立绘、12张图集、24个语义动作及192帧画稿；候选bundle的两立绘、12图集与清单共15个文件已与来源逐字节比对，发布后安装仍须复核，不能沿用旧7个文件的结果。构建仍使用 `assets/orange-character/` 白名单，没有旧鲸尾动画目录。
 
 本轮Q图以用户提供的AI参考图及据此生成的master为参考，使用内置图像工具生成/编辑；公开提示、最终索引及嘴框校准入口见 [ASSET_SOURCE.md](../assets/orange-character/ASSET_SOURCE.md)。生成与处理不改变可能存在的参考图权利，未将新图声明MIT，也未额外授予参考原图或生成图再分发权。参考图按用户说明为AI生成，本次未进一步追溯；本记录不为图片另行授予商用或再分发权。
 

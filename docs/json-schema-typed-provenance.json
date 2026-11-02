@@ -1,0 +1,39 @@
+{
+  "name": "json-schema-typed",
+  "version": "8.0.2",
+  "license": "BSD-2-Clause",
+  "repository": {
+    "url": "git+https://github.com/RemyRylan/json-schema-typed.git",
+    "type": "git"
+  },
+  "gitHead": "613f3ab84c8e1b14de492534bfcb81d1499610a3",
+  "registry": "https://registry.npmjs.org/json-schema-typed/8.0.2",
+  "tarball": "https://registry.npmjs.org/json-schema-typed/-/json-schema-typed-8.0.2.tgz",
+  "registryIntegrity": "sha512-fQhoXdcvc3V28x7C7BMs4P5+kNlgUURe2jmUT1T//oBRMDrqy1QPelJimwZGo7Hg9VPV3EQV5Bnq4hbFy2vetA==",
+  "integrityVerified": true,
+  "licenseFile": "third_party/JSON-SCHEMA-TYPED-LICENSE.txt",
+  "licenseBytes": 2859,
+  "licenseSHA256": "bbe87b573c12bda5baf18742117330efa177e0886b3b0a278dacf8f236e1e129",
+  "savedLicenseLineEndings": "Original npm tarball CRLF bytes preserved",
+  "githubLicenseURL": "https://github.com/RemyRylan/json-schema-typed/blob/613f3ab84c8e1b14de492534bfcb81d1499610a3/LICENSE.md",
+  "githubLicenseBytes": 2802,
+  "githubLicenseSHA256": "2701eb669226473bb7df25dff5abcd3b7f73589091dce6dea1ca50919a138c73",
+  "licenseMatchesGitHubTextAfterCRLFNormalization": true,
+  "declarationBytes": 56926,
+  "declarationSHA256": "104fae9b53b5eaa040d9ce626e1bf0b3e6e27d269a899a98a4a28358cdcbc155",
+  "sourceMaps": [
+    {
+      "file": "types-DqbrgVmG.d.cts.map",
+      "embeddedBytes": 56926,
+      "embeddedSHA256": "104fae9b53b5eaa040d9ce626e1bf0b3e6e27d269a899a98a4a28358cdcbc155",
+      "rawMatchesPublishedDeclaration": true
+    },
+    {
+      "file": "types-DDiDRBhz.d.mts.map",
+      "embeddedBytes": 56926,
+      "embeddedSHA256": "104fae9b53b5eaa040d9ce626e1bf0b3e6e27d269a899a98a4a28358cdcbc155",
+      "rawMatchesPublishedDeclaration": true
+    }
+  ],
+  "scope": "SDK declaration source-map contents, not an additional runtime dependency"
+}

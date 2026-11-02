@@ -60,10 +60,6 @@ CrossPet 的代码许可与美术许可不同。其角色素材另有 [CC BY-NC-
 
 ## README 结构参考
 
-只借鉴信息组织，不复制正文、截图、角色素材或功能结论：
+本轮完整调研了DSH大肥鱼、Whale记账挂件、roleplay和非宠物插件Hub的README。固定版本、结构对比、首页采用顺序及来源链接见[README结构调研](readme-reference.md)。CrossPet与PC2005-cloud/dsh-pet为此前展示与文档调研的来源，不把它们称为本轮新增代码依赖。
 
-- [CrossPet README](https://github.com/lokicorvus/crosspet/blob/main/README.md)：封面与操作预览靠前，用用户能完成的动作组织说明，区分已测和待测范围。
-- [QCYTSN/dsh-dafeiyu README](https://github.com/QCYTSN/dsh-dafeiyu/blob/main/README.md)：明确客户端与安装位置，将更新、排错和动画规则分开说明。
-- [PC2005-cloud/dsh-pet README](https://github.com/PC2005-cloud/dsh-pet/blob/main/README.md)：简短安装入口，详细功能、配置与接口另用文档承载。
-
-本仓库首页优先预览、安装和体验；长规则、权限说明、验证记录与调研边界分置这些文档，避免把研究过的功能混入已经完成的能力。
+首页现在逐项链接直接/间接npm、SDK内嵌运行时代码、SDK附带类型声明、提取适配规则，以及实际使用的Host/共享React/UI基础；完整原始许可继续放在third_party。产品调研、文档参考和历史素材另列，避免读者将功能设想当作当前集成。

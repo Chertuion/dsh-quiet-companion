@@ -4,3 +4,5 @@
 *.yml text eol=lf
 *.png binary
 native/QuietCompanion.app/Contents/MacOS/QuietCompanion binary
+# Preserve the exact original npm license bytes (CRLF).
+third_party/JSON-SCHEMA-TYPED-LICENSE.txt -text

@@ -1,6 +1,6 @@
 # 第三方软件、素材来源与许可
 
-本项目自有部分的 `UNLICENSED` 声明不替代第三方原许可。以下软件版本来自 `0.4.1-beta.1` 的锁定及实际安装核查：直接npm依赖2项、间接npm依赖3项，以及MCP SDK已内嵌的7个库。`0.5.0-beta.1` Q 版升级沿用这些软件依赖，新增的原生网格与 PCM 嘴部实现未引入第三方动画或口型库；新版最终包及安装结果仍须另行复核。安装器可能按传递依赖的semver范围重新解析版本，本清单不保证未来所有安装都使用相同版本。核查记录见 [docs/license-audit.md](docs/license-audit.md)。
+本项目自有部分的 `UNLICENSED` 声明不替代第三方原许可。以下软件版本来自 `0.4.1-beta.1` 的锁定及实际安装核查：直接npm依赖2项、间接npm依赖3项，以及MCP SDK已内嵌的7个运行时代码来源；本轮另补齐SDK声明映射附带的 `json-schema-typed@8.0.2`，它不增加运行时库数量。`0.5.0-beta.1` Q 版升级沿用这些软件依赖，新增的原生网格与 PCM 嘴部实现未引入第三方动画或口型库；新版最终包及安装结果仍须另行复核。安装器可能按传递依赖的semver范围重新解析版本，本清单不保证未来所有安装都使用相同版本。核查记录见 [docs/license-audit.md](docs/license-audit.md)。
 
 原始许可全文保存在 `third_party/`，不以本页中文说明代替、翻译或改写原文。
 
@@ -38,6 +38,30 @@ Orama：使用本机全文检索引擎；本地包装增加中文单字/双字�
 
 六个MIT库各自的版权、许可和免责声明均保留；fast-uri的BSD-3-Clause原文另保留条件、免责声明及不得借作者/贡献者名字背书的条款。`@cfworker/json-schema@4.1.1` 的npm包也漏带LICENSE，本集合从其精确registry gitHead对应的 [LICENSE.md](https://github.com/cfworker/cfworker/blob/5409fdc2bd144f68e8b28c61c71fcb16600000a6/LICENSE.md)补入原文，其他六项采用各自精确npm发布包中的许可。
 
+## SDK附带的 JSON Schema 类型声明
+
+[RemyRylan/json-schema-typed](https://github.com/RemyRylan/json-schema-typed/tree/613f3ab84c8e1b14de492534bfcb81d1499610a3)，实际版本 **8.0.2**，固定提交 `613f3ab84c8e1b14de492534bfcb81d1499610a3`；采用版本为 **BSD-2-Clause**。完整原文：[JSON-SCHEMA-TYPED-LICENSE.txt](third_party/JSON-SCHEMA-TYPED-LICENSE.txt)。它保留 Remy Rylan 以及 JSON Schema 文档所列各版作者与 IETF 等版权，未以SDK作者版权替代。
+
+MCP server 2.4.0 的 `types-DqbrgVmG.d.cts.map` 和 `types-DDiDRBhz.d.mts.map` 各自附带完整 `draft_2020_12.d.ts`；两份内容均与8.0.2官方npm包的56926字节声明逐字节一致。它是SDK随附类型声明来源，不是第8个运行时内嵌库，也没有成为本插件lock中的第6个节点。
+
+保留的许可来自经registry SHA-512完整核验的[8.0.2发布包](https://registry.npmjs.org/json-schema-typed/8.0.2)，2859字节，SHA-256 `bbe87b573c12bda5baf18742117330efa177e0886b3b0a278dacf8f236e1e129`。保留npm原始CRLF；[同提交GitHub许可](https://github.com/RemyRylan/json-schema-typed/blob/613f3ab84c8e1b14de492534bfcb81d1499610a3/LICENSE.md)为LF，文本相同但散列不同。没有采用后来main/9.0.0的BSD-3-Clause来替换本版本的许可。
+
+## Host、共享客户端与官方示例
+
+| 来源 | 实际关系与许可边界 |
+| --- | --- |
+| [DeepSeek Harness 0.2.1-rc.5](https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.2.1-rc.5) | 提供生命周期、LLM、附件、账户、会话事件和界面服务；根许可MIT、Copyright (c) 2026 DeepSeek；[完整原文](third_party/DSH-HARNESS-LICENSE.txt)保留 |
+| [decoration插件模板](https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.2.1-rc.5/packages/preset/agent-preset/skills/cordis-plugin-development/templates/decoration)与[客户端消费fixture](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-rc.5/apps/web/tests/fixtures/plugins/fixture-input-extension/client.js) | 客户端模块工厂、注入、共享React/primitives和设置注册的协议参考；未复制完整装饰/输入活动/图标功能，设置页面/controller/CSS由本项目另写；采用Host原MIT说明 |
+| [Host UI primitives](https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.2.1-rc.5/packages/client/ui-primitives)与[设置插槽](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-rc.5/packages/client/ui-settings/src/client/contract/slots.ts) | 从Host共享模块表取得Button、Switch、connection、locale与settings；不把整套Host前端复制入插件 |
+| [React/ReactDOM/scheduler](https://github.com/react/react/tree/v18.3.1) | 本次Host版本分别为18.3.1/18.3.1/0.23.2，MIT；Host提供共享运行与挂载，ReactDOM另用于本机SSR测试；本插件不另打包React |
+| [clsx 2.1.1](https://github.com/lukeed/clsx/tree/v2.1.1) | MIT；Host Button/Switch使用其样式组合功能，未作为本插件直接依赖或源码拷贝 |
+| [Cordis上游](https://github.com/cordiverse/cordis)与[Host采用fork](https://github.com/deepseek-ai/deepseek-harness/tree/dsh-v0.2.1-rc.5/vendor/cordis) | Host提供 `@deepseek-ai/cordis@4.0.5` 的上下文/生命周期；[vendor原MIT](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-rc.5/vendor/cordis/LICENSE)保留Shigma版权，不把Host概括为单一作者的全部实现 |
+| [Node.js](https://github.com/nodejs/node) | 使用Host运行时内置模块，不重新分发Node二进制 |
+
+Host的React依赖图还涉及 [loose-envify 1.4.0](https://github.com/zertosh/loose-envify)与 [js-tokens 4.0.0](https://github.com/lydell/js-tokens)。它们属于Host发布/构建基础，是否被内联或替换由Host构建决定，未成为本插件独立导入/打包的库。Host内部其他功能的完整依赖归属继续由Host维护，本页不宣称替整个Harness或Node完成依赖认证。
+
+官方Host原许可按固定tag保留，1065字节，SHA-256 `ebb4f09972aee8608be255debaf78451a68e95c290f55c240dec2ecfa16ea6be`。原始版权、许可和免责声明未翻译或删改。系统AppKit/SpriteKit/AVFoundation等框架不是新随包复制的GitHub引擎，详见后文角色实现。
+
 ## 部分复用的 roleplay 养成规则
 
 来源：[ajuwm/dsh-roleplay-plugin](https://github.com/ajuwm/dsh-roleplay-plugin/tree/c2f4844e8e342c9a0079b7d4df419adb774bccef)，固定提交 `c2f4844e8e342c9a0079b7d4df419adb774bccef`；MIT；Copyright (c) 2026 roleplay-plugin contributors。完整原文：[ROLEPLAY-GROWTH-LICENSE.txt](third_party/ROLEPLAY-GROWTH-LICENSE.txt)。
@@ -58,6 +82,8 @@ Orama：使用本机全文检索引擎；本地包装增加中文单字/双字�
 
 ## 仅调研，未作为依赖或复制实现
 
-Open-LLM-VTuber、`xp-level-system`、`xp-parser`没有安装、导入或随包提供其代码/素材；功能相似不表示已接入。CrossPet仅核验过固定提交 [5c64326b6e7fc175eda0360c0bb5c4732541d138](https://github.com/lokicorvus/crosspet/tree/5c64326b6e7fc175eda0360c0bb5c4732541d138)，没有复制图片、角色配置、提示词或代码。其代码MIT明确排除素材，[角色素材为CC BY-NC-SA 4.0](https://github.com/lokicorvus/crosspet/blob/5c64326b6e7fc175eda0360c0bb5c4732541d138/characters/LICENSE.md)，不能将该许可当成本项目新生成图的授权来源。
+[Open-LLM-VTuber](https://github.com/Open-LLM-VTuber/Open-LLM-VTuber)、[`xp-level-system`](https://www.npmjs.com/package/xp-level-system)、[`xp-parser`](https://www.npmjs.com/package/xp-parser)没有安装、导入或随包提供其代码/素材；功能相似不表示已接入。CrossPet仅核验过固定提交 [5c64326b6e7fc175eda0360c0bb5c4732541d138](https://github.com/lokicorvus/crosspet/tree/5c64326b6e7fc175eda0360c0bb5c4732541d138)，没有复制图片、角色配置、提示词或代码。其代码MIT明确排除素材，[角色素材为CC BY-NC-SA 4.0](https://github.com/lokicorvus/crosspet/blob/5c64326b6e7fc175eda0360c0bb5c4732541d138/characters/LICENSE.md)，不能将该许可当成本项目新生成图的授权来源。
 
 以上是本次实际版本及已核验来源的归属记录，不构成对全部法律权利或未来版本的合规保证。
+
+README信息组织另参考了 [QCYTSN/dsh-dafeiyu](https://github.com/QCYTSN/dsh-dafeiyu)、[MeteorNOX/DeepSeek-Balance-Whale-Widget](https://github.com/MeteorNOX/DeepSeek-Balance-Whale-Widget)、[dshplugin/dsh-plugin-hub](https://github.com/dshplugin/dsh-plugin-hub)和上述roleplay仓库；没有复制其文案或截图，详细固定版本与采用范围见[README结构调研](docs/readme-reference.md)。
