@@ -1,0 +1,9 @@
+.DS_Store
+._*
+.env
+.env.*
+node_modules/
+native/build/
+assets/prompts.txt
+*.log
+*.tgz

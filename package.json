@@ -1,0 +1,15 @@
+{
+  "name": "dsh-quiet-companion",
+  "version": "0.1.0-preview.1",
+  "description": "安静陪伴预览版：macOS 悬浮鲸鱼娘、摸头、聊天与经授权的应用状态感知。屏幕和视频理解尚未接通。",
+  "type": "module",
+  "main": "index.mjs",
+  "exports": { ".": "./index.mjs", "./package.json": "./package.json" },
+  "engines": { "dsh": "0.2.1-rc.5" },
+  "os": ["darwin"],
+  "cpu": ["arm64"],
+  "files": ["index.mjs", "lib/model.mjs", "lib/controller.mjs", "cordis.patch.yml", "native/QuietCompanion.app", "README.txt"],
+  "dsh": { "bundle": { "patch": "./cordis.patch.yml", "platforms": ["darwin"] } },
+  "scripts": { "test": "node --test lib/*.test.mjs" },
+  "license": "UNLICENSED"
+}
