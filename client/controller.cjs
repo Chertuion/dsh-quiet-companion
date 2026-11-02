@@ -1,0 +1,108 @@
+'use strict';
+
+/** React-free, registration-owned settings bridge. Polls only while this settings page is mounted. */
+class CompanionSettingsController {
+  constructor(connection, { intervalMs = 2000, timers = globalThis } = {}) {
+    this.connection = connection;
+    this.intervalMs = intervalMs;
+    this.timers = timers;
+    this.listeners = new Set();
+    this.state = { status: 'idle', snapshot: null, busy: false, operation: '', error: '' };
+    this.active = 0;
+    this.disposed = false;
+    this.read = null;
+    this.timer = null;
+    this.controllers = new Set();
+    this.revision = 0;
+    this.store = {
+      getSnapshot: () => this.state,
+      subscribe: listener => { this.listeners.add(listener); return () => this.listeners.delete(listener); },
+    };
+  }
+  publish(patch) {
+    if (this.disposed) return;
+    this.state = { ...this.state, ...patch };
+    for (const listener of [...this.listeners]) { try { listener(); } catch { /* One UI observer cannot block another. */ } }
+  }
+  async call(endpoint, payload, controller) {
+    const result = await this.connection.rpc.call('/api', `quiet-companion/${endpoint}`, payload, controller.signal);
+    if (!result || result.ok !== true || !result.value || typeof result.value !== 'object') throw new Error('bridge-request-failed');
+    return result.value.snapshot && typeof result.value.snapshot === 'object' ? result.value.snapshot : result.value;
+  }
+  load() {
+    if (this.disposed || this.state.busy) return Promise.resolve();
+    if (this.read) return this.read;
+    const controller = new AbortController();
+    const revision = this.revision;
+    this.controllers.add(controller);
+    if (!this.state.snapshot) this.publish({ status: 'loading', error: '' });
+    const work = this.call('snapshot', {}, controller).then(snapshot => {
+      if (!controller.signal.aborted && revision === this.revision) this.publish({ snapshot, status: 'ready', error: '' });
+    }).catch(() => {
+      if (!controller.signal.aborted && revision === this.revision) this.publish({ status: 'error', error: '暂时无法读取陪伴设置。请检查 Harness 连接后重试。' });
+    }).finally(() => {
+      this.controllers.delete(controller);
+      if (this.read === work) this.read = null;
+    });
+    this.read = work;
+    return work;
+  }
+  async mutate(endpoint, payload, operation) {
+    if (this.disposed || this.state.busy) return false;
+    this.revision++;
+    for (const controller of this.controllers) controller.abort();
+    this.read = null;
+    const controller = new AbortController();
+    this.controllers.add(controller);
+    this.publish({ busy: true, operation, error: '' });
+    try {
+      const snapshot = await this.call(endpoint, payload, controller);
+      if (controller.signal.aborted || this.disposed) return false;
+      this.publish({ snapshot, status: 'ready', error: '' });
+      return true;
+    } catch {
+      if (!controller.signal.aborted) this.publish({ error: '这次设置没有保存成功，请重试。权限操作也可以在 macOS 系统设置中检查。' });
+      return false;
+    } finally {
+      this.controllers.delete(controller);
+      if (!this.disposed) this.publish({ busy: false, operation: '' });
+    }
+  }
+  update(patch) { return this.mutate('update-settings', { patch }, 'save-settings'); }
+  action(action, payload = {}) { return this.mutate('action', { ...payload, action }, action); }
+  open() {
+    if (this.disposed) return () => {};
+    this.active++;
+    if (this.active === 1) {
+      void this.load();
+      this.timer = this.timers.setInterval(() => {
+        if (typeof document === 'undefined' || document.visibilityState !== 'hidden') void this.load();
+      }, this.intervalMs);
+    }
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      this.active = Math.max(0, this.active - 1);
+      if (this.active === 0) {
+        if (this.timer !== null) this.timers.clearInterval(this.timer);
+        this.timer = null;
+        // Reads are disposable; an explicit save already requested by the user may complete.
+        if (this.read && !this.state.busy) {
+          for (const controller of this.controllers) controller.abort();
+          this.read = null;
+          this.revision++;
+        }
+      }
+    };
+  }
+  dispose() {
+    this.disposed = true;
+    if (this.timer !== null) this.timers.clearInterval(this.timer);
+    this.timer = null;
+    for (const controller of this.controllers) controller.abort();
+    this.controllers.clear();
+    this.listeners.clear();
+  }
+}
+module.exports = { CompanionSettingsController };

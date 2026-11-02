@@ -1,4 +1,4 @@
-Native companion component — 0.2.0 — 2026-11-02
+Native companion component — 0.2.1 — 2026-11-02
 
 Build
   ./build.sh
@@ -109,6 +109,65 @@ Inbound:
   so short live-pipe commands do not wait for a 65 KB buffer or EOF.
 stdin EOF shuts down the helper and owned capture resources.
 
+LaunchServices transport and Speech crash fix (0.2.1)
+The real 2026-11-02 14:54 crash was a TCC privacy-description termination, not
+an audio-format or SCStream error. The helper's own Info.plist contained
+NSSpeechRecognitionUsageDescription, but macOS attributed its direct-spawned
+Speech authorization to the responsible DeepSeek Harness process, whose
+Info.plist did not contain that key. Do not modify the official signed app.
+The Host now launches this .app through macOS LaunchServices and passes:
+  --ipc-socket <private AF_UNIX path> --ipc-token <ephemeral authentication token>
+The socket and its parent directory must be owned by the current uid with no
+group/other access. Before NSApplication starts, the helper connects and uses
+the same duplex FileHandle for its existing JSONL protocol. ready additionally
+contains pid, parentPid and ipcToken; the Host authenticates before accepting
+other events. No token is written to a log by this helper. Socket EOF follows
+the existing shutdown path. Standalone stdin and --preview remain supported.
+Speech permission requests additionally require the authenticated-socket
+launch mode and a nonempty purpose string in the helper's own bundle. Legacy
+bare-spawn usage shows a safe upgrade message instead of requesting Speech.
+No official app signature, TCC database or system permission is bypassed.
+
+Optional pointer play
+mousePlayEnabled defaults false; mousePlayAfterMinutes defaults 20 and is
+clamped to 5..120. enable-mouse-play is an explicit control action with native
+confirmation and an AXIsProcessTrustedWithOptions prompt; successful enable
+alone persists consent and emits the enabled setting. Incoming configuration
+cannot enable pointer play without that consent and existing AX permission.
+mouse-play is the Host policy's trigger, not a timer or model instruction.
+It rechecks active observation, no pressed mouse buttons/modifiers, recent
+input (idle <=90s), no native modal/permission request/drag, secure input,
+foreground application exclusions and focused menu/dialog roles. Independent
+native cooldown is at least 30 minutes. The visual tug runs for 1.2 seconds,
+has a hard 1.5-second stop and a maximum displacement of 160 pixels. It uses
+only CGWarpMouseCursorPosition, which the SDK documents as generating no events.
+Global/local input monitors cancel on real movement, mouse press, scrolling or
+any key including Esc; every tick also checks for unexpected physical movement.
+No click, keystroke, cursor/hardware disassociation or sustained drag is posted.
+Pause, settings changes, chat, hide and shutdown cancel the local action.
+native-status includes mouseAuthorized, mousePlayActive and mouseStatus.
+Preview only changes the pet pose/status and never calls AX permission requests
+or CGWarp. The self-test verifies pointer play defaults off; live preview
+regression exercises only this inert branch, not a real user cursor movement.
+
+Host controls and status
+control:{action} supports enable-screen, disable-screen, enable-system-audio,
+disable-system-audio, pause, resume, snooze, show, hide, chat, feed, sleep, wake,
+open-settings and refresh-status. set-appearance also accepts scale/opacity.
+Enable actions are explicit user actions and use native confirmation plus OS
+authorization; receiving settings never automatically requests permission.
+The fallback native settings window need not appear for a Host enable action.
+native-status is deduplicated and includes audioStatus, modelStatus,
+screenAuthorized, audioAuthorized, helperVersion, voices:[{id,name,language}],
+scale, opacity and permissionRequestInFlight, plus enabled/transport flags.
+request-status refreshes that snapshot without echoing settings.
+Permission dialogs share an in-flight guard. A pair-bound request epoch is
+checked after confirmation, in the Speech callback and after screen access;
+queued settings/model changes, disable, pause or shutdown invalidate it at
+the reader thread before a modal main loop can delay their application.
+Preview does not request authorization, capture data, speak or persist visual
+and consent settings; status uses synthetic false authorization values.
+
 Safe QA
   <staged app>/Contents/MacOS/QuietCompanion --self-test
 Self-test checks default-off settings and decodes a real first WebP frame.
@@ -124,3 +183,9 @@ It sends a sub-100-byte ping, fragmented JSON and an overlong bounded id,
 requires each pong within two seconds, and always shuts down its own helper.
 This UI test needs ordinary macOS WindowServer access; it does not request
 screen/audio permission, observe activity or make model calls.
+For the production launch/transport path:
+  python3 protocol-test.py <staged app> --launch-services
+The safe preview test checks a private socket's authenticated ready, tiny and
+fragmented ping commands, voices/appearance/status and blocked preview audio
+enable, then shuts down its own test app. It does not test actual Speech or
+screen permissions; those still need the user's interactive authorization.

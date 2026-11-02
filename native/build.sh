@@ -10,6 +10,7 @@ mkdir -p "$app_path/Contents/MacOS" "$app_path/Contents/Resources/pet" "$module_
   -module-cache-path "$module_cache" \
   -framework AppKit -framework ScreenCaptureKit -framework CoreGraphics \
   -framework AVFoundation -framework Speech -framework CoreMedia -framework ImageIO \
+  -framework ApplicationServices -framework Carbon \
   "$staging_dir/main.swift" -o "$app_path/Contents/MacOS/QuietCompanion"
 /bin/cp -X "$native_dir/Info.plist" "$app_path/Contents/Info.plist"
 for pet_asset in idle.png shy.png; do

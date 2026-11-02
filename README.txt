@@ -1,11 +1,11 @@
-安静陪伴 0.2.0-beta.1
+安静陪伴 0.2.0-beta.2
 
-安装地址：github:Chertuion/dsh-quiet-companion#v0.2.0-beta.1
+安装地址：github:Chertuion/dsh-quiet-companion#v0.2.0-beta.2
 Harness 桌面版 → 插件 → 添加插件 → 粘贴地址 → 安装并启用。
 适用 Apple Silicon Mac、macOS14+、Harness0.2.1-rc.5。
 
 模型跟随 Harness 默认配置，不需要另一套 API Key。
-首次使用请右键打开陪伴设置；画面、系统声音、语音均按需开启。
+首次使用请在 Harness 设置侧栏打开“安静陪伴”；画面、系统声音、语音均按需开启。
 默认模型必须支持图片才能启用画面理解；系统声音识别要求本机离线识别资源和用户授权。
 主动发言根据新事件和上下文自适应决定，没有固定轮播的角色台词。
 

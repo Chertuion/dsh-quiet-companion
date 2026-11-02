@@ -1,12 +1,13 @@
 {
   "name": "dsh-quiet-companion",
-  "version": "0.2.0-beta.1",
+  "version": "0.2.0-beta.2",
   "description": "安静陪伴：跟随 Harness 默认模型的实时画面与视频陪伴、自适应发言、长期记忆、Agent 进度、语音和动态鲸尾女仆。",
   "type": "module",
   "main": "index.mjs",
   "exports": {
     ".": "./index.mjs",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./client": "./client.js"
   },
   "engines": {
     "dsh": "0.2.1-rc.5"
@@ -19,6 +20,8 @@
   ],
   "files": [
     "index.mjs",
+    "client.js",
+    "client",
     "lib",
     "cordis.patch.yml",
     "native/QuietCompanion.app",
@@ -28,6 +31,15 @@
     "THIRD_PARTY_NOTICES.md"
   ],
   "dsh": {
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-locale"
+      ]
+    },
     "bundle": {
       "patch": "./cordis.patch.yml",
       "platforms": [
@@ -36,7 +48,8 @@
     }
   },
   "scripts": {
-    "test": "node --test lib/*.test.mjs"
+    "test": "node --test lib/*.test.mjs client/*.test.mjs client/*.test.cjs",
+    "build:client": "node client/build.mjs"
   },
   "license": "UNLICENSED",
   "dependencies": {
