@@ -6,10 +6,12 @@
   <key>CFBundleDisplayName</key><string>安静陪伴</string>
   <key>CFBundleExecutable</key><string>QuietCompanion</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.1.0</string>
-  <key>CFBundleVersion</key><string>1</string>
+  <key>CFBundleShortVersionString</key><string>0.2.0</string>
+  <key>CFBundleVersion</key><string>2</string>
   <key>LSUIElement</key><true/>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>NSHighResolutionCapable</key><true/>
-  <key>NSScreenCaptureUsageDescription</key><string>仅在你明确开启截图理解后，截图会发送给你选定的模型服务，以理解你正在看的内容。不会录音，也不会保存截图历史。</string>
+  <key>NSScreenCaptureUsageDescription</key><string>仅在你明确开启后采样当前应用画面，关键帧会按 Harness 附件机制保存在本机并发送给默认模型。系统声音捕获需要另行同意，不使用麦克风。</string>
+  <key>NSAudioCaptureUsageDescription</key><string>仅在你同意后捕获系统播放的声音，在本机离线识别成文字并发送给 Harness 默认模型，不使用麦克风，也不保存录音。</string>
+  <key>NSSpeechRecognitionUsageDescription</key><string>仅对你授权的系统播放声音做本机离线语音识别。不会使用麦克风，不会回退到网络语音识别。</string>
 </dict></plist>
