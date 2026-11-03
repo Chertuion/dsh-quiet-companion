@@ -6,9 +6,9 @@
 
 [发行版本](https://github.com/Chertuion/dsh-quiet-companion/releases) · [使用指南](docs/guide.md) · [更新记录](CHANGELOG.md) · [问题反馈](https://github.com/Chertuion/dsh-quiet-companion/issues)
 
-<img src="docs/assets/orange-q-character.png" width="240" alt="0.5候选的橙发花饰Q版角色美术预览，怀抱书本，穿白橙色裙装">
+<img src="docs/assets/q-render-open.png" width="240" alt="0.5候选的橙发花饰Q版角色美术预览，怀抱书本，穿白橙色裙装">
 
-*上图为 0.5 候选的角色美术预览，尚非桌面运行截图。*
+*上图为原生渲染器输出，口型输入为合成音量；不含桌面采集、真实用量或音频播放。*
 
 </div>
 
@@ -16,7 +16,7 @@
 
 角色风格是安静、体贴，带一点黏人与俏皮。主动回应由事件与上下文决定，模型可以选择保持安静。角色随 Harness 启停，使用官方桌面版时不需要一直开着终端。
 
-> **版本状态**：当前已发布、可安装的测试版为 [`v0.4.1-beta.1`](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.4.1-beta.1)。本分支为 **`0.5.0-beta.1` 候选**，新增 Q 版动作、网格微动与语音口型；这些新增内容已完成构建及部分测试，桌面视觉验收和正式标签发布仍待完成。本文描述候选实现，标为“0.5新增”的功能不会出现在0.4.1安装包中。
+> **当前测试版：[`v0.5.0-beta.1`](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.0-beta.1)**。本版增加 Q 版动作、网格微动与语音口型。已有0.4.1用户需要卸载旧包并安装新地址；设置、记忆和成长保存在包目录之外。各项验证的范围见[开发记录](docs/development.md)。
 
 ## 目录
 
@@ -82,7 +82,7 @@
 | 互动 | 拖动、落地、摸头、轻戳、轻扶裙摆、进食 |
 | 情绪 | 害羞、关心、俏皮 |
 
-关键姿势采用可变时长播放，并叠加 SpriteKit 的轻微呼吸、头部与发缘网格形变，渲染目标为30fps。192帧是画稿数量，30fps是渲染目标；目前没有分层骨骼、Live2D 模型或 Live2D SDK，视觉流畅度仍待桌面验收。
+关键姿势采用可变时长播放，并叠加 SpriteKit 的轻微呼吸、头部与发缘网格形变，渲染目标为30fps。192帧是画稿数量，30fps是渲染目标；目前没有分层骨骼、Live2D 模型或 Live2D SDK，不同负载下的帧率和连续动作观感仍以本机实际表现为准。
 
 开启本机朗读后，嘴部跟随 **实际播放的 TTS 音量**开合：由 PCM 的短窗 RMS 和播放器时钟驱动，不依赖文字长度，不使用麦克风，也不判断音素。静态立绘同样支持口型；“减少动态”会同时停止网格微动和嘴部动画。朗读默认关闭，口型开关默认开启，开启口型不会自动播放声音。
 
@@ -111,17 +111,17 @@
 2. 安装当前已发布版本，填入：
 
    ```text
-   github:Chertuion/dsh-quiet-companion#v0.4.1-beta.1
+   github:Chertuion/dsh-quiet-companion#v0.5.0-beta.1
    ```
 
 3. 安装后启用插件，按应用提示重新打开 Harness。
 4. 打开 **设置 → 安静陪伴**，确认原生组件已连接。
 
-当前安装地址得到的是0.4.1旧橙发版本。**Q 版0.5候选尚未发布标签，暂不提供它的安装命令。** 候选通过验收后，会先公开 GitHub 标签和安装包，再更新这里的安装地址。仓库分支可以查看开发进展，不等同于已验收发行版。
+此固定地址对应本版 Q 角色。更新时使用已发布标签或对应Release包；开发分支用于查看后续改动，不自动代表新的发行版。
 
 ### 使用 Release 安装包
 
-在对应 [Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.4.1-beta.1) 的 **Assets** 中下载 [`dsh-quiet-companion-0.4.1-beta.1.tgz`](https://github.com/Chertuion/dsh-quiet-companion/releases/download/v0.4.1-beta.1/dsh-quiet-companion-0.4.1-beta.1.tgz)，无需解压，把下载文件的完整本机路径填入“添加插件”。GitHub 自动生成的 Source code ZIP/TAR 是源码快照，不是此预编译安装包。
+在对应 [Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.0-beta.1) 的 **Assets** 中下载 [`dsh-quiet-companion-0.5.0-beta.1.tgz`](https://github.com/Chertuion/dsh-quiet-companion/releases/download/v0.5.0-beta.1/dsh-quiet-companion-0.5.0-beta.1.tgz)，无需解压，把下载文件的完整本机路径填入“添加插件”。GitHub 自动生成的 Source code ZIP/TAR 是源码快照，不是此预编译安装包。
 
 ### 使用桌面应用自带的 CLI
 
@@ -129,7 +129,7 @@
 
 ```sh
 "/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh" \
-  plugin --profile desktop add github:Chertuion/dsh-quiet-companion#v0.4.1-beta.1
+  plugin --profile desktop add github:Chertuion/dsh-quiet-companion#v0.5.0-beta.1
 ```
 
 随后重新打开应用。这里使用的是**桌面应用自带的 CLI**，不要用独立 npm 安装的 `dsh` 去修改桌面端 profile。自定义安装位置请调整路径；参考 [Harness 官方桌面端说明](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-rc.5/apps/desktop/README.zh.md)。
@@ -363,7 +363,7 @@ npm test
 | `third_party/` | 提取适配模块与完整第三方许可 |
 | `docs/` | 详细指南、来源、许可审计与分层验证记录 |
 
-0.5候选已通过136项自动测试（0失败、0跳过）、原生构建、严格签名、24动作/192帧解码及一次真实短句的PCM播放时钟/RMS测试。连续动画、嘴部视觉同步、实际桌面安装等仍需完成验收；不能由这些自动测试推导画面理解、系统转写或全部用户体验都已实测。
+本版通过136项自动测试（0失败、0跳过）、原生构建、严格签名、24动作/192帧解码、LaunchServices实际协议及一次真实短句的PCM播放时钟/RMS测试。另用同一原生渲染器输出20张透明图，核对静态/回复各姿势的嘴部变化均在校准区域内：[对照图](docs/assets/q-mouth-qa.png)、[检测摘要](docs/q-mouth-qa.json)。这些场景输出使用合成音量，不是桌面截图；它们不证明真实画面理解、系统转写或所有用户体验均已实测。
 
 构建与协议命令、测试范围和历史实机证据见[开发与验证](docs/development.md)。本次文档更新不改变模型、权限、记忆、成长或原生运行逻辑。
 

@@ -1,0 +1,131 @@
+{
+  "method": "SKView.texture(from:ownScene,crop:)",
+  "desktopScreenshot": false,
+  "audioPlayback": false,
+  "captureOrPermissions": false,
+  "mouthInput": "synthetic level 0 / 0.9; no speech synthesis",
+  "pairs": 10,
+  "passed": true,
+  "results": [
+    {
+      "closed": "static-idle-closed.png",
+      "open": "static-idle-open.png",
+      "changedPixels": 111,
+      "changedOutsideCalibrationPlus3px": 0,
+      "backgroundCornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "closed": "static-shy-closed.png",
+      "open": "static-shy-open.png",
+      "changedPixels": 160,
+      "changedOutsideCalibrationPlus3px": 0,
+      "backgroundCornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "closed": "replying-01-closed.png",
+      "open": "replying-01-open.png",
+      "changedPixels": 293,
+      "changedOutsideCalibrationPlus3px": 0,
+      "backgroundCornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "closed": "replying-02-closed.png",
+      "open": "replying-02-open.png",
+      "changedPixels": 234,
+      "changedOutsideCalibrationPlus3px": 0,
+      "backgroundCornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "closed": "replying-03-closed.png",
+      "open": "replying-03-open.png",
+      "changedPixels": 272,
+      "changedOutsideCalibrationPlus3px": 0,
+      "backgroundCornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "closed": "replying-04-closed.png",
+      "open": "replying-04-open.png",
+      "changedPixels": 235,
+      "changedOutsideCalibrationPlus3px": 0,
+      "backgroundCornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "closed": "replying-05-closed.png",
+      "open": "replying-05-open.png",
+      "changedPixels": 317,
+      "changedOutsideCalibrationPlus3px": 0,
+      "backgroundCornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "closed": "replying-06-closed.png",
+      "open": "replying-06-open.png",
+      "changedPixels": 206,
+      "changedOutsideCalibrationPlus3px": 0,
+      "backgroundCornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "closed": "replying-07-closed.png",
+      "open": "replying-07-open.png",
+      "changedPixels": 275,
+      "changedOutsideCalibrationPlus3px": 0,
+      "backgroundCornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "closed": "replying-08-closed.png",
+      "open": "replying-08-open.png",
+      "changedPixels": 198,
+      "changedOutsideCalibrationPlus3px": 0,
+      "backgroundCornerAlpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}
