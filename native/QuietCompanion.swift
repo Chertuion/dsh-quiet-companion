@@ -137,6 +137,53 @@ private struct PermissionContextSnapshot {
 }
 // END PURE PERMISSION POLICY
 
+// BEGIN PURE AUDIO STATUS — used verbatim by AudioStatusSelfTest.swift.
+/// Nil preserves the more specific consent, unavailable or failure message.
+/// This policy describes state only and never starts or requests anything.
+private func configuredSystemAudioStatus(enabled: Bool, active: Bool, awaitingConsent: Bool,
+                                         starting: Bool, running: Bool) -> String? {
+    guard enabled, !awaitingConsent else { return nil }
+    if !active { return "系统声音理解已配置；观察已暂停，声音识别也处于暂停状态。" }
+    if running { return "正在本机识别系统声音；仅文字结果会发送给当前默认模型。" }
+    if starting { return "正在启动本机系统声音识别；尚未确认捕获已开始。" }
+    return "系统声音理解已配置；等待启动本机声音识别，尚未开始捕获。"
+}
+// END PURE AUDIO STATUS
+
+// BEGIN ACCESSIBILITY ACTIONS — used verbatim by AccessibilityActionSelfTest.swift.
+private func companionAccessibilityActionAllowed(enabled: Bool, hidden: Bool, alpha: Double, visibleWindow: Bool) -> Bool {
+    enabled && !hidden && alpha.isFinite && alpha > 0.08 && visibleWindow
+}
+
+/// A semantic action backed by the same Host interaction as a pointer click.
+/// The owner retains these elements; their parent/closures do not retain it.
+private final class CompanionAccessibilityButton: NSAccessibilityElement, NSAccessibilityButton {
+    private let actionLabel: String
+    private let actionIdentifier: String
+    private let available: () -> Bool
+    private let localFrame: () -> NSRect
+    private let press: () -> Bool
+
+    init(label: String, identifier: String, parent: AnyObject?, frame: @escaping () -> NSRect,
+         available: @escaping () -> Bool, press: @escaping () -> Bool) {
+        actionLabel = label; actionIdentifier = identifier
+        self.available = available; localFrame = frame; self.press = press
+        super.init()
+        setAccessibilityParent(parent)
+    }
+    override func isAccessibilityElement() -> Bool { true }
+    override func accessibilityRole() -> NSAccessibility.Role? { .button }
+    override func accessibilityLabel() -> String? { actionLabel }
+    override func accessibilityIdentifier() -> String { actionIdentifier }
+    override func accessibilityFrameInParentSpace() -> NSRect { localFrame() }
+    override func isAccessibilityEnabled() -> Bool { available() }
+    override func accessibilityPerformPress() -> Bool {
+        guard available() else { return false }
+        return press()
+    }
+}
+// END ACCESSIBILITY ACTIONS
+
 private struct CompanionSettings {
     var observationEnabled = false
     var screenEnabled = false
@@ -373,6 +420,35 @@ private final class BubbleView: NSView {
 
 private final class PetImageView: NSImageView {
     var rendererView: NSView?
+    var accessibilityRegionFrame: ((String) -> NSRect)?
+    private lazy var interactionButtons: [CompanionAccessibilityButton] = [
+        ("head", "摸摸头"), ("body", "轻碰衣服"), ("skirt", "轻碰裙摆")
+    ].map { kind, label in
+        CompanionAccessibilityButton(label: label, identifier: "quiet-companion.interaction.\(kind)", parent: self,
+            frame: { [weak self] in self?.accessibilityRegionFrame?(kind) ?? .zero },
+            available: { [weak self] in self?.accessibleInteractionAvailable ?? false },
+            press: { [weak self] in
+                guard let self, self.accessibleInteractionAvailable else { return false }
+                self.companion?.interact(kind)
+                return true
+            })
+    }
+    private var accessibleInteractionAvailable: Bool {
+        companionAccessibilityActionAllowed(enabled: companion != nil, hidden: isHiddenOrHasHiddenAncestor,
+            alpha: alphaValue, visibleWindow: window?.isVisible == true)
+    }
+    override func isAccessibilityElement() -> Bool { true }
+    override func accessibilityRole() -> NSAccessibility.Role? { .group }
+    override func accessibilityLabel() -> String? { "安静陪伴互动" }
+    override func accessibilityChildren() -> [Any]? {
+        accessibleInteractionAvailable ? interactionButtons : []
+    }
+    override func accessibilityHitTest(_ point: NSPoint) -> Any? {
+        guard accessibleInteractionAvailable, let window else { return nil }
+        let local = convert(window.convertPoint(fromScreen: point), from: nil)
+        if let child = interactionButtons.first(where: { $0.accessibilityFrameInParentSpace().contains(local) }) { return child }
+        return self
+    }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
     override func draw(_ dirtyRect: NSRect) {
         // Keep image metadata/alpha for hit testing, but render only the mesh.
@@ -606,6 +682,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         panel.contentView = content
         imageView = PetImageView(frame: .zero)
         imageView.companion = self
+        imageView.accessibilityRegionFrame = { [weak self] kind in self?.accessibleInteractionFrame(kind) ?? .zero }
         imageView.imageScaling = .scaleProportionallyUpOrDown
         let renderer = AvatarMeshRenderer()
         avatarRenderer = renderer
@@ -804,6 +881,32 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
     func interact(at point: NSPoint) {
         guard let normalized = normalizedImagePoint(point) else { return }
         interact(animationPlayer?.interactionRegion(at: normalized) ?? (normalized.y < 0.32 ? "head" : (normalized.y >= 0.63 ? "skirt" : "body")))
+    }
+
+    /// Small AX focus targets follow the same normalized character regions as
+    /// pointer interactions. Compute in parent space so screen moves stay valid.
+    private func accessibleInteractionFrame(_ kind: String) -> NSRect {
+        let regions: [String: CGRect] = ["head": CGRect(x: 0.1, y: 0.02, width: 0.8, height: 0.5),
+            "body": CGRect(x: 0.18, y: 0.52, width: 0.64, height: 0.22),
+            "skirt": CGRect(x: 0.12, y: 0.74, width: 0.76, height: 0.24)]
+        guard let region = regions[kind] else { return .zero }
+        let samples = [region.minX, region.midX, region.maxX].flatMap { x in
+            [region.minY, region.midY, region.maxY].map { CGPoint(x: x, y: $0) }
+        }
+        let projected: [CGPoint] = samples.compactMap { uv in
+            if let renderer = avatarRenderer, let point = renderer.normalizedPoint(for: uv) {
+                return imageView.convert(point, from: renderer.view)
+            }
+            let rect = drawnImageRect
+            guard rect.width > 0, rect.height > 0 else { return nil }
+            return CGPoint(x: rect.minX + uv.x * rect.width, y: rect.maxY - uv.y * rect.height)
+        }
+        guard let first = projected.first else { return .zero }
+        return projected.dropFirst().reduce(CGRect(x: first.x, y: first.y, width: 0, height: 0)) { box, point in
+            CGRect(x: min(box.minX, point.x), y: min(box.minY, point.y),
+                width: max(box.maxX, point.x) - min(box.minX, point.x),
+                height: max(box.maxY, point.y) - min(box.minY, point.y))
+        }.intersection(imageView.bounds)
     }
 
     private func animatePet() { sleepLabel.isHidden = !sleeping }
@@ -1231,6 +1334,9 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             } else {
                 audioStatus = "系统声音权限已就绪；请再次点击开启，本次检查没有启动捕获。"
             }
+        } else if let status = configuredSystemAudioStatus(enabled: settings.videoAudioEnabled, active: settings.active,
+                     awaitingConsent: audioConsentPending, starting: audioStarting, running: audioRunning) {
+            audioStatus = status
         }
         if mouseConsentPending {
             mouseStatus = AXIsProcessTrusted()
@@ -1727,6 +1833,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             audioConsentPending = false
             settings.videoAudioEnabled = false
             audioConsentPair = ""
+            audioStatus = "系统声音理解已关闭。"
             if !previewMode { defaults.removeObject(forKey: "audioConsentPair") }
             settingsChanged()
             return
@@ -1808,6 +1915,8 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             self.settings.videoAudioEnabled = true
             self.audioConsentPending = false
             self.audioConsentPair = requestPair
+            self.audioStatus = configuredSystemAudioStatus(enabled: true, active: self.settings.active,
+                awaitingConsent: false, starting: self.audioStarting, running: self.audioRunning) ?? self.audioStatus
             self.defaults.set(self.audioConsentPair, forKey: "audioConsentPair")
             self.settingsChanged(audioConsent: true)
         }
@@ -1955,6 +2064,9 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
                 return
             }
             audioStarting = true
+            audioStatus = configuredSystemAudioStatus(enabled: true, active: settings.active,
+                awaitingConsent: false, starting: true, running: false) ?? audioStatus
+            refreshSettingsUI()
             let pair = settings.pair
             audioTranscriber.onTranscript = { [weak self] text in
                 guard let self, self.settings.active, self.settings.videoAudioEnabled,
@@ -2648,11 +2760,13 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
                     && CGPreflightScreenCaptureAccess()
             }
             if let value = incoming["videoAudioEnabled"] as? Bool {
+                let wasEnabled = settings.videoAudioEnabled
                 let pair = incoming["audioConsentPair"] as? String ?? audioConsentPair
                 audioConsentPair = retainedConsentPair(incoming: pair, current: audioConsentPair,
                     route: settings.pair, hasRoute: !settings.provider.isEmpty && !settings.model.isEmpty)
                 settings.videoAudioEnabled = value && !previewMode && !audioConsentPending && audioConsentPair == settings.pair && !settings.provider.isEmpty
                     && speechPermissionRequestIsSafe() && CGPreflightScreenCaptureAccess() && SFSpeechRecognizer.authorizationStatus() == .authorized
+                if wasEnabled, !value, !audioConsentPending { audioStatus = "系统声音理解已关闭。" }
             }
             if let value = incoming["voiceEnabled"] as? Bool {
                 settings.voiceEnabled = value

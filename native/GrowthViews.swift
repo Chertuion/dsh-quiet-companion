@@ -3,6 +3,8 @@ import AppKit
 /// Original AppKit drawings. These views are projections of Host inventory;
 /// clicking offers an id and never consumes or generates a snack locally.
 final class CompanionSnackView: NSView {
+    private static let foodNames = ["cookie": "曲奇", "candy": "糖果", "fishcake": "鱼糕",
+        "mantou": "馒头", "lamian": "一碗拉面", "dianxin": "精致点心", "cake": "橡木蛋糕卷"]
     let snackID: String
     let kind: String
     var onOffer: ((String) -> Void)?
@@ -54,11 +56,23 @@ final class CompanionSnackView: NSView {
         self.kind = kind
         super.init(frame: .zero)
         wantsLayer = true
-        let names = ["cookie": "曲奇", "candy": "糖果", "fishcake": "鱼糕",
-                     "mantou": "馒头", "lamian": "一碗拉面", "dianxin": "精致点心", "cake": "橡木蛋糕卷"]
-        toolTip = (names[kind] ?? "零食") + " · 点击递给她，由当前状态决定是否进食"
+        toolTip = (Self.foodNames[kind] ?? "零食") + " · 点击递给她，由当前状态决定是否进食"
     }
     required init?(coder: NSCoder) { fatalError("Not a storyboard view") }
+    override func isAccessibilityElement() -> Bool { true }
+    override func accessibilityRole() -> NSAccessibility.Role? { .button }
+    override func accessibilityLabel() -> String? { "递给她：" + (Self.foodNames[kind] ?? "零食") }
+    override func accessibilityIdentifier() -> String { "quiet-companion.snack." + snackID }
+    override func accessibilityHelp() -> String? { "由当前饱腹、休息和任务状态决定是否进食" }
+    override func isAccessibilityEnabled() -> Bool {
+        companionAccessibilityActionAllowed(enabled: canOffer && onOffer != nil, hidden: isHiddenOrHasHiddenAncestor,
+            alpha: alphaValue, visibleWindow: window?.isVisible == true)
+    }
+    override func accessibilityPerformPress() -> Bool {
+        guard isAccessibilityEnabled(), let onOffer else { return false }
+        onOffer(snackID)
+        return true
+    }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
     override func hitTest(_ point: NSPoint) -> NSView? {
         guard canOffer, containsVisibleFood(convert(point, from: superview)) else { return nil }
