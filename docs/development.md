@@ -1,6 +1,6 @@
 # 开发与验证
 
-本文记录已公开 `0.5.1-beta.4` 的JavaScript短期画面修复，并保留beta3的触碰协议、安装、身体回应及屏幕授权恢复，以及beta1、beta2、0.5.0和0.4.1的历史证据。验收设备待解锁，实际安装仍为beta3，beta4安装与最终复测待完成；继续使用同字节0.5.1/build9原生组件。真实AX、视觉与音频的范围以下各节为准。安装入口见[项目首页](../README.md)，用户操作见[使用指南](guide.md)。
+本文记录 `0.5.1-beta.5` 设置页重启状态文字兼容、180项代码检查，以及已公开安装beta4的文件、状态和CG授权核对，并保留各旧版历史证据。beta5发布与实际安装复测待完成；继续使用同字节0.5.1/build9原生组件。预算阻止的模型终验、真实AX、视觉及音频范围以下各节为准。安装入口见[项目首页](../README.md)，用户操作见[使用指南](guide.md)。
 
 ## 环境与依赖
 
@@ -69,6 +69,16 @@ python3 native/protocol-test.py "$companion_app" --launch-services
 
 `native/protocol-test.py --launch-services` 使用无采集的预览路径检查实际通信、状态同步和退出。它不是录屏、录音或真实鼠标控制测试。协议和原生行为的详细字段见 [native/README.txt](../native/README.txt)。
 
+<a id="beta5-ui-compatibility"></a>
+
+## 0.5.1-beta.5设置页重启状态兼容
+
+包与lock根版本 **0.5.1-beta.5**。beta4实际重启后Host画面/观察开关为开、CG显示已授权；原生bootstrap恢复了screenEnabled，但screenStatus仍是初始化默认句。设置页先前无条件显示该句，产生与开关及授权事实不一致的提示。本轮只在客户端按已确认事实兼容显示，不改原生状态、权限或采集逻辑。
+
+严格条件为helper已连接，`settings.screenEnabled`、`native.screenEnabled`、`native.screenAuthorized` 均精确为true，`screenConsentPending` 和权限busy均不为true，且 `screenStatus` 精确等于原初始化句，才显示“画面理解已配置；仅在观察开启且有变化时按需采样。”。任何真实错误、待确认、未启用/未授权/未知、断开、其它或近似文字仍保留原反馈。该句不表示已采样或发送画面。
+
+新增2项真实Host React SSR回归：覆盖helper连接形式及观察开/关的重启组合，另覆盖断开、设置/原生状态false或未知、pending、busy、真实错误及非精确文字保留。离线重建client.js后，用Host Electron Node.js24.21.0、实际Host React及合成Unix socket运行16个JS文件，**180项通过、0失败、0跳过**。原生18文件和签名字节保持不变，未增权限、依赖、模型调用或预算豁免；发布及实际安装复测待完成。
+
 ## 0.5.1-beta.4短期画面修复与验证
 
 包与lock根版本为 **0.5.1-beta.4**。仅修正JavaScript的设置同步：普通settings不再无条件清除短期画面，仅在同一仍有效路由、画面发送同意、`screenAllowed` 前后持续为true时保留45秒内已有帧。暂停、临时安静、撤权以及route/provider/model/useDefault变化仍清除，不延长原始TTL，不放宽发送条件。
@@ -77,9 +87,17 @@ python3 native/protocol-test.py "$companion_app" --launch-services
 
 最终全量使用Host Electron Node.js24.21.0、实际Host React及合成Unix socket：16个JS文件共 **178项通过、0失败、0跳过**，比beta3新增4项；runtime定向28项通过。覆盖普通同步保留与在途取消、原始45秒到期、暂停/安静/撤权及路由变化清除等代码行为，不把合成帧测试当作真实桌面采样或OCR质量验收。
 
-保持0.5.1/build9的原生18文件及签名字节，不重新编译或增加原生命令、权限、素材、依赖。Harness/角色聊天在前台时不保证新增采样，手动请求仍可能没有可用附图；此修复不等于主动截图，也不保证受控标记OCR成功。beta4已公开，实际安装与最终复测待设备解锁后完成；beta3的174项计数和既有CG授权结果仅作该版本历史保留。
+保持0.5.1/build9的原生18文件及签名字节，不重新编译或增加原生命令、权限、素材、依赖。Harness/角色聊天在前台时不保证新增采样，手动请求仍可能没有可用附图；此修复不等于主动截图，也不保证受控标记OCR成功。beta4已公开并实际安装，功能终验逐项另记；beta3的174项计数和既有CG授权结果仍仅作该版本历史保留。
 
-公开发行对应提交 [`221630c`](https://github.com/Chertuion/dsh-quiet-companion/commit/221630c)，[固定标签与Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.4)已公开，资产为35,957,787字节，SHA-256为 `e5da5a62afdca14fe2b573eba4f8ac439b2e43485072ac7295a72d2a272c35eb`；GitHub资产上传状态及非草稿状态已核对。固定标签和资产保持冻结，本段为后续文档补记。当前设备锁屏、实际仍运行/安装beta3；解锁后须先恢复临时测试安静应用设置、正常退出Host，再安装并记录beta4实际结果，未把已公开或178项代码检查当成安装成功。
+公开发行对应提交 [`221630c`](https://github.com/Chertuion/dsh-quiet-companion/commit/221630c)，[固定标签与Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.4)已公开，资产为35,957,787字节，SHA-256为 `e5da5a62afdca14fe2b573eba4f8ac439b2e43485072ac7295a72d2a272c35eb`；GitHub资产上传状态及非草稿状态已核对。固定标签和资产保持冻结，本段为后续文档补记，实际安装校验见下。
+
+<a id="beta4-desktop-validation"></a>
+
+### beta4公开发行后的实际Desktop复核（2026-11-04）
+
+- 解锁后正常退出Host，仅从 `quietApps` 移除临时测试项 `QC-SCREEN-7429`，未修改其它设置键。以清理后的状态为安装基线，设置、成长、用量三文件安装前后SHA完全一致；临时标记已清除。该结果只针对安装瞬间，运行后允许正常更新。
+- 实际安装版本为0.5.1-beta.4，安装脚本成功退出；profile内87文件与上述公开发行包逐字节匹配，原生严格签名校验通过，没有重新编译或改签名。实际重启后Host显示画面和观察开关为开、CG已授权；screenStatus却残留初始化默认句，属本次看到的显示不一致，兼容修复见beta5。本地动作结果仍不由这些字段推导为全部通过。
+- 本次真实状态已出现“已达到今天设置的用量预算”。没有提高预算、清除usage或绕过门禁；新的模型回应、裙摆及受控标记识别暂不记通过，也不因预算阻止请求而判断模型故障。文件/签名、本地动作和授权状态须与模型质量分别验收。
 
 ## 0.5.1-beta.3协议调整与验证
 

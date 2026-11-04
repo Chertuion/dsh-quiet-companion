@@ -283,6 +283,11 @@ function CompanionSection({ snapshot, controller, disabled }) {
   const audioWait = permissionBusy || (audioPending && native.audioAuthorized !== true);
   const mouseWait = permissionBusy || (mousePending && native.mouseAuthorized !== true);
   const snoozed = Number(settings.snoozeUntil) > Date.now();
+  const screenStatus = helper && settings.screenEnabled === true && native.screenEnabled === true
+    && native.screenAuthorized === true && !screenPending && !permissionBusy
+    && native.screenStatus === '画面理解未开启；需要同意向当前模型发送画面并获得系统权限。'
+    ? '画面理解已配置；仅在观察开启且有变化时按需采样。'
+    : native.screenStatus;
   return h(React.Fragment, null,
     h(Card, { title: '感知与陪伴' },
       h(ToggleRow, { label: '应用感知', checked: settings.observationEnabled, disabled,
@@ -294,7 +299,7 @@ function CompanionSection({ snapshot, controller, disabled }) {
         description: !vision ? '当前默认模型不支持图片；文字陪伴仍可使用。' : '开启时由原生宠物确认并申请屏幕录制权限。更换默认模型后需重新同意。',
         onChange: next => next ? controller.action('request-screen-permission') : controller.update({ screenEnabled: false }) }),
       h('div', { className: 'qcp-form-row' },
-        h('p', { className: 'qcp-status', role: 'status' }, native.screenStatus || `屏幕权限：${native.screenAuthorized === true ? '已授权' : native.screenAuthorized === false ? '未授权' : '待读取'}`),
+        h('p', { className: 'qcp-status', role: 'status' }, screenStatus || `屏幕权限：${native.screenAuthorized === true ? '已授权' : native.screenAuthorized === false ? '未授权' : '待读取'}`),
         screenPending ? h('p', { className: 'qcp-note', role: 'status' }, native.screenPermissionState === 'granted'
           ? '本次同意已保留，系统权限现已可用。请点击画面开关继续开启。' : '本次同意已保留，正在等待系统权限生效。请确认 macOS 系统设置后重新检查；如提示需要重启，请重启宠物后再开启。') : null,
         settings.screenEnabled && (!settings.observationEnabled || snoozed) ? h('p', { className: 'qcp-note' }, '画面理解已配置，但观察已暂停，当前不采集画面。') : null,

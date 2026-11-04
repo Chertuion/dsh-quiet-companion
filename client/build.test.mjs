@@ -167,6 +167,44 @@ test('pending OS permission shows real wait/restart state and blocks repeat enab
   assert.match(html,/<button(?![^>]*disabled)[^>]*>取消画面开启<\/button>/u);
 });
 
+test('restarted authorized screen configuration replaces only the exact stale initialization message',{skip:!React},()=>{
+  const stale='画面理解未开启；需要同意向当前模型发送画面并获得系统权限。';
+  const configured='画面理解已配置；仅在观察开启且有变化时按需采样。';
+  for(const helper of [true,{running:true},{alive:true}]) for(const observationEnabled of [false,true]) {
+    const html=pageFor('companion',{...fixture,helper,
+      settings:{...fixture.settings,screenEnabled:true,observationEnabled},
+      native:{...fixture.native,screenEnabled:true,screenAuthorized:true,screenStatus:stale,
+        screenConsentPending:false,permissionRequestInFlight:false}});
+    assert.ok(html.includes(configured));assert.equal(html.includes(stale),false);
+    assert.equal(html.includes('画面理解已配置，但观察已暂停，当前不采集画面。'),!observationEnabled);
+    assert.equal(html.includes('已发送关键帧'),false);
+  }
+});
+
+test('screen feedback preserves errors and all unconfirmed or disconnected restart states',{skip:!React},()=>{
+  const stale='画面理解未开启；需要同意向当前模型发送画面并获得系统权限。';
+  const configured='画面理解已配置；仅在观察开启且有变化时按需采样。';
+  const enabled={...fixture,settings:{...fixture.settings,screenEnabled:true,observationEnabled:true},
+    native:{...fixture.native,screenEnabled:true,screenAuthorized:true,screenStatus:stale,
+      screenConsentPending:false,permissionRequestInFlight:false}};
+  const cases=[
+    {...enabled,helper:{running:false}},
+    {...enabled,helper:false},
+    {...enabled,settings:{...enabled.settings,screenEnabled:false}},
+    ...['screenEnabled','screenAuthorized'].flatMap(key=>[false,undefined].map(value=>
+      ({...enabled,native:{...enabled.native,[key]:value}}))),
+    {...enabled,native:{...enabled.native,screenConsentPending:true}},
+    {...enabled,native:{...enabled.native,permissionRequestInFlight:true}},
+    ...['系统屏幕权限不可用；请重新检查。','正在等待本次同意。',`${stale} `].map(screenStatus=>
+      ({...enabled,native:{...enabled.native,screenStatus}})),
+  ];
+  for(const snapshot of cases) {
+    const html=pageFor('companion',snapshot);
+    assert.equal(html.includes(configured),false);
+    assert.ok(html.includes(snapshot.native.screenStatus));
+  }
+});
+
 test('an explicit off remains available with lost helper/model capability or another pending dialog',{skip:!React},async()=>{
   const switches=new Map(),calls=[];
   const controller={update:async patch=>{calls.push(patch);return true;}};
