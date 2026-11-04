@@ -16,7 +16,7 @@
 
 角色风格是安静、体贴，带一点黏人与俏皮。主动回应由事件与上下文决定，模型可以选择保持安静。角色随 Harness 启停，使用官方桌面版时不需要一直开着终端。
 
-> **本轮版本：`v0.5.1-beta.4`**。仅修正JavaScript侧普通设置刷新清掉短期画面的问题：在同一路由、同意和画面能力持续有效时保留未过期帧，暂停、撤权或换模型仍清除，不延长45秒有效期。继续使用0.5.1/build9原生组件，不新增权限、素材、依赖或原生命令；beta4发布与实际安装复测尚未完成。已公开beta3的安装、身体回应及屏幕授权恢复记录见[开发记录](docs/development.md)。设置、记忆和成长保存在包目录之外。
+> **当前测试版：[`v0.5.1-beta.4`](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.4)**，已公开。仅修正JavaScript侧普通设置刷新清掉短期画面的问题：在同一路由、同意和画面能力持续有效时保留未过期帧，暂停、撤权或换模型仍清除，不延长45秒有效期。继续使用0.5.1/build9原生组件，不新增权限、素材、依赖或原生命令。验收设备待解锁，实际安装仍为beta3；beta4安装与最终复测待完成。已有结果见[开发记录](docs/development.md)。设置、记忆和成长保存在包目录之外。
 
 ## 目录
 
@@ -123,11 +123,11 @@ beta3为这三类触碰单独约定自然文本回应，模型从请求开始就
 3. 安装后启用插件，按应用提示重新打开 Harness。
 4. 打开 **设置 → 安静陪伴**，确认原生组件已连接。
 
-beta4仅修正普通设置刷新时的短期画面保留；beta3已加入专用触碰回应协议。beta4固定地址须在对应标签和Release发布后使用；已公开版本可查看下方历史Release，开发分支不自动代表新的发行版。
+beta4仅修正普通设置刷新时的短期画面保留；beta3已加入专用触碰回应协议。beta4固定标签与Release已公开；开发分支用于后续改动，不自动代表新的发行版。
 
 ### 使用 Release 安装包
 
-在对应 [Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.4) 发布后，从 **Assets** 中下载 [`dsh-quiet-companion-0.5.1-beta.4.tgz`](https://github.com/Chertuion/dsh-quiet-companion/releases/download/v0.5.1-beta.4/dsh-quiet-companion-0.5.1-beta.4.tgz)，无需解压，把下载文件的完整本机路径填入“添加插件”。GitHub 自动生成的 Source code ZIP/TAR 是源码快照，不是此预编译安装包。GitHub源码拉取停滞时可选择同版已下载的Release安装包；历史版本见 [beta3 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.3)、[beta2 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.2) 和 [beta1 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.1)。
+在对应 [Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.4) 的 **Assets** 中下载 [`dsh-quiet-companion-0.5.1-beta.4.tgz`](https://github.com/Chertuion/dsh-quiet-companion/releases/download/v0.5.1-beta.4/dsh-quiet-companion-0.5.1-beta.4.tgz)，无需解压，把下载文件的完整本机路径填入“添加插件”。GitHub 自动生成的 Source code ZIP/TAR 是源码快照，不是此预编译安装包。GitHub源码拉取停滞时可选择同版已下载的Release安装包；历史版本见 [beta3 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.3)、[beta2 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.2) 和 [beta1 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.1)。
 
 ### 使用桌面应用自带的 CLI
 
@@ -382,7 +382,7 @@ npm test
 | `third_party/` | 提取适配模块与完整第三方许可 |
 | `docs/` | 详细指南、来源、许可审计与分层验证记录 |
 
-**beta4的JavaScript全量检查为178项通过、0失败、0跳过**，仅调整设置刷新与短期画面保留规则。继续使用同字节的0.5.1/build9原生组件，不新增权限、素材、依赖或原生命令；beta3的174项保留为历史结果。发布与实际安装复测尚未完成，当前不保证聊天窗口在前台时新增采样，也不延长已有帧的45秒有效期。
+**beta4的JavaScript全量检查为178项通过、0失败、0跳过**，仅调整设置刷新与短期画面保留规则。已公开提交 `221630c` 对应的固定标签和安装包；继续使用同字节0.5.1/build9原生组件，不新增权限、素材、依赖或原生命令。验收设备待解锁，当前安装仍为beta3；beta4安装与最终复测待完成。beta3的174项及既有CG授权结果保留为历史，不据此写成beta4实测通过；不保证聊天前台新增采样，也不延长45秒有效期。
 
 **beta3的JavaScript全量检查为174项通过、0失败、0跳过**，使用Node.js24.21、实际Host React与合成Unix socket。公开版本对应提交 `805b147`，实际安装87个文件与发行包逐字节匹配，严格签名通过；原生0.5.1/build9的18个bundle文件与beta2一致，不将历史原生检查算作本轮重新执行。安装瞬间设置、成长、用量三个文件字节保留；随后真实互动和模型请求已使成长、用量正常变化，不代表这些文件当前仍与安装前相同。beta3一次身体互动得到自然中文回应；摸头成功属于beta2历史，裙摆复测尚待完成。详见[beta3实机记录](docs/development.md#beta3-desktop-validation)。
 
