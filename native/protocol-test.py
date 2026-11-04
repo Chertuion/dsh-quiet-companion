@@ -121,6 +121,10 @@ def main():
         assert native_status.get('preview') is True
         assert native_status.get('screenAuthorized') is False
         assert native_status.get('audioAuthorized') is False
+        assert native_status.get('screenPermissionState') == 'unavailable'
+        for name in ['screenConsentPending', 'audioConsentPending', 'mouseConsentPending',
+                     'permissionsNeedRestart', 'permissionRequestInFlight']:
+            assert native_status.get(name) is False
         assert isinstance(native_status.get('voices'), list)
         assert native_status.get('usingSocketTransport') is args.launch_services
         assert native_status.get('growthPanelVisible') is False
@@ -164,6 +168,64 @@ def main():
                     time.sleep(0.03)
                 raise AssertionError('No fresh native status met the motion/PCM condition.')
 
+            # Read-only permission refresh must not prompt, enable, or capture.
+            send({'type': 'control', 'action': 'refresh-permissions'})
+            checked = status()
+            assert checked.get('screenEnabled') is False and checked.get('audioEnabled') is False
+            assert checked.get('mousePlayEnabled') is False and checked.get('permissionsNeedRestart') is False
+
+            # Simulate consent loaded after a helper restart, in memory only.
+            # Exercise both actual models/settings bootstrap orders and real
+            # explicit disable handlers; preview never writes consent defaults.
+            consent_counter = 0
+
+            def consent_state():
+                nonlocal consent_counter
+                consent_counter += 1
+                identity = f'consent-state-{consent_counter}'
+                send({'type': 'control', 'action': 'preview-consent-state', 'id': identity})
+                return wait_for('preview-consent-state', identity)
+
+            route_models = {'type': 'models', 'defaultProvider': 'qa-permission', 'defaultModel': 'vision',
+                            'models': [{'provider': 'qa-permission', 'model': 'vision', 'vision': True}]}
+            unknown_echo = {'type': 'settings', 'settings': {'screenEnabled': False, 'consentPair': '',
+                            'videoAudioEnabled': False, 'audioConsentPair': ''}}
+            route_echo = {'type': 'settings', 'settings': {'provider': 'qa-permission', 'model': 'vision',
+                          **unknown_echo['settings']}}
+            for order in ['settings-first', 'models-first']:
+                send({'type': 'control', 'action': 'preview-seed-consents'})
+                if order == 'settings-first':
+                    send(unknown_echo)
+                    deferred = consent_state()
+                    assert deferred['screenPresent'] and deferred['audioPresent']
+                    assert not deferred['screenEnabled'] and not deferred['audioEnabled']
+                send(route_models)
+                send(route_echo)
+                kept = consent_state()
+                assert kept['screenMatchesRoute'] and kept['audioMatchesRoute'], order
+                assert not kept['screenEnabled'] and not kept['audioEnabled'], 'Consent never enables capture.'
+                send({'type': 'control', 'action': 'disable-screen'})
+                wait_for('settings', predicate=lambda value: value.get('consentPair') == '')
+                send({'type': 'control', 'action': 'disable-system-audio'})
+                wait_for('settings', predicate=lambda value: value.get('audioConsentPair') == '')
+                send(route_echo)
+                revoked = consent_state()
+                assert not revoked['screenPresent'] and not revoked['audioPresent'], 'Empty echo must not restore explicit revocation.'
+            send({'type': 'control', 'action': 'preview-seed-consents'})
+            send({'type': 'models', 'defaultProvider': 'qa-other', 'defaultModel': 'vision',
+                  'models': [{'provider': 'qa-other', 'model': 'vision', 'vision': True}]})
+            changed = consent_state()
+            assert not changed['screenPresent'] and not changed['audioPresent'], 'First different route revokes loaded consent.'
+
+            # These ordinary settings have no permission side effect.
+            send({'type': 'settings', 'settings': {'voiceEnabled': True, 'memoryEnabled': True,
+                                                   'agentProgressEnabled': True, 'lipSyncEnabled': True}})
+            checked = status()
+            assert checked.get('permissionRequestInFlight') is False
+            assert checked.get('speechPlaying') is False
+            assert checked.get('screenAuthorized') is False and checked.get('audioAuthorized') is False
+            send({'type': 'settings', 'settings': {'voiceEnabled': False}})
+
             # Exercise actual Host semantic inputs before using preview-only pose controls.
             send({'type': 'speech', 'text': '合成预览', 'mood': 'shy', 'speak': False})
             send({'type': 'mood', 'mood': 'thinking'})
@@ -180,9 +242,13 @@ def main():
             send({'type': 'agent', 'available': False, 'current': None, 'activeCount': 0, 'waitingCount': 0})
             send({'type': 'speech', 'text': '合成预览', 'mood': 'idle', 'speak': False})
             write(b'{"type":"control","action":"preview-reset-motion"}\n')
+            # Render clocks may pause while a different floating app covers the
+            # panel. Raise only this owned test panel, then require real progress.
+            send({'type': 'control', 'action': 'show'})
             baseline = status(lambda value: value.get('currentClip') == 'idle')
-            time.sleep(0.15)
-            dynamic = status(lambda value: value.get('motionMode') == 'native-mesh')
+            dynamic = status(lambda value: value.get('motionMode') == 'native-mesh'
+                             and value.get('frameMetrics', {}).get('sceneFrameCount', 0)
+                             > baseline['frameMetrics']['sceneFrameCount'])
             assert dynamic['frameMetrics']['sceneFrameCount'] > baseline['frameMetrics']['sceneFrameCount'], f'Real scene did not advance: baseline={baseline["frameMetrics"]}, after={dynamic["frameMetrics"]}'
             assert dynamic['frameMetrics']['maximumNormalizedDisplacement'] < 0.03
 
@@ -287,6 +353,33 @@ def main():
             assert hidden.get('snackArrivalCount') == 0, 'Old startup inventory must stay still.'
             initial_positions = positions(hidden)
 
+            # Dispatch synthetic events through the actual owned preview panel.
+            # No CGEvent is posted, cursor moved, Host offer emitted or model called.
+            def click(target, identity=None):
+                payload = {'type': 'control', 'action': 'preview-click', 'target': target}
+                if identity is not None:
+                    payload['id'] = identity
+                send(payload)
+                return wait_for('preview-click-result', predicate=lambda value: value.get('target') == target)
+
+            offered = click('snack', 'qa-snack-0')
+            assert offered['hit'] == 'snack' and offered['firstMouseAccepted'] is True
+            assert offered['snackOfferCount'] == 1 and offered['lastSnackOffer'] == 'qa-snack-0'
+            corner = click('snack-corner', 'qa-snack-0')
+            assert corner['hit'] != 'snack' and corner['snackOfferCount'] == 1
+            for part in ['head', 'body', 'skirt']:
+                touched = click(part)
+                assert touched['hit'] == 'pet' and touched['firstMouseAccepted'] is True
+                assert touched['lastInteraction'] == part
+            # A rejected offer remains visible with the growth sidebar hidden,
+            # without character dialogue, TTS, eating animation or history echo.
+            send({'type': 'notice', 'kind': 'snack-offer', 'text': '刚吃过，稍等一会儿再递给她。',
+                  'reason': 'meal-cooldown'})
+            notice = status(lambda value: value.get('operationNoticeVisible') is True)
+            assert notice.get('growthPanelVisible') is False
+            assert notice.get('speechPlaying') is False and notice.get('snackEatingActive') is False
+            assert not any(value.get('type') in ['snack-offer', 'interaction', 'observation', 'transcript'] for value in messages)
+
             # Exercise the actual menu's shared action; it emits only an appearance patch.
             write(b'{"type":"control","action":"preview-place-at-right-edge"}\n')
             write(b'{"type":"control","action":"toggle-growth-panel"}\n')
@@ -377,6 +470,10 @@ def main():
             'native_parent_pid': ready.get('parentPid'),
             'preview_audio_enable_stayed_off': args.launch_services,
             'preview_pointer_play_no_warp': args.launch_services,
+            'permission_refresh_and_unrelated_settings_safe': args.launch_services,
+            'restart_bootstrap_consent_and_explicit_revoke_safe': args.launch_services,
+            'first_mouse_food_alpha_and_body_region_dispatch': args.launch_services,
+            'snack_notice_visible_without_tts_or_model': args.launch_services,
             'growth_snapshot_eat_level_replay_safe': args.launch_services,
             'snacks_around_character_stable': args.launch_services,
             'growth_panel_hidden_by_default_and_toggle_safe': args.launch_services,

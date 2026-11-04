@@ -59,6 +59,11 @@ final class CompanionSnackView: NSView {
         toolTip = (names[kind] ?? "零食") + " · 点击递给她，由当前状态决定是否进食"
     }
     required init?(coder: NSCoder) { fatalError("Not a storyboard view") }
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        guard canOffer, containsVisibleFood(convert(point, from: superview)) else { return nil }
+        return self
+    }
     override func mouseDown(with event: NSEvent) {
         if canOffer, containsVisibleFood(convert(event.locationInWindow, from: nil)) { onOffer?(snackID) }
     }

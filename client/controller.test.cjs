@@ -93,3 +93,37 @@ test('virtual snack and growth controls use the existing owner channel without n
     {channel:'/api',endpoint:'quiet-companion/update-settings',payload:{patch:{tokensPerSnack:2000,snackRewardsEnabled:true,autoEatEnabled:true,growthEnabled:true}}},
   ]); controller.dispose();
 });
+
+test('known permission failures remain visible across successful polling without exposing raw errors',async()=>{
+  const {controller}=fixture(async(_channel,endpoint)=>endpoint.endsWith('/action')
+    ? {ok:false,error:{code:'vision-unavailable',message:'PRIVATE_PROVIDER_DIAGNOSTIC',details:{key:'PRIVATE_KEY'}}}
+    : {ok:true,value:{settings:{screenEnabled:false}}});
+  assert.equal(await controller.action('request-screen-permission'),false);
+  assert.match(controller.state.error,/默认模型不支持图片/u);
+  await controller.load();
+  assert.match(controller.state.error,/默认模型不支持图片/u);
+  assert.equal(controller.state.status,'ready');
+  assert.equal(JSON.stringify(controller.state).includes('PRIVATE_'),false);
+  await controller.retry();
+  assert.equal(controller.state.error,'');
+  controller.dispose();
+});
+
+test('permission completion is reflected only by later native snapshots, never by the send acknowledgement',async()=>{
+  const snapshots=[{settings:{screenEnabled:false},native:{screenConsentPending:true,screenPermissionState:'restart-required'}},
+    {settings:{screenEnabled:true},native:{screenConsentPending:false,screenAuthorized:true}}];
+  let sent=0;
+  const {controller}=fixture(async(_channel,endpoint)=>{
+    if(endpoint.endsWith('/action')) {sent++;return {ok:true,value:{settings:{screenEnabled:false}}};}
+    return {ok:true,value:snapshots.shift()};
+  });
+  await controller.action('request-screen-permission');
+  assert.equal(controller.state.snapshot.settings.screenEnabled,false);
+  await controller.load();
+  assert.equal(controller.state.snapshot.settings.screenEnabled,false);
+  assert.equal(controller.state.snapshot.native.screenConsentPending,true);
+  await controller.load();
+  assert.equal(controller.state.snapshot.settings.screenEnabled,true);
+  assert.equal(sent,1,'Polling must not replay a permission action.');
+  controller.dispose();
+});

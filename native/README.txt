@@ -1,4 +1,4 @@
-Native companion component — 0.5.0 — 2026-11-02
+Native companion component — Q 0.5.x
 
 Build
   ./build.sh
@@ -96,6 +96,17 @@ and emits a maximum 1280-pixel JPEG. The parent may admit selected keyframes to
 Harness attachments; those keyframes can persist locally. Both UI disclosure
 and consent dialog explain this instead of promising zero image storage.
 Screen consent binds provider + U+001F + model and is cleared on model changes.
+App-level consent and actual macOS authorization are separate. After an explicit
+confirmation, a false screen preflight retains the current-model consent as
+pending instead of repeating the dialog. Screen/AX requests are attempted at
+most once per helper process; rechecking reads existing permission only.
+macOS may require restarting the app after its first screen-recording grant:
+https://developer.apple.com/documentation/screencapturekit/capturing-screen-content-in-macos
+After permission becomes ready, the user must explicitly enable again. Returning
+from System Settings or refreshing status never starts capture or pointer play.
+Explicit disable cancels pending consent. A model/capability change, real pause,
+snooze, language change or shutdown cancels an in-flight confirmation; unrelated
+voice/memory/growth/appearance settings and identical model refreshes do not.
 
 System audio
 A separate explicit consent gate captures only system playback through
@@ -158,7 +169,9 @@ Inbound:
   invented. mood changes poses only and idle restores any active agent pose.
   Usage supports nested usage/budget/balance and estimatedCosts by currency.
   Memory uses factsText for editable pins and facts for the read-only full view.
-  Parent-supplied models/settings never echo a settings event. Persisted screen
+  Parent-supplied models/settings normally do not echo a settings event. Unsafe
+  incoming enable requests receive the actual disabled settings instead.
+  Persisted screen
   and audio consent are accepted only for the current route and existing OS
   permissions; incoming state never requests permission automatically.
   ping:{id:string} returns pong:{id:string}, bounded to 128 characters, without
@@ -188,8 +201,9 @@ No official app signature, TCC database or system permission is bypassed.
 Optional pointer play
 mousePlayEnabled defaults false; mousePlayAfterMinutes defaults 20 and is
 clamped to 5..120. enable-mouse-play is an explicit control action with native
-confirmation and an AXIsProcessTrustedWithOptions prompt; successful enable
-alone persists consent and emits the enabled setting. Incoming configuration
+confirmation and an AXIsProcessTrustedWithOptions prompt. App consent persists
+while the OS grant is pending, but the feature remains disabled until the user
+explicitly enables with a real AX grant. Incoming configuration
 cannot enable pointer play without that consent and existing AX permission.
 mouse-play is the Host policy's trigger, not a timer or model instruction.
 It rechecks active observation, no pressed mouse buttons/modifiers, recent
@@ -209,7 +223,8 @@ regression exercises only this inert branch, not a real user cursor movement.
 
 Host controls and status
 control:{action} supports enable-screen, disable-screen, enable-system-audio,
-disable-system-audio, pause, resume, snooze, show, hide, chat, feed, sleep, wake,
+disable-system-audio, enable-mouse-play, disable-mouse-play, refresh-permissions,
+pause, resume, snooze, show, hide, chat, feed, sleep, wake,
 open-settings and refresh-status. set-appearance also accepts scale/opacity.
 toggle-growth-panel shares the right-click menu action and changes only the
 sidebar appearance; it emits a partial settings event containing that one
@@ -220,10 +235,16 @@ The fallback native settings window need not appear for a Host enable action.
 native-status is deduplicated and includes audioStatus, modelStatus,
 screenAuthorized, audioAuthorized, helperVersion, voices:[{id,name,language}],
 scale, opacity and permissionRequestInFlight, plus enabled/transport flags.
+screenPermissionState is granted, not-authorized, restart-required or unavailable;
+restart-required means a request has not produced usable access, not proof that
+the user granted it. screenStatus explains the next step. screenConsentPending,
+audioConsentPending, mouseConsentPending and permissionsNeedRestart distinguish
+pending consent from real OS authorization. refresh-permissions reads screen,
+Speech and AX state only, without requesting, enabling, capturing or moving.
 request-status refreshes that snapshot without echoing settings.
 Permission dialogs share an in-flight guard. A pair-bound request epoch is
 checked after confirmation, in the Speech callback and after screen access;
-queued settings/model changes, disable, pause or shutdown invalidate it at
+queued material route/capability changes, disable, pause or shutdown invalidate it at
 the reader thread before a modal main loop can delay their application.
 Preview does not request authorization, capture data, speak or persist visual
 and consent settings; status uses synthetic false authorization values.
@@ -241,6 +262,11 @@ Default execution of that manual harness starts no audio.
 MotionStateSelfTest.swift and
 AvatarMeshGeometrySelfTest.swift are standalone test programs; none is
 concatenated into the production build.
+PermissionPolicySelfTest.swift tests the marked pure policy block extracted from
+QuietCompanion.swift (concatenate that block before the test and compile with
+-parse-as-library). It checks per-process request gating, pending consent
+retention, read-only refresh, same-model echoes and explicit revocation without
+calling AppKit, TCC or observation APIs.
 Self-test checks default-off capture/voice settings, lip-sync default true,
 the Q-character manifest and every supplied PNG atlas cell, reporting
 pngDecoded, characterId, clipCount, frameCount and allFramesDecoded. ImageIO decoding does
@@ -288,6 +314,15 @@ while the card is hidden. Transparent regions around the character and food
 remain click-through; food hit testing excludes its transparent outer corners. The helper neither generates food nor changes inventory or XP.
 Clicking a snack emits snack-offer:{id}. The existing feed action emits the
 same intent without an id. Neither plays an eating action prematurely.
+The pet image and snack views accept first mouse clicks on the inactive floating
+panel. Snack hitTest uses the view's superview coordinates and excludes invisible
+corners; it retains priority over the image below it. The Host replies with
+notice:{kind:"snack-offer",text,reason} for accepted or refused offers. An explicit
+interaction's safe model-error hint may use kind:"model-reply" on the same
+operation channel. This is
+a separate five-second operation bubble even when the growth card is hidden;
+it does not change personality, speak, write chat history or trigger a model.
+Actual eating still requires the authoritative snack-eaten event below.
 Only a unique snack-eaten event moves the corresponding snack from its current
 visible location to the mouth, fades it away and plays the real eat_token
 clip. The native event-id cache suppresses repeated event replay. A genuinely
@@ -314,6 +349,13 @@ inventoryLabelVisible, petPanelWidth (unscaled), panelWithinVisibleScreen,
 snackLayout, snackPositions
 (unscaled id/slot/x/y/width/height), snackArrivalCount and snackEatingActive
 for these assertions. No observation or additional permission is involved.
+The preview-only preview-click:{target:"snack"|"snack-corner"|"head"|"body"|"skirt",id?}
+control dispatches synthetic mouse events through this owned panel's hitTest and
+first-mouse responder path. It never posts an OS event or moves the real cursor.
+preview-click-result reports the actual hit/accepted responder and preview-only
+interaction/offer counters; preview suppresses every real Host interaction and
+snack-offer event. The protocol regression also checks the independent notice
+bubble and non-permission settings without using capture or a model.
 It does not install or change the real desktop profile or its permissions.
 
 Native motion and PCM preview diagnostics

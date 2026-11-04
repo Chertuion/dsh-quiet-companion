@@ -33,12 +33,15 @@ const fixture={settings:{observationEnabled:false,screenEnabled:false,videoAudio
   status:'等待明确开启',memory:{factsText:'喜欢安静',counts:{facts:1,pinned:1,episodes:2},facts:[{id:'fact:fixture',text:'喜欢安静 <script>not-code</script>',pinned:true,source:'editor',kind:'fact',slot:'preference',provenance:{quote:'我喜欢安静'}}]},
   usage:{day:'2026-11-02',calls:1,reportedCalls:0,totalTokens:null,inputTokens:null,cacheReadTokens:null,outputTokens:null,estimatedCosts:{}},
   budget:{reached:false},balance:{available:false,reason:'尚未查询账户余额'},agent:{available:true,current:null,activeCount:0,waitingCount:0}};
-function pageFor(tab,snapshot=fixture) {
+function pageFor(tab,snapshot=fixture,hooks={}) {
   let registration;
   const effects=[];
   const injectedReact={...React,useState:initial=>React.useState(initial==='companion'?tab:initial)};
   const primitives={Button:({variant,size,children,...props})=>React.createElement('button',props,children),
-    Switch:({checked,label,disabled,onChange,title})=>React.createElement('button',{role:'switch','aria-label':label,'aria-checked':checked,disabled,title,onClick:()=>onChange(!checked)})};
+    Switch:({checked,label,disabled,onChange,title})=>{
+      hooks.switches?.set(label,{checked,disabled,onChange});
+      return React.createElement('button',{role:'switch','aria-label':label,'aria-checked':checked,disabled,title,onClick:()=>onChange(!checked)});
+    }};
   let entry;
   new Script(bundle).runInNewContext({window:{__ModuleLoader__:{load:value=>{entry=value;}}},AbortController,setInterval,clearInterval});
   const plugin=entry.factory(name=>name==='react'?injectedReact:name==='@deepseek-ai/dsh-client-ui-primitives'?primitives:(()=>{throw new Error('Unexpected external');})());
@@ -47,7 +50,7 @@ function pageFor(tab,snapshot=fixture) {
     slots:{inject:(_slot,callback)=>callback(),register:(options,component)=>{registration={options,component};return()=>{};}}});
   assert.equal(registration.options.name,'settings.section'); assert.equal(registration.options.id,'quiet-companion');
   const injected=registration.options.inject();
-  const html=render(React.createElement(registration.component,{controller:injected.controller,
+  const html=render(React.createElement(registration.component,{controller:hooks.controller??injected.controller,
     useSnapshot:()=>({status:'ready',snapshot,busy:false,error:''})}));
   effects.reverse().forEach(off=>off());
   return html;
@@ -148,4 +151,79 @@ test('desktop growth panel toggle defaults off and stays independent from growth
     assert.match(html,/aria-label="启用成长"[^>]*aria-checked="true"/u);
     assert.equal((html.match(/aria-label="显示桌面成长状态栏"/gu)??[]).length,1);
   }
+});
+
+test('pending OS permission shows real wait/restart state and blocks repeat enable while allowing cancellation',{skip:!React},()=>{
+  const switches=new Map();
+  const html=pageFor('companion',{...fixture,native:{...fixture.native,screenPermissionState:'restart-required',
+    screenStatus:'系统权限需重启后生效。',screenConsentPending:true,audioConsentPending:true,mouseConsentPending:true,
+    permissionsNeedRestart:true,audioAuthorized:false,mouseAuthorized:false}}, {switches});
+  for(const label of ['画面理解','理解系统播放声音','允许撒娇抢鼠标']) {
+    assert.equal(switches.get(label).checked,false,label);
+    assert.equal(switches.get(label).disabled,true,label);
+  }
+  for(const label of ['系统权限需重启后生效。','重新检查系统权限','重启宠物以应用权限',
+    '取消画面开启','取消声音开启','取消鼠标开启']) assert.ok(html.includes(label),label);
+  assert.match(html,/<button(?![^>]*disabled)[^>]*>取消画面开启<\/button>/u);
+});
+
+test('an explicit off remains available with lost helper/model capability or another pending dialog',{skip:!React},async()=>{
+  const switches=new Map(),calls=[];
+  const controller={update:async patch=>{calls.push(patch);return true;}};
+  pageFor('companion',{...fixture,helper:{running:false},route:{...fixture.route,vision:false},
+    settings:{...fixture.settings,screenEnabled:true,videoAudioEnabled:true,mousePlayEnabled:true},
+    native:{...fixture.native,permissionRequestInFlight:true}}, {switches,controller});
+  for(const [label,key] of [['画面理解','screenEnabled'],['理解系统播放声音','videoAudioEnabled'],['允许撒娇抢鼠标','mousePlayEnabled']]) {
+    assert.equal(switches.get(label).checked,true);assert.equal(switches.get(label).disabled,false,label);
+    await switches.get(label).onChange(false);assert.deepEqual(JSON.parse(JSON.stringify(calls.at(-1))),{[key]:false});
+  }
+});
+
+test('permission recheck never turns a pending request on by itself and granted state permits explicit continuation',{skip:!React},()=>{
+  const switches=new Map();
+  const html=pageFor('companion',{...fixture,native:{...fixture.native,screenPermissionState:'granted',screenAuthorized:true,
+    audioAuthorized:true,mouseAuthorized:true,screenConsentPending:true,audioConsentPending:true,mouseConsentPending:true}}, {switches});
+  for(const label of ['画面理解','理解系统播放声音','允许撒娇抢鼠标']) {
+    assert.equal(switches.get(label).checked,false);assert.equal(switches.get(label).disabled,false,label);
+  }
+  assert.ok(html.includes('点击画面开关继续开启'));
+});
+
+test('reenabling application sensing explicitly ends snooze instead of showing an inactive enabled switch',{skip:!React},async()=>{
+  const switches=new Map(),calls=[];
+  const html=pageFor('companion',{...fixture,settings:{...fixture.settings,snoozeUntil:Date.now()+600000}},
+    {switches,controller:{update:async patch=>{calls.push(patch);return true;}}});
+  await switches.get('应用感知').onChange(true);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)),[{observationEnabled:true,snoozeUntil:0}]);
+  assert.ok(html.includes('恢复观察'));assert.ok(html.includes('正在临时安静'));
+});
+
+test('every settings switch sends its own boolean and reflects the Host echo without granting other features',{skip:!React},async()=>{
+  const cases=[['companion','应用感知','observationEnabled'],['companion','会议中减少主动打扰','quietMeetingApps'],
+    ['companion','优先提醒任务待确认','urgentAgentAlerts'],['appearance','动态Q版橙发角色','dynamicSkinEnabled'],
+    ['appearance','减少动态效果','reduceMotion'],['appearance','朗读模型回应','voiceEnabled'],['appearance','语音口型','lipSyncEnabled'],
+    ['growth','启用成长','growthEnabled'],['growth','显示桌面成长状态栏','growthPanelVisible'],
+    ['growth','按 token 获得零食','snackRewardsEnabled'],['growth','允许自动吃零食','autoEatEnabled'],
+    ['memory','使用记忆','memoryEnabled'],['usage','显示真实任务进度','agentProgressEnabled']];
+  for(const [tab,label,key] of cases) {
+    let settings={...fixture.settings};const calls=[];
+    const controller={update:async patch=>{calls.push(patch);settings={...settings,...patch};return true;}};
+    for(const value of [true,false]) {
+      const switches=new Map();pageFor(tab,{...fixture,settings},{controller,switches});
+      await switches.get(label).onChange(value);
+      assert.equal(calls.at(-1)[key],value,label+' write');
+      const echoed=new Map();pageFor(tab,{...fixture,settings},{controller,switches:echoed});
+      assert.equal(echoed.get(label).checked,value,label+' echo');
+      assert.equal(settings.screenEnabled,false);assert.equal(settings.videoAudioEnabled,false);
+      assert.notEqual(settings.mousePlayEnabled,true);
+    }
+  }
+});
+
+test('protected enable switches dispatch distinct native consent actions instead of saving true booleans',{skip:!React},async()=>{
+  const switches=new Map(),actions=[];
+  pageFor('companion',fixture,{switches,controller:{action:async action=>{actions.push(action);return true;},
+    update:()=>{throw new Error('Enabling a protected feature must not save a true patch.');}}});
+  for(const label of ['画面理解','理解系统播放声音','允许撒娇抢鼠标']) await switches.get(label).onChange(true);
+  assert.deepEqual(actions,['request-screen-permission','request-audio-permission','request-mouse-permission']);
 });

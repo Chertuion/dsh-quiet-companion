@@ -74,6 +74,69 @@ private func emit(_ message: [String: Any]) {
 
 private func nowMilliseconds() -> Double { Date().timeIntervalSince1970 * 1000 }
 
+// BEGIN PURE PERMISSION POLICY — used verbatim by PermissionPolicySelfTest.swift.
+private struct PermissionPromptGate {
+    private(set) var requested = false
+    mutating func shouldRequest(authorized: Bool) -> Bool {
+        guard !authorized, !requested else { return false }
+        requested = true
+        return true
+    }
+    func state(authorized: Bool, available: Bool) -> String {
+        if !available { return "unavailable" }
+        if authorized { return "granted" }
+        return requested ? "restart-required" : "not-authorized"
+    }
+}
+
+private func retainedConsentPair(incoming: String, current: String, route: String, hasRoute: Bool) -> String {
+    // Startup models/settings can arrive in either order. Keep only the existing
+    // local consent until the route is known; this never enables a feature.
+    guard hasRoute else { return current }
+    if current == route, incoming.isEmpty { return current }
+    return incoming == route ? incoming : ""
+}
+
+private func consentRouteChanged(previous: String, hadModel: Bool, route: String, screen: String, audio: String) -> Bool {
+    let mismatch = (!screen.isEmpty && screen != route) || (!audio.isEmpty && audio != route)
+    return previous != route && (hadModel || mismatch)
+}
+
+/// Only changes that revoke an active permission context cancel its confirmation.
+/// Full Host settings echoes and a refresh of the same model are not revocations.
+private struct PermissionContextSnapshot {
+    var provider = ""
+    var model = ""
+    var vision = false
+    var observationEnabled = false
+    var snoozeUntil = 0.0
+    var speechLanguage = "zh-CN"
+    func invalidated(by command: [String: Any], now: Double) -> Bool {
+        let type = command["type"] as? String ?? ""
+        if type == "shutdown" { return true }
+        if type == "control" {
+            return ["disable-screen", "disable-system-audio", "disable-mouse-play", "pause", "snooze"]
+                .contains(command["action"] as? String ?? "")
+        }
+        if type == "models" {
+            if let p = command["defaultProvider"] as? String, p != provider { return true }
+            if let m = command["defaultModel"] as? String, m != model { return true }
+            if vision, let models = command["models"] as? [[String: Any]] {
+                return !models.contains { $0["provider"] as? String == provider && $0["model"] as? String == model && $0["vision"] as? Bool == true }
+            }
+        }
+        if type == "settings", let value = command["settings"] as? [String: Any] {
+            if let p = value["provider"] as? String, p != provider { return true }
+            if let m = value["model"] as? String, m != model { return true }
+            if observationEnabled, value["observationEnabled"] as? Bool == false { return true }
+            if let until = value["snoozeUntil"] as? Double, until != snoozeUntil, until > now { return true }
+            if let language = value["speechLanguage"] as? String, language != speechLanguage { return true }
+        }
+        return false
+    }
+}
+// END PURE PERMISSION POLICY
+
 private struct CompanionSettings {
     var observationEnabled = false
     var screenEnabled = false
@@ -310,6 +373,7 @@ private final class BubbleView: NSView {
 
 private final class PetImageView: NSImageView {
     var rendererView: NSView?
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
     override func draw(_ dirtyRect: NSRect) {
         // Keep image metadata/alpha for hit testing, but render only the mesh.
         if rendererView == nil { super.draw(dirtyRect) }
@@ -358,6 +422,8 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
     private var panel: PetPanel!
     private var imageView: PetImageView!
     private var bubble: BubbleView!
+    private var operationBubble: BubbleView!
+    private var operationNoticeTimer: Timer?
     private var sleepLabel: NSTextField!
     private var statusItem: NSStatusItem!
     private var settingsWindow: NSWindow?
@@ -450,6 +516,17 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
     private var permissionRequestInFlight = false
     private var permissionEpoch = 0
     private let permissionEpochLock = NSLock()
+    private var permissionContextSnapshot = PermissionContextSnapshot()
+    private var screenPromptGate = PermissionPromptGate()
+    private var mousePromptGate = PermissionPromptGate()
+    private var screenConsentPending = false
+    private var audioConsentPending = false
+    private var mouseConsentPending = false
+    private var screenStatus = "画面理解未开启；需要同意向当前模型发送画面并获得系统权限。"
+    private var previewInteractionCount = 0
+    private var previewSnackOfferCount = 0
+    private var previewLastInteraction = ""
+    private var previewLastSnackOffer = ""
     private var mousePlayTimer: Timer?
     private var mouseGlobalMonitor: Any?
     private var mouseLocalMonitor: Any?
@@ -508,6 +585,12 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         if previewMode { showSettings() }
     }
 
+    func applicationDidBecomeActive(_ notification: Notification) {
+        // Returning from System Settings changes readiness only. A fresh explicit
+        // enable action is still required; never prompt, capture, or move here.
+        if panel != nil { refreshPermissionFeedback(); publishNativeStatus() }
+    }
+
     private func makePanel() {
         panel = PetPanel(contentRect: NSRect(x: 0, y: 0, width: 320 * scale, height: 400 * scale),
                          styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
@@ -531,11 +614,14 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         renderer.view.autoresizingMask = [.width, .height]
         imageView.addSubview(renderer.view)
         bubble = BubbleView(frame: .zero)
+        operationBubble = BubbleView(frame: .zero)
+        operationBubble.isHidden = true
         sleepLabel = label("z Z", font: .systemFont(ofSize: 23, weight: .light))
         sleepLabel.textColor = .systemOrange
         sleepLabel.isHidden = true
         content.addSubview(imageView)
         content.addSubview(bubble)
+        content.addSubview(operationBubble)
         content.addSubview(sleepLabel)
         agentPill = label("", font: .systemFont(ofSize: 11, weight: .medium))
         agentPill.alignment = .center
@@ -563,8 +649,10 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         imageView.frame = NSRect(x: (dynamic ? 20 : 55) * scale, y: 4 * scale,
                                 width: (dynamic ? 280 : 210) * scale, height: 270 * scale)
         bubble.frame = NSRect(x: 6 * scale, y: 300 * scale, width: 308 * scale, height: 94 * scale)
+        operationBubble.frame = bubble.frame
         agentPill.frame = NSRect(x: 35 * scale, y: 275 * scale, width: 250 * scale, height: 22 * scale)
         bubble.text.font = .systemFont(ofSize: 14 * min(scale, 1.2), weight: .medium)
+        operationBubble.text.font = bubble.text.font
         sleepLabel.frame = NSRect(x: 250 * scale, y: 240 * scale, width: 65 * scale, height: 35 * scale)
         avatarRenderer?.view.frame = imageView.bounds
         layoutGrowthTray()
@@ -722,6 +810,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
 
     func interact(_ input: String) {
         let kind = input == "tail" ? "skirt" : input
+        if previewMode { previewInteractionCount += 1; previewLastInteraction = kind }
         if kind == "sleep" { forcedSleep = true; sleeping = true; stopSpokenText() }
         else if kind == "wake" { forcedSleep = false; sleeping = false; lastExplicitWake = Date() }
         // Touching or finishing a drag never implicitly cancels persistent sleep.
@@ -736,6 +825,8 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
     }
 
     private func showSpeech(_ text: String, mood: String, speak: Bool = true) {
+        operationNoticeTimer?.invalidate()
+        operationBubble.isHidden = true
         stopSpokenText()
         currentMood = ["idle", "shy", "concern", "tease", "happy", "success", "error", "thinking", "sleep", "sleepy"].contains(mood) ? mood : "idle"
         updateImage()
@@ -751,6 +842,20 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             self?.currentMood = "idle"
             self?.updateImage()
         }
+    }
+
+    /// A Host operation result, separate from character speech and TTS.
+    private func showOperationNotice(_ text: String) {
+        let value = String(text.trimmingCharacters(in: .whitespacesAndNewlines).prefix(180))
+        guard !value.isEmpty else { return }
+        operationNoticeTimer?.invalidate()
+        operationBubble.text.stringValue = value
+        operationBubble.isHidden = false
+        operationNoticeTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { [weak self] _ in
+            self?.operationBubble.isHidden = true
+        }
+        // Do not change mood, stop/start speech, emit interaction, or write history.
+        publishNativeStatus()
     }
 
     private func makeStatusItem() {
@@ -793,12 +898,14 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         shutdown()
     }
     @objc private func pauseObservation() {
+        invalidatePendingPermissions()
         settings.observationEnabled = false
         stopSpokenText()
         settingsChanged()
         showSpeech("观察已暂停", mood: "idle", speak: false)
     }
     @objc private func snooze() {
+        invalidatePendingPermissions()
         settings.snoozeUntil = nowMilliseconds() + 30 * 60 * 1000
         stopSpokenText()
         settingsChanged()
@@ -838,6 +945,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         isDragging = true
         panel.ignoresMouseEvents = false
         bubble.isHidden = true
+        operationBubble.isHidden = true
         animationPlayer?.interaction("drag-hold")
         refreshAvatarState()
         if !previewMode { emit(["type": "interaction", "kind": "drag-hold", "timestamp": nowMilliseconds()]) }
@@ -862,7 +970,8 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
     private func updateMousePassthrough() {
         guard panel != nil, panel.isVisible, !isDragging else { return }
         let point = panel.convertPoint(fromScreen: NSEvent.mouseLocation)
-        let bubbleHit = !bubble.isHidden && bubble.frame.contains(point)
+        let bubbleHit = (!bubble.isHidden && bubble.frame.contains(point))
+            || (!operationBubble.isHidden && operationBubble.frame.contains(point))
         let imagePoint = imageView.convert(point, from: panel.contentView)
         var imageHit = false
         if let normalized = normalizedImagePoint(imagePoint), let bitmap = petBitmap {
@@ -1087,10 +1196,47 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         models.contains { $0.provider == settings.provider && $0.model == settings.model && $0.vision }
     }
 
+    private func permissionRequestIsSafe() -> Bool {
+        usingSocketTransport && Bundle.main.bundleURL.pathExtension == "app"
+            && Bundle.main.bundleIdentifier != nil
+    }
+
     private func speechPermissionRequestIsSafe() -> Bool {
-        guard usingSocketTransport,
+        guard permissionRequestIsSafe(),
               let purpose = Bundle.main.object(forInfoDictionaryKey: "NSSpeechRecognitionUsageDescription") as? String else { return false }
         return !purpose.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    /// An explicit click may request OS access once per helper process. A false
+    /// preflight after the request can require an app restart; never fake success.
+    private func requestScreenAccessOnce() -> Bool {
+        let authorized = CGPreflightScreenCaptureAccess()
+        if screenPromptGate.shouldRequest(authorized: authorized) { _ = CGRequestScreenCaptureAccess() }
+        return CGPreflightScreenCaptureAccess()
+    }
+
+    private func refreshPermissionFeedback() {
+        guard !previewMode else { return }
+        let screen = CGPreflightScreenCaptureAccess()
+        if screenConsentPending {
+            screenStatus = screen
+                ? "系统屏幕权限已就绪；请再次点击开启画面理解，不会自动采集。"
+                : "系统屏幕权限尚未生效。请确认系统设置允许“安静陪伴”，再重新检查；已授权仍无效时重启宠物。不会重复申请或自动采集。"
+        }
+        if audioConsentPending {
+            if SFSpeechRecognizer.authorizationStatus() != .authorized {
+                audioStatus = "语音识别权限尚未生效；请在系统设置确认“安静陪伴”的语音识别授权，然后重新检查或重启宠物。"
+            } else if !screen {
+                audioStatus = "屏幕／系统声音录制权限尚未生效；请确认系统开关，再重新检查或重启宠物。不会重复申请。"
+            } else {
+                audioStatus = "系统声音权限已就绪；请再次点击开启，本次检查没有启动捕获。"
+            }
+        }
+        if mouseConsentPending {
+            mouseStatus = AXIsProcessTrusted()
+                ? "辅助功能权限已就绪；请再次点击开启指针互动，不会自动移动。"
+                : "辅助功能权限尚未生效；请确认系统设置允许“安静陪伴”，再重新检查或重启宠物。不会重复申请或移动指针。"
+        }
     }
 
     private func previewPCM(_ payload: [String: Any]) {
@@ -1115,7 +1261,48 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         publishNativeStatus(force: true)
     }
 
+    /// Send a synthetic event only through this preview panel's real view tree.
+    /// It never posts an OS event or touches the user's cursor/input stream.
+    private func previewClick(_ payload: [String: Any]) {
+        guard previewMode, let content = panel.contentView else { return }
+        let target = payload["target"] as? String ?? ""
+        var point: NSPoint?
+        if target == "snack" || target == "snack-corner" {
+            let id = payload["id"] as? String ?? snackViews.keys.sorted().first ?? ""
+            if let view = snackViews[id] {
+                let local = target == "snack" ? NSPoint(x: view.bounds.midX, y: view.bounds.midY) : NSPoint(x: 0.2, y: 0.2)
+                point = view.convert(local, to: nil)
+            }
+        } else if ["head", "body", "skirt"].contains(target) {
+            let uv = CGPoint(x: 0.5, y: target == "head" ? 0.27 : (target == "body" ? 0.63 : 0.86))
+            if let renderer = avatarRenderer, let local = renderer.normalizedPoint(for: uv) {
+                point = renderer.view.convert(local, to: nil)
+            }
+        }
+        guard let point else { return }
+        let hitPoint = content.superview?.convert(point, from: nil) ?? content.convert(point, from: nil)
+        let hit = content.hitTest(hitPoint)
+        let down = NSEvent.mouseEvent(with: .leftMouseDown, location: point, modifierFlags: [],
+            timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: panel.windowNumber,
+            context: nil, eventNumber: 1, clickCount: 1, pressure: 1)
+        let up = NSEvent.mouseEvent(with: .leftMouseUp, location: point, modifierFlags: [],
+            timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: panel.windowNumber,
+            context: nil, eventNumber: 2, clickCount: 1, pressure: 0)
+        let accepted = hit?.acceptsFirstMouse(for: down) ?? false
+        if accepted, let down {
+            hit?.mouseDown(with: down)
+            if hit === imageView, let up { hit?.mouseUp(with: up) }
+        }
+        emit(["type": "preview-click-result", "target": target,
+              "hit": hit is CompanionSnackView ? "snack" : (hit === imageView ? "pet" : "other"),
+              "firstMouseAccepted": accepted, "interactionCount": previewInteractionCount,
+              "lastInteraction": previewLastInteraction, "snackOfferCount": previewSnackOfferCount,
+              "lastSnackOffer": previewLastSnackOffer])
+    }
+
     private func publishNativeStatus(force: Bool = false) {
+        refreshPermissionFeedback()
+        updatePermissionContextSnapshot()
         let screenAuthorized = !previewMode && CGPreflightScreenCaptureAccess()
         let audioAuthorized = !previewMode && speechPermissionRequestIsSafe() && screenAuthorized
             && SFSpeechRecognizer.authorizationStatus() == .authorized
@@ -1126,14 +1313,22 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         let message: [String: Any] = [
             "type": "native-status", "audioStatus": audioStatus, "modelStatus": modelStatus,
             "screenAuthorized": screenAuthorized, "audioAuthorized": audioAuthorized,
+            "screenPermissionState": screenPromptGate.state(authorized: screenAuthorized, available: !previewMode && permissionRequestIsSafe()),
+            "screenStatus": screenStatus,
+            "screenConsentPending": screenConsentPending, "audioConsentPending": audioConsentPending,
+            "mouseConsentPending": mouseConsentPending,
+            "permissionsNeedRestart": !previewMode && ((!screenAuthorized && screenPromptGate.requested && (screenConsentPending || audioConsentPending))
+                || (!AXIsProcessTrusted() && mousePromptGate.requested && mouseConsentPending)),
             "helperVersion": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown",
             "observationEnabled": settings.observationEnabled, "screenEnabled": settings.screenEnabled,
             "audioEnabled": settings.videoAudioEnabled, "usingSocketTransport": usingSocketTransport,
+            "mousePlayEnabled": settings.mousePlayEnabled,
             "preview": previewMode, "scale": scale, "opacity": opacity,
             "permissionRequestInFlight": permissionRequestInFlight,
             "mouseAuthorized": !previewMode && AXIsProcessTrusted(), "mousePlayActive": mousePlayActive,
             "mouseStatus": mouseStatus,
             "petSleeping": sleeping,
+            "operationNoticeVisible": !operationBubble.isHidden,
             "motionMode": mode, "currentClip": animationPlayer?.currentClip ?? "idle",
             "actualMouthLevel": mesh["mouthLevel"] ?? 0, "speechPlaying": speechPlayer.isPlaying,
             "source": "pcm-rms", "previewPCMActive": previewPCMActive,
@@ -1164,6 +1359,22 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
 
     private func invalidatePendingPermissions() {
         permissionEpochLock.withLock { permissionEpoch &+= 1 }
+        if Thread.isMainThread, permissionRequestInFlight, NSApp?.modalWindow != nil {
+            NSApp.abortModal()
+        }
+    }
+
+    private func updatePermissionContextSnapshot() {
+        let value = PermissionContextSnapshot(provider: settings.provider, model: settings.model,
+            vision: selectedModelSupportsVision(), observationEnabled: settings.observationEnabled,
+            snoozeUntil: settings.snoozeUntil, speechLanguage: settings.speechLanguage)
+        permissionEpochLock.withLock { permissionContextSnapshot = value }
+    }
+
+    private func invalidatePermissionsIfNeeded(_ command: [String: Any]) {
+        permissionEpochLock.withLock {
+            if permissionContextSnapshot.invalidated(by: command, now: nowMilliseconds()) { permissionEpoch &+= 1 }
+        }
     }
 
     private func currentPermissionEpoch() -> Int { permissionEpochLock.withLock { permissionEpoch } }
@@ -1180,8 +1391,11 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             screenCheckbox.state = .on
             screenToggled()
         case "disable-screen":
+            invalidatePendingPermissions()
+            screenConsentPending = false
             settings.screenEnabled = false
             settings.consentPair = ""
+            screenStatus = "画面理解已关闭。"
             if !previewMode { defaults.removeObject(forKey: "screenConsentPair") }
             settingsChanged()
         case "enable-system-audio":
@@ -1189,10 +1403,24 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             audioCheckbox.state = .on
             audioToggled()
         case "disable-system-audio":
+            invalidatePendingPermissions()
+            audioConsentPending = false
             settings.videoAudioEnabled = false
             audioConsentPair = ""
             if !previewMode { defaults.removeObject(forKey: "audioConsentPair") }
             audioStatus = "系统声音理解已关闭。"
+            settingsChanged()
+        case "refresh-permissions":
+            refreshPermissionFeedback()
+            if screenConsentPending { modelStatus = screenStatus }
+            refreshSettingsUI()
+        case "disable-mouse-play":
+            invalidatePendingPermissions()
+            mouseConsentPending = false
+            settings.mousePlayEnabled = false
+            mousePlayConsent = false
+            if !previewMode { defaults.removeObject(forKey: "mousePlayConsent") }
+            mouseStatus = "指针互动已关闭。"
             settingsChanged()
         case "pause": pauseObservation()
         case "resume": resumeObservation()
@@ -1232,6 +1460,24 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
                 animationPlayer?.interaction(name); refreshAvatarState(); publishNativeStatus(force: true)
             }
         case "preview-reset-motion": if previewMode { stopSpokenText(); configureAnimation(); publishNativeStatus(force: true) }
+        case "preview-click": previewClick(payload)
+        case "preview-seed-consents":
+            if previewMode {
+                // In-memory test fixture only. Never read/write real consent defaults.
+                settings.provider = ""; settings.model = ""; models = []
+                settings.screenEnabled = false; settings.videoAudioEnabled = false
+                screenConsentPending = false; audioConsentPending = false
+                settings.consentPair = "qa-permission\u{1f}vision"
+                audioConsentPair = settings.consentPair
+            }
+        case "preview-consent-state":
+            if previewMode {
+                emit(["type": "preview-consent-state", "id": String((payload["id"] as? String ?? "").prefix(128)),
+                      "screenPresent": !settings.consentPair.isEmpty, "audioPresent": !audioConsentPair.isEmpty,
+                      "screenMatchesRoute": !settings.consentPair.isEmpty && settings.consentPair == settings.pair,
+                      "audioMatchesRoute": !audioConsentPair.isEmpty && audioConsentPair == settings.pair,
+                      "screenEnabled": settings.screenEnabled, "audioEnabled": settings.videoAudioEnabled])
+            }
         case "enable-mouse-play": enableMousePlay()
         case "mouse-play": startMousePlay()
         default: break
@@ -1244,29 +1490,39 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             publishNativeStatus()
             return
         }
-        guard usingSocketTransport, !permissionRequestInFlight else {
+        guard permissionRequestIsSafe(), !permissionRequestInFlight else {
             mouseStatus = "请等待已有授权完成，并从更新后的 Harness 插件开启。"
             publishNativeStatus()
             return
         }
         permissionRequestInFlight = true
+        invalidatePendingPermissions()
         let epoch = currentPermissionEpoch()
         let pair = settings.pair
         defer { permissionRequestInFlight = false; publishNativeStatus() }
-        let alert = NSAlert()
-        alert.messageText = "允许她偶尔轻拉一下指针吗？"
-        alert.informativeText = "只有你长时间没和宠物互动时才可能触发，默认至少间隔 30 分钟。每次最多 1.5 秒、轻拉不超过 160 像素；你真实移动鼠标、按键或按 Esc 时立即停止。\n\n不会点击、发送按键或持续拖拽；按住鼠标、菜单操作、系统授权、密码输入或会议应用期间不执行。此功能需要 macOS 辅助功能权限；该权限本身较广，但本插件仅按以上范围调整指针。授权后如未自动开启，请重新点击开启。"
-        alert.addButton(withTitle: "同意并检查辅助功能授权")
-        alert.addButton(withTitle: "取消")
-        NSApp.activate(ignoringOtherApps: true)
-        guard alert.runModal() == .alertFirstButtonReturn, permissionContextIsCurrent(pair, epoch: epoch) else { return }
+        if !mousePlayConsent {
+            let alert = NSAlert()
+            alert.messageText = "允许她偶尔轻拉一下指针吗？"
+            alert.informativeText = "只有你长时间没和宠物互动时才可能触发，默认至少间隔 30 分钟。每次最多 1.5 秒、轻拉不超过 160 像素；你真实移动鼠标、按键或按 Esc 时立即停止。\n\n不会点击、发送按键或持续拖拽；按住鼠标、菜单操作、系统授权、密码输入或会议应用期间不执行。此功能需要 macOS 辅助功能权限；该权限本身较广，但本插件仅按以上范围调整指针。在系统设置授权后，请重新检查并明确点击开启。"
+            alert.addButton(withTitle: "同意并检查辅助功能授权")
+            alert.addButton(withTitle: "取消")
+            NSApp.activate(ignoringOtherApps: true)
+            guard alert.runModal() == .alertFirstButtonReturn, permissionContextIsCurrent(pair, epoch: epoch) else { return }
+            mousePlayConsent = true
+            defaults.set(true, forKey: "mousePlayConsent")
+        }
+        guard permissionContextIsCurrent(pair, epoch: epoch) else { return }
+        mouseConsentPending = true
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-        guard AXIsProcessTrustedWithOptions(options), permissionContextIsCurrent(pair, epoch: epoch) else {
-            mouseStatus = "尚未获得辅助功能授权。请在系统设置中允许“安静陪伴”，然后重新点击开启。"
+        if mousePromptGate.shouldRequest(authorized: AXIsProcessTrusted()) { _ = AXIsProcessTrustedWithOptions(options) }
+        guard permissionContextIsCurrent(pair, epoch: epoch) else { return }
+        guard AXIsProcessTrusted() else {
+            settings.mousePlayEnabled = false
+            refreshPermissionFeedback()
+            settingsChanged()
             return
         }
-        mousePlayConsent = true
-        defaults.set(true, forKey: "mousePlayConsent")
+        mouseConsentPending = false
         settings.mousePlayEnabled = true
         mouseStatus = "轻拉指针已开启；真实鼠标移动、按键或 Esc 都会立即停止。"
         settingsChanged()
@@ -1390,71 +1646,91 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
     }
 
     @objc private func observeToggled() {
+        if observeCheckbox.state == .off { invalidatePendingPermissions() }
         settings.observationEnabled = observeCheckbox.state == .on
         settingsChanged()
     }
     @objc private func screenToggled() {
         if screenCheckbox.state == .off {
+            invalidatePendingPermissions()
+            screenConsentPending = false
             settings.screenEnabled = false
             settings.consentPair = ""
+            screenStatus = "画面理解已关闭。"
             if !previewMode { defaults.removeObject(forKey: "screenConsentPair") }
             settingsChanged()
             return
         }
-        settings.screenEnabled = false
         guard !previewMode else { modelStatus = "界面预览不截图或申请权限。"; refreshSettingsUI(); return }
+        guard permissionRequestIsSafe() else {
+            screenStatus = "当前组件没有通过 Harness 的独立应用连接；请重新启动宠物，未申请屏幕权限。"
+            modelStatus = screenStatus; refreshSettingsUI(); return
+        }
         guard selectedModelSupportsVision(), !settings.provider.isEmpty, !settings.model.isEmpty else {
             modelStatus = "当前默认模型没有确认图片能力，未开启屏幕理解。"
             refreshSettingsUI()
             return
+        }
+        if settings.screenEnabled, settings.consentPair == settings.pair, CGPreflightScreenCaptureAccess() {
+            screenStatus = "画面理解已开启。"; refreshSettingsUI(); return
         }
         guard !permissionRequestInFlight else {
             modelStatus = "已有权限请求正在等待处理，请先完成或取消。"
             refreshSettingsUI()
             return
         }
+        settings.screenEnabled = false
         permissionRequestInFlight = true
+        invalidatePendingPermissions()
         let requestPair = settings.pair
         let requestEpoch = currentPermissionEpoch()
         modelStatus = "正在等待屏幕理解确认及系统授权。"
         refreshSettingsUI()
         defer { permissionRequestInFlight = false; refreshSettingsUI() }
-        let alert = NSAlert()
-        alert.messageText = "允许她理解当前应用的画面吗？"
-        alert.informativeText = "当前默认模型服务：\(settings.provider) / \(settings.model)。\n\n优先当前应用窗口，无法定位窗口时采样显示器并排除宠物。画面可能包含私人聊天、文档和账号信息。普通帧只在内存中比较；需要模型理解的关键帧会按 Harness 附件机制保存在本机并发送给该模型服务。不会保存屏幕视频。暂停观察或关闭此开关会停止采集，更换默认模型后需要重新同意。"
-        alert.addButton(withTitle: "同意并开启画面理解")
-        alert.addButton(withTitle: "取消")
-        NSApp.activate(ignoringOtherApps: true)
-        guard alert.runModal() == .alertFirstButtonReturn else { refreshSettingsUI(); return }
+        if settings.consentPair != requestPair {
+            let alert = NSAlert()
+            alert.messageText = "允许她理解当前应用的画面吗？"
+            alert.informativeText = "当前默认模型服务：\(settings.provider) / \(settings.model)。\n\n优先当前应用窗口，无法定位窗口时采样显示器并排除宠物。画面可能包含私人聊天、文档和账号信息。普通帧只在内存中比较；需要模型理解的关键帧会按 Harness 附件机制保存在本机并发送给该模型服务。不会保存屏幕视频。暂停观察或关闭此开关会停止采集，更换默认模型后需要重新同意。\n\n首次系统授权后可能需要重启宠物；本次同意不会被当成系统已经授权。"
+            alert.addButton(withTitle: "同意并检查系统权限")
+            alert.addButton(withTitle: "取消")
+            NSApp.activate(ignoringOtherApps: true)
+            guard alert.runModal() == .alertFirstButtonReturn else { refreshSettingsUI(); return }
+        }
         guard permissionContextIsCurrent(requestPair, epoch: requestEpoch) else {
             modelStatus = "设置已改变，本次屏幕授权已取消，请重新开启。"
             return
         }
-        if !CGPreflightScreenCaptureAccess() { _ = CGRequestScreenCaptureAccess() }
+        settings.consentPair = requestPair
+        screenConsentPending = true
+        defaults.set(requestPair, forKey: "screenConsentPair")
+        let authorized = requestScreenAccessOnce()
         guard permissionContextIsCurrent(requestPair, epoch: requestEpoch) else {
             modelStatus = "设置已改变，本次屏幕授权未启用，请重新开启。"
             return
         }
-        guard CGPreflightScreenCaptureAccess() else {
-            modelStatus = "尚未获得屏幕录制权限。请在系统设置中授权“安静陪伴”，然后重新开启。"
-            refreshSettingsUI()
+        guard authorized else {
+            refreshPermissionFeedback()
+            modelStatus = screenStatus
+            settingsChanged(screenConsent: true)
             return
         }
         settings.screenEnabled = true
-        settings.consentPair = requestPair
-        defaults.set(settings.consentPair, forKey: "screenConsentPair")
+        screenConsentPending = false
+        screenStatus = "画面理解已开启；仅在观察开启且有变化时按需发送关键帧。"
+        modelStatus = screenStatus
         settingsChanged(screenConsent: true)
     }
 
     @objc private func audioToggled() {
         if audioCheckbox.state == .off {
+            invalidatePendingPermissions()
+            audioConsentPending = false
             settings.videoAudioEnabled = false
             audioConsentPair = ""
             if !previewMode { defaults.removeObject(forKey: "audioConsentPair") }
             settingsChanged()
             return
         }
-        settings.videoAudioEnabled = false
         guard !previewMode else { audioStatus = "界面预览不捕获声音或申请权限。"; refreshSettingsUI(); return }
         guard speechPermissionRequestIsSafe() else {
             audioStatus = "当前启动方式不支持独立语音授权，已阻止请求以避免 macOS 强制退出。请更新插件并从 Harness 重新启动宠物。"
@@ -1476,21 +1752,27 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             refreshSettingsUI()
             return
         }
+        if settings.videoAudioEnabled, audioConsentPair == settings.pair, CGPreflightScreenCaptureAccess(),
+           SFSpeechRecognizer.authorizationStatus() == .authorized { refreshSettingsUI(); return }
+        settings.videoAudioEnabled = false
         permissionRequestInFlight = true
+        invalidatePendingPermissions()
         let requestPair = settings.pair
         let requestEpoch = currentPermissionEpoch()
         audioStatus = "正在等待系统声音确认及语音识别授权。"
         refreshSettingsUI()
-        let alert = NSAlert()
-        alert.messageText = "允许理解正在播放的系统声音吗？"
-        alert.informativeText = "只捕获系统播放的声音，不使用麦克风，也不保存录音。本机离线语音识别会把声音转成文字，识别结果将发送给当前默认模型：\(settings.provider) / \(settings.model)。\n\n系统声音可能包含会议、聊天或其他私人内容。开启需要 macOS 屏幕／系统声音录制权限及语音识别权限。只有本机支持离线识别时才工作，不回退到 Apple 的网络识别。"
-        alert.addButton(withTitle: "同意并开启系统声音理解")
-        alert.addButton(withTitle: "取消")
-        NSApp.activate(ignoringOtherApps: true)
-        guard alert.runModal() == .alertFirstButtonReturn else {
-            permissionRequestInFlight = false
-            refreshSettingsUI()
-            return
+        if audioConsentPair != requestPair {
+            let alert = NSAlert()
+            alert.messageText = "允许理解正在播放的系统声音吗？"
+            alert.informativeText = "只捕获系统播放的声音，不使用麦克风，也不保存录音。本机离线语音识别会把声音转成文字，识别结果将发送给当前默认模型：\(settings.provider) / \(settings.model)。\n\n系统声音可能包含会议、聊天或其他私人内容。开启需要 macOS 屏幕／系统声音录制权限及语音识别权限。只有本机支持离线识别时才工作，不回退到 Apple 的网络识别。系统授权后可能需要重新检查或重启宠物。"
+            alert.addButton(withTitle: "同意并检查系统权限")
+            alert.addButton(withTitle: "取消")
+            NSApp.activate(ignoringOtherApps: true)
+            guard alert.runModal() == .alertFirstButtonReturn else {
+                permissionRequestInFlight = false
+                refreshSettingsUI()
+                return
+            }
         }
         guard permissionContextIsCurrent(requestPair, epoch: requestEpoch) else {
             permissionRequestInFlight = false
@@ -1498,38 +1780,48 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             refreshSettingsUI()
             return
         }
-        SFSpeechRecognizer.requestAuthorization { [weak self] status in
-            DispatchQueue.main.async {
-                guard let self else { return }
-                defer { self.permissionRequestInFlight = false; self.refreshSettingsUI() }
-                guard self.permissionContextIsCurrent(requestPair, epoch: requestEpoch) else {
-                    self.audioStatus = "设置已改变，本次声音授权未启用，请重新开启。"
-                    return
-                }
-                guard status == .authorized else {
-                    self.audioStatus = "未获语音识别权限，系统声音理解保持关闭。"
-                    self.refreshSettingsUI()
-                    return
-                }
-                if !CGPreflightScreenCaptureAccess() { _ = CGRequestScreenCaptureAccess() }
-                guard self.permissionContextIsCurrent(requestPair, epoch: requestEpoch) else {
-                    self.audioStatus = "设置已改变，本次声音授权未启用，请重新开启。"
-                    return
-                }
-                guard CGPreflightScreenCaptureAccess() else {
-                    self.audioStatus = "未获屏幕／系统声音录制权限。请在系统设置授权后重新开启。"
-                    self.refreshSettingsUI()
-                    return
-                }
-                self.settings.videoAudioEnabled = true
-                self.audioConsentPair = requestPair
-                self.defaults.set(self.audioConsentPair, forKey: "audioConsentPair")
-                self.settingsChanged(audioConsent: true)
+        audioConsentPair = requestPair
+        audioConsentPending = true
+        defaults.set(requestPair, forKey: "audioConsentPair")
+        let complete: (SFSpeechRecognizerAuthorizationStatus) -> Void = { [weak self] status in
+            guard let self else { return }
+            defer { self.permissionRequestInFlight = false; self.refreshSettingsUI() }
+            guard self.permissionContextIsCurrent(requestPair, epoch: requestEpoch) else {
+                self.audioStatus = "设置已改变，本次声音授权未启用，请重新开启。"
+                return
             }
+            guard status == .authorized else {
+                self.audioStatus = "未获语音识别权限，系统声音理解保持关闭。"
+                self.settingsChanged(audioConsent: true)
+                return
+            }
+            let authorized = self.requestScreenAccessOnce()
+            guard self.permissionContextIsCurrent(requestPair, epoch: requestEpoch) else {
+                self.audioStatus = "设置已改变，本次声音授权未启用，请重新开启。"
+                return
+            }
+            guard authorized else {
+                self.refreshPermissionFeedback()
+                self.settingsChanged(audioConsent: true)
+                return
+            }
+            self.settings.videoAudioEnabled = true
+            self.audioConsentPending = false
+            self.audioConsentPair = requestPair
+            self.defaults.set(self.audioConsentPair, forKey: "audioConsentPair")
+            self.settingsChanged(audioConsent: true)
+        }
+        let status = SFSpeechRecognizer.authorizationStatus()
+        if status == .notDetermined {
+            SFSpeechRecognizer.requestAuthorization { status in DispatchQueue.main.async { complete(status) } }
+        } else {
+            complete(status)
         }
     }
 
     @objc private func languageSelected() {
+        invalidatePendingPermissions()
+        audioConsentPending = false
         settings.speechLanguage = languagePicker.indexOfSelectedItem == 1 ? "en-US" : "zh-CN"
         settings.videoAudioEnabled = false
         audioStatus = "识别语言已改变，请重新开启系统声音理解。"
@@ -1657,8 +1949,9 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         if wanted && !audioRunning && !audioStarting {
             guard SFSpeechRecognizer.authorizationStatus() == .authorized, CGPreflightScreenCaptureAccess() else {
                 settings.videoAudioEnabled = false
+                audioConsentPending = true
                 audioStatus = "系统声音或语音识别权限不可用，声音理解已关闭。"
-                refreshSettingsUI()
+                settingsChanged()
                 return
             }
             audioStarting = true
@@ -1691,6 +1984,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
                 } catch {
                     self.settings.videoAudioEnabled = false
                     self.audioStatus = "无法开启本机系统声音理解；未使用麦克风或网络识别。"
+                    self.settingsChanged()
                 }
                 self.refreshSettingsUI()
             }
@@ -1718,7 +2012,6 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
 
     private func settingsChanged(screenConsent: Bool = false, audioConsent: Bool = false) {
         stopMousePlay("设置已改变，指针互动已停止。")
-        invalidatePendingPermissions()
         captureGeneration += 1
         var message = settings.json
         message["type"] = "settings"
@@ -1822,8 +2115,9 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         }
         guard CGPreflightScreenCaptureAccess() else {
             settings.screenEnabled = false
-            settings.consentPair = ""
-            modelStatus = "屏幕录制权限不可用，画面理解已关闭。"
+            screenConsentPending = true
+            screenStatus = "屏幕录制权限当前不可用。请检查系统设置后重新检查；本次同意保留，但不会自动恢复采集。"
+            modelStatus = screenStatus
             settingsChanged()
             if metadataChanged { emit(observation) }
             return
@@ -1912,12 +2206,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
                     let line = buffer[..<newline]
                     buffer.removeSubrange(...newline)
                     guard let command = try? JSONSerialization.jsonObject(with: Data(line)) as? [String: Any] else { continue }
-                    let kind = command["type"] as? String ?? ""
-                    let action = command["action"] as? String ?? ""
-                    if ["settings", "models", "shutdown"].contains(kind)
-                        || (kind == "control" && ["disable-screen", "disable-system-audio", "pause", "resume", "snooze"].contains(action)) {
-                        self?.invalidatePendingPermissions()
-                    }
+                    self?.invalidatePermissionsIfNeeded(command)
                     DispatchQueue.main.async { self?.handle(command) }
                 }
             }
@@ -1929,9 +2218,12 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         let hadModel = !settings.provider.isEmpty && !settings.model.isEmpty
         settings.provider = provider
         settings.model = model
-        let consentMismatch = (!settings.consentPair.isEmpty && settings.consentPair != settings.pair)
-            || (!audioConsentPair.isEmpty && audioConsentPair != settings.pair)
-        if previous != settings.pair && (hadModel || consentMismatch) {
+        if consentRouteChanged(previous: previous, hadModel: hadModel, route: settings.pair,
+                               screen: settings.consentPair, audio: audioConsentPair) {
+            invalidatePendingPermissions()
+            screenConsentPending = false
+            audioConsentPending = false
+            mouseConsentPending = false
             settings.screenEnabled = false
             settings.videoAudioEnabled = false
             settings.consentPair = ""
@@ -2005,6 +2297,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
 
     private func offerSnack(_ id: String?) {
         stopMousePlay("正在递零食，指针互动已停止。")
+        if previewMode { previewSnackOfferCount += 1; previewLastSnackOffer = id ?? "" }
         guard !previewMode else { return }
         var message: [String: Any] = ["type": "snack-offer"]
         if let id { message["id"] = id }
@@ -2321,6 +2614,15 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             else if settings.provider.isEmpty, models.count == 1 {
                 resolveDefault(provider: models[0].provider, model: models[0].model)
             }
+            if !selectedModelSupportsVision(), settings.screenEnabled || screenConsentPending {
+                invalidatePendingPermissions()
+                settings.screenEnabled = false
+                settings.consentPair = ""
+                screenConsentPending = false
+                screenStatus = "当前默认模型未确认图片能力，画面理解已关闭。"
+                if !previewMode { defaults.removeObject(forKey: "screenConsentPair") }
+                settingsChanged()
+            }
             refreshSettingsUI()
             resetObservationTimer()
         case "settings":
@@ -2339,14 +2641,17 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             }
             if let value = incoming["screenEnabled"] as? Bool {
                 let pair = incoming["consentPair"] as? String ?? settings.consentPair
-                settings.consentPair = pair == settings.pair && !settings.provider.isEmpty ? pair : ""
-                settings.screenEnabled = value && settings.consentPair == settings.pair && !settings.provider.isEmpty
+                settings.consentPair = retainedConsentPair(incoming: pair, current: settings.consentPair,
+                    route: settings.pair, hasRoute: !settings.provider.isEmpty && !settings.model.isEmpty)
+                settings.screenEnabled = value && !previewMode && !screenConsentPending && permissionRequestIsSafe()
+                    && selectedModelSupportsVision() && settings.consentPair == settings.pair && !settings.provider.isEmpty
                     && CGPreflightScreenCaptureAccess()
             }
             if let value = incoming["videoAudioEnabled"] as? Bool {
                 let pair = incoming["audioConsentPair"] as? String ?? audioConsentPair
-                audioConsentPair = pair == settings.pair && !settings.provider.isEmpty ? pair : ""
-                settings.videoAudioEnabled = value && audioConsentPair == settings.pair && !settings.provider.isEmpty
+                audioConsentPair = retainedConsentPair(incoming: pair, current: audioConsentPair,
+                    route: settings.pair, hasRoute: !settings.provider.isEmpty && !settings.model.isEmpty)
+                settings.videoAudioEnabled = value && !previewMode && !audioConsentPending && audioConsentPair == settings.pair && !settings.provider.isEmpty
                     && speechPermissionRequestIsSafe() && CGPreflightScreenCaptureAccess() && SFSpeechRecognizer.authorizationStatus() == .authorized
             }
             if let value = incoming["voiceEnabled"] as? Bool {
@@ -2379,7 +2684,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             if let value = incoming["inputPricePerMillion"] as? Double, value.isFinite { settings.inputPricePerMillion = max(0, value) }
             if let value = incoming["outputPricePerMillion"] as? Double, value.isFinite { settings.outputPricePerMillion = max(0, value) }
             if let value = incoming["mousePlayEnabled"] as? Bool {
-                settings.mousePlayEnabled = value && !previewMode && mousePlayConsent && usingSocketTransport && AXIsProcessTrusted()
+                settings.mousePlayEnabled = value && !previewMode && !mouseConsentPending && mousePlayConsent && permissionRequestIsSafe() && AXIsProcessTrusted()
             }
             if let value = incoming["mousePlayAfterMinutes"] as? Double, value.isFinite {
                 settings.mousePlayAfterMinutes = min(120, max(5, value))
@@ -2388,10 +2693,19 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
             layoutPet()
             refreshSettingsUI()
             resetObservationTimer()
+            if (incoming["screenEnabled"] as? Bool == true && !settings.screenEnabled)
+                || (incoming["videoAudioEnabled"] as? Bool == true && !settings.videoAudioEnabled)
+                || (incoming["mousePlayEnabled"] as? Bool == true && !settings.mousePlayEnabled) {
+                settingsChanged()
+            }
         case "agent": updateAgent(command)
         case "usage": updateUsage(command)
         case "memory": updateMemory(command)
         case "growth": updateGrowth(command)
+        case "notice":
+            if ["snack-offer", "model-reply"].contains(command["kind"] as? String ?? "") {
+                showOperationNotice(command["text"] as? String ?? "")
+            }
         case "shutdown": shutdown()
         case "open-settings": showSettings()
         default: break
@@ -2401,6 +2715,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
     private func shutdown() {
         guard !isShuttingDown else { return }
         isShuttingDown = true
+        invalidatePendingPermissions()
         stopMousePlay("宠物已退出，指针互动已停止。")
         captureGeneration += 1
         observationTimer?.invalidate()
@@ -2408,6 +2723,7 @@ private final class CompanionApp: NSObject, NSApplicationDelegate, NSWindowDeleg
         passthroughTimer?.invalidate()
         poseTimer?.invalidate()
         bubbleTimer?.invalidate()
+        operationNoticeTimer?.invalidate()
         stopSpokenText()
         animationPlayer?.stop()
         avatarRenderer?.stop()

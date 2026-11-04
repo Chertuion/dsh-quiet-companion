@@ -1,5 +1,16 @@
 'use strict';
 
+// Messages come from local codes, never raw provider errors, RPC details or credentials.
+const BRIDGE_ERRORS = Object.freeze({
+  forbidden: '只有此 Harness 的所有者可以管理陪伴设置。',
+  'explicit-consent-required': '请使用对应的授权开关开启此功能。',
+  'helper-unavailable': '宠物尚未运行，请先重新启动宠物。',
+  'helper-disconnected': '宠物连接已关闭，请重新启动宠物后重试。',
+  'vision-unavailable': '当前 Harness 默认模型不支持图片，暂时无法开启画面理解。',
+  'model-required': '请先在 Harness 中配置默认模型。',
+  'permission-in-progress': '正在等待原生授权，请在原生提示中继续或取消。',
+});
+
 /** React-free, registration-owned settings bridge. Polls only while this settings page is mounted. */
 class CompanionSettingsController {
   constructor(connection, { intervalMs = 2000, timers = globalThis } = {}) {
@@ -7,7 +18,7 @@ class CompanionSettingsController {
     this.intervalMs = intervalMs;
     this.timers = timers;
     this.listeners = new Set();
-    this.state = { status: 'idle', snapshot: null, busy: false, operation: '', error: '' };
+    this.state = { status: 'idle', snapshot: null, busy: false, operation: '', error: '', errorType: '' };
     this.active = 0;
     this.disposed = false;
     this.read = null;
@@ -26,7 +37,11 @@ class CompanionSettingsController {
   }
   async call(endpoint, payload, controller) {
     const result = await this.connection.rpc.call('/api', `quiet-companion/${endpoint}`, payload, controller.signal);
-    if (!result || result.ok !== true || !result.value || typeof result.value !== 'object') throw new Error('bridge-request-failed');
+    if (!result || result.ok !== true || !result.value || typeof result.value !== 'object') {
+      const error = new Error('bridge-request-failed');
+      error.userMessage = BRIDGE_ERRORS[result?.error?.code] || '';
+      throw error;
+    }
     return result.value.snapshot && typeof result.value.snapshot === 'object' ? result.value.snapshot : result.value;
   }
   load() {
@@ -35,11 +50,13 @@ class CompanionSettingsController {
     const controller = new AbortController();
     const revision = this.revision;
     this.controllers.add(controller);
-    if (!this.state.snapshot) this.publish({ status: 'loading', error: '' });
+    if (!this.state.snapshot) this.publish({ status: 'loading',
+      ...(this.state.errorType === 'operation' ? {} : { error: '', errorType: '' }) });
     const work = this.call('snapshot', {}, controller).then(snapshot => {
-      if (!controller.signal.aborted && revision === this.revision) this.publish({ snapshot, status: 'ready', error: '' });
+      if (!controller.signal.aborted && revision === this.revision) this.publish({ snapshot, status: 'ready',
+        ...(this.state.errorType === 'connection' ? { error: '', errorType: '' } : {}) });
     }).catch(() => {
-      if (!controller.signal.aborted && revision === this.revision) this.publish({ status: 'error', error: '暂时无法读取陪伴设置。请检查 Harness 连接后重试。' });
+      if (!controller.signal.aborted && revision === this.revision) this.publish({ status: 'error', errorType: 'connection', error: '暂时无法读取陪伴设置。请检查 Harness 连接后重试。' });
     }).finally(() => {
       this.controllers.delete(controller);
       if (this.read === work) this.read = null;
@@ -54,14 +71,16 @@ class CompanionSettingsController {
     this.read = null;
     const controller = new AbortController();
     this.controllers.add(controller);
-    this.publish({ busy: true, operation, error: '' });
+    this.publish({ busy: true, operation, error: '', errorType: '' });
     try {
       const snapshot = await this.call(endpoint, payload, controller);
       if (controller.signal.aborted || this.disposed) return false;
-      this.publish({ snapshot, status: 'ready', error: '' });
+      this.publish({ snapshot, status: 'ready', error: '', errorType: '' });
       return true;
-    } catch {
-      if (!controller.signal.aborted) this.publish({ error: '这次设置没有保存成功，请重试。权限操作也可以在 macOS 系统设置中检查。' });
+    } catch (error) {
+      if (!controller.signal.aborted) this.publish({ errorType: 'operation',
+        error: Object.values(BRIDGE_ERRORS).includes(error?.userMessage) ? error.userMessage
+          : '这次操作未完成，请重试；权限操作请检查原生提示或 macOS 系统设置。' });
       return false;
     } finally {
       this.controllers.delete(controller);
@@ -70,6 +89,7 @@ class CompanionSettingsController {
   }
   update(patch) { return this.mutate('update-settings', { patch }, 'save-settings'); }
   action(action, payload = {}) { return this.mutate('action', { ...payload, action }, action); }
+  retry() { this.publish({ error: '', errorType: '' }); return this.load(); }
   open() {
     if (this.disposed) return () => {};
     this.active++;

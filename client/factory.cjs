@@ -141,21 +141,42 @@ function CompanionSection({ snapshot, controller, disabled }) {
   const native = snapshot.native ?? {};
   const vision = snapshot.capabilities?.vision ?? snapshot.route?.vision;
   const helper = helperRunning(snapshot);
+  const permissionBusy = native.permissionRequestInFlight === true;
+  const screenPending = native.screenConsentPending === true;
+  const audioPending = native.audioConsentPending === true;
+  const mousePending = native.mouseConsentPending === true;
+  const needsRestart = native.permissionsNeedRestart === true || native.screenPermissionState === 'restart-required';
+  const screenWait = permissionBusy || (screenPending && native.screenPermissionState !== 'granted');
+  const audioWait = permissionBusy || (audioPending && native.audioAuthorized !== true);
+  const mouseWait = permissionBusy || (mousePending && native.mouseAuthorized !== true);
+  const snoozed = Number(settings.snoozeUntil) > Date.now();
   return h(React.Fragment, null,
     h(Card, { title: '感知与陪伴' },
       h(ToggleRow, { label: '应用感知', checked: settings.observationEnabled, disabled,
-        description: '留意前台应用与空闲状态。关闭或暂停后停止采集，你仍可以主动聊天。', onChange: next => controller.update({ observationEnabled: next }) }),
-      h(ToggleRow, { label: '画面理解', checked: settings.screenEnabled, disabled: disabled || !helper || !vision,
-        title: !vision ? '当前 Harness 默认模型未声明支持图片' : !helper ? '请先启动原生宠物' : undefined,
+        description: snoozed ? '正在临时安静，当前不采集。重新开启应用感知会结束安静时段。' : '留意前台应用与空闲状态。关闭或暂停后停止采集，你仍可以主动聊天。',
+        onChange: next => controller.update(next ? { observationEnabled: true, snoozeUntil: 0 } : { observationEnabled: false }) }),
+      h(ToggleRow, { label: '画面理解', checked: settings.screenEnabled,
+        disabled: disabled || (settings.screenEnabled !== true && (!helper || !vision || screenWait)),
+        title: !vision ? '当前 Harness 默认模型未声明支持图片' : !helper ? '请先启动原生宠物' : screenWait ? '请先完成授权或重新检查系统权限' : undefined,
         description: !vision ? '当前默认模型不支持图片；文字陪伴仍可使用。' : '开启时由原生宠物确认并申请屏幕录制权限。更换默认模型后需重新同意。',
         onChange: next => next ? controller.action('request-screen-permission') : controller.update({ screenEnabled: false }) }),
+      h('div', { className: 'qcp-form-row' },
+        h('p', { className: 'qcp-status', role: 'status' }, native.screenStatus || `屏幕权限：${native.screenAuthorized === true ? '已授权' : native.screenAuthorized === false ? '未授权' : '待读取'}`),
+        screenPending ? h('p', { className: 'qcp-note', role: 'status' }, native.screenPermissionState === 'granted'
+          ? '本次同意已保留，系统权限现已可用。请点击画面开关继续开启。' : '本次同意已保留，正在等待系统权限生效。请确认 macOS 系统设置后重新检查；如提示需要重启，请重启宠物后再开启。') : null,
+        settings.screenEnabled && (!settings.observationEnabled || snoozed) ? h('p', { className: 'qcp-note' }, '画面理解已配置，但观察已暂停，当前不采集画面。') : null,
+        h('div', { className: 'qcp-actions' },
+          button('重新检查系统权限', () => controller.action('refresh-permissions'), disabled || !helper || permissionBusy),
+          screenPending ? button('取消画面开启', () => controller.update({ screenEnabled: false }), disabled, 'ghost') : null,
+          needsRestart ? button('重启宠物以应用权限', () => controller.action('restart-pet'), disabled || permissionBusy) : null)),
       h('div', { className: 'qcp-form-row' }, h('div', { className: 'qcp-grid' },
         h(NumberField, { label: '画面采样间隔', value: settings.captureIntervalSeconds ?? 3, min: 1, max: 30, step: 1, unit: '秒', disabled,
           onCommit: next => controller.update({ captureIntervalSeconds: next }) })),
         h('p', { className: 'qcp-muted' }, '感知频率不等于发言频率。只有新事件需要理解时，才选取最近最多 3 帧送给默认模型。'),
         h('p', { className: 'qcp-note' }, '选中的关键帧会经过 Harness 附件服务，可能保存在本机共享附件缓存中；本插件不承诺自动删除该缓存。'))),
     h(Card, { title: '撒娇抢鼠标' },
-      h(ToggleRow, { label: '允许撒娇抢鼠标', checked: settings.mousePlayEnabled, disabled: disabled || (!helper && settings.mousePlayEnabled!==true),
+      h(ToggleRow, { label: '允许撒娇抢鼠标', checked: settings.mousePlayEnabled,
+        disabled: disabled || (settings.mousePlayEnabled !== true && (!helper || mouseWait)),
         title: !helper ? '请先启动原生宠物' : undefined,
         description: '默认关闭。太久没有互动时，短暂轻拉鼠标，最长 1.5 秒；移动鼠标或按 Esc 立即停止，不点击或输入。',
         onChange: next => next ? controller.action('request-mouse-permission') : controller.update({ mousePlayEnabled: false }) }),
@@ -164,15 +185,22 @@ function CompanionSection({ snapshot, controller, disabled }) {
           onCommit: mousePlayAfterMinutes => controller.update({ mousePlayAfterMinutes }) }),
         h('p', { className: 'qcp-muted' }, '开启需要 macOS 辅助功能权限；点击开关后，由原生宠物显示确认与权限提示。'),
         h('p', { className: 'qcp-status', role: 'status' }, `辅助功能：${native.mouseAuthorized===true?'已授权':native.mouseAuthorized===false?'未授权':'待读取'} · 状态：${native.mousePlayActive===true?'正在轻拉鼠标':native.mousePlayActive===false?'未在轻拉鼠标':'待读取'}`),
-        native.mouseStatus?h('p',{className:'qcp-muted'},native.mouseStatus):null)),
+        native.mouseStatus?h('p',{className:'qcp-muted'},native.mouseStatus):null,
+        mousePending ? h('div', { className: 'qcp-actions' },
+          h('p', { className: 'qcp-note', role: 'status' }, '鼠标开启请求正在等待辅助功能权限；重新检查不会自动开启。'),
+          button('取消鼠标开启', () => controller.update({ mousePlayEnabled: false }), disabled, 'ghost')) : null)),
     h(Card, { title: '系统声音与视频对白' },
-      h(ToggleRow, { label: '理解系统播放声音', checked: settings.videoAudioEnabled, disabled: disabled || !helper,
+      h(ToggleRow, { label: '理解系统播放声音', checked: settings.videoAudioEnabled,
+        disabled: disabled || (settings.videoAudioEnabled !== true && (!helper || audioWait)),
         description: '仅在本机离线语音识别可用时转写系统播放声，不使用麦克风。开启时会显示原生确认与权限请求。',
         onChange: next => next ? controller.action('request-audio-permission') : controller.update({ videoAudioEnabled: false }) }),
       h(Row, { label: '识别语言', description: '离线识别资源由 macOS 提供。' }, h('select', { className: 'qcp-select', 'aria-label': '系统声音识别语言', value: settings.speechLanguage || 'zh-CN', disabled,
         onChange: event => controller.update({ speechLanguage: event.currentTarget.value }) },
       [['zh-CN','中文（普通话）'],['en-US','英语（美国）']].map(([value,label]) => h('option', {value,key:value},label)))),
       h('div', { className: 'qcp-form-row' }, h('p', { className: 'qcp-status' }, native.audioStatus || '系统声音尚未开启。'),
+        audioPending ? h('div', { className: 'qcp-actions' },
+          h('p', { className: 'qcp-note', role: 'status' }, '声音开启请求正在等待系统权限；重新检查后可继续开启，也可以取消。'),
+          button('取消声音开启', () => controller.update({ videoAudioEnabled: false }), disabled, 'ghost')) : null,
         h('p', { className: 'qcp-muted' }, `屏幕权限：${native.screenAuthorized===true?'已授权':native.screenAuthorized===false?'未授权':'待读取'} · 声音识别：${native.audioAuthorized===true?'已授权':native.audioAuthorized===false?'未授权':'待读取'}`))),
     h(Card, { title: '发言与安静时机' },
       h(ToggleRow, { label: '会议中减少主动打扰', checked: settings.quietMeetingApps !== false, disabled,
@@ -310,6 +338,7 @@ function LoadedSettings({ controller, useSnapshot }) {
   useEffect(()=>controller.open(),[controller]);
   const snapshot=state.snapshot??{};
   const disabled=state.busy||state.status!=='ready';
+  const observing=snapshot.settings?.observationEnabled===true && !(Number(snapshot.settings?.snoozeUntil)>Date.now());
   const tabs=[['companion','感知与陪伴'],['appearance','外观与语音'],['growth','成长与零食'],['memory','记忆'],['usage','进度与用量']];
   const view={companion:CompanionSection,appearance:AppearanceSection,growth:GrowthSection,memory:MemorySection,usage:UsageSection}[tab];
   return h('div',{className:'qcp-settings'},
@@ -325,9 +354,9 @@ function LoadedSettings({ controller, useSnapshot }) {
       h('p',{className:'qcp-muted'},'自动跟随 Harness，不需要重复填写 API Key。默认模型可在“模型”设置中更改。'),
       snapshot.status?h('p',{className:'qcp-status',role:'status'},typeof snapshot.status==='string'?snapshot.status:snapshot.status.text||''):null,
       h('div',{className:'qcp-actions'},button('刷新模型',()=>controller.action('refresh-model'),disabled),
-        button(snapshot.settings?.observationEnabled?'暂停观察':'恢复观察',()=>controller.action(snapshot.settings?.observationEnabled?'pause':'resume'),disabled),
+        button(observing?'暂停观察':'恢复观察',()=>controller.action(observing?'pause':'resume'),disabled),
         button('安静 30 分钟',()=>controller.action('snooze'),disabled))),
-    state.error?h('div',{className:'qcp-error',role:'alert'},state.error,button('重试',()=>controller.load(),state.busy,'ghost')):null,
+    state.error?h('div',{className:'qcp-error',role:'alert'},state.error,button('刷新状态',()=>controller.retry(),state.busy,'ghost')):null,
     state.status==='loading'&&!state.snapshot?h('p',{className:'qcp-muted',role:'status'},'正在读取陪伴设置……'):null,
     h('div',{className:'qcp-tabs',role:'tablist','aria-label':'安静陪伴设置分区'},tabs.map(([key,label])=>h('button',{
       key,id:`${id}-tab-${key}`,className:'qcp-tab',type:'button',role:'tab',tabIndex:tab===key?0:-1,'aria-selected':tab===key,'aria-controls':`${id}-panel`,
