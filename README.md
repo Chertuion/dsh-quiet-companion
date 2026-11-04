@@ -16,7 +16,7 @@
 
 角色风格是安静、体贴，带一点黏人与俏皮。主动回应由事件与上下文决定，模型可以选择保持安静。角色随 Harness 启停，使用官方桌面版时不需要一直开着终端。
 
-> **本轮版本：`v0.5.1-beta.3`**。仅调整JavaScript侧的头部、身体衣物与裙摆触碰回应协议：请求开始即约定自然短句，自动观察与手动聊天仍使用严格JSON。沿用0.5.1/build9原生组件，不新增权限、素材或依赖；beta3的发布、安装和真实触碰复测尚未完成。beta1、beta2已完成的检查及本次待核问题见[开发记录](docs/development.md)。设置、记忆和成长保存在包目录之外。
+> **本轮版本：`v0.5.1-beta.4`**。仅修正JavaScript侧普通设置刷新清掉短期画面的问题：在同一路由、同意和画面能力持续有效时保留未过期帧，暂停、撤权或换模型仍清除，不延长45秒有效期。继续使用0.5.1/build9原生组件，不新增权限、素材、依赖或原生命令；beta4发布与实际安装复测尚未完成。已公开beta3的安装、身体回应及屏幕授权恢复记录见[开发记录](docs/development.md)。设置、记忆和成长保存在包目录之外。
 
 ## 目录
 
@@ -117,17 +117,17 @@ beta3为这三类触碰单独约定自然文本回应，模型从请求开始就
 2. 填入本版固定地址：
 
    ```text
-   github:Chertuion/dsh-quiet-companion#v0.5.1-beta.3
+   github:Chertuion/dsh-quiet-companion#v0.5.1-beta.4
    ```
 
 3. 安装后启用插件，按应用提示重新打开 Harness。
 4. 打开 **设置 → 安静陪伴**，确认原生组件已连接。
 
-beta3仅变更触碰回应协议，beta2已有无障碍入口、音频状态和生成上限改进。固定地址应在对应标签和Release发布后使用，再安装与复测；开发分支用于查看后续改动，不自动代表新的发行版。
+beta4仅修正普通设置刷新时的短期画面保留；beta3已加入专用触碰回应协议。beta4固定地址须在对应标签和Release发布后使用；已公开版本可查看下方历史Release，开发分支不自动代表新的发行版。
 
 ### 使用 Release 安装包
 
-在对应 [Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.3) 发布后，从 **Assets** 中下载 [`dsh-quiet-companion-0.5.1-beta.3.tgz`](https://github.com/Chertuion/dsh-quiet-companion/releases/download/v0.5.1-beta.3/dsh-quiet-companion-0.5.1-beta.3.tgz)，无需解压，把下载文件的完整本机路径填入“添加插件”。GitHub 自动生成的 Source code ZIP/TAR 是源码快照，不是此预编译安装包。GitHub源码拉取停滞时可选择同版已下载的Release安装包；历史版本见 [beta2 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.2) 和 [beta1 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.1)。
+在对应 [Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.4) 发布后，从 **Assets** 中下载 [`dsh-quiet-companion-0.5.1-beta.4.tgz`](https://github.com/Chertuion/dsh-quiet-companion/releases/download/v0.5.1-beta.4/dsh-quiet-companion-0.5.1-beta.4.tgz)，无需解压，把下载文件的完整本机路径填入“添加插件”。GitHub 自动生成的 Source code ZIP/TAR 是源码快照，不是此预编译安装包。GitHub源码拉取停滞时可选择同版已下载的Release安装包；历史版本见 [beta3 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.3)、[beta2 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.2) 和 [beta1 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.1)。
 
 ### 使用桌面应用自带的 CLI
 
@@ -135,7 +135,7 @@ beta3仅变更触碰回应协议，beta2已有无障碍入口、音频状态和�
 
 ```sh
 "/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh" \
-  plugin --profile desktop add github:Chertuion/dsh-quiet-companion#v0.5.1-beta.3
+  plugin --profile desktop add github:Chertuion/dsh-quiet-companion#v0.5.1-beta.4
 ```
 
 随后重新打开应用。这里使用的是**桌面应用自带的 CLI**，不要用独立 npm 安装的 `dsh` 去修改桌面端 profile。自定义安装位置请调整路径；参考 [Harness 官方桌面端说明](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-rc.5/apps/desktop/README.zh.md)。
@@ -283,6 +283,7 @@ beta2为头部、身体衣物与裙摆提供带语义名称的macOS无障碍按�
 | 系统已允许，却仍提示授权 | 核对系统列表中的“安静陪伴”，点“重新检查系统权限”；按需重启宠物，再明确开启，勿连续重复申请 |
 | 视频有声音却听不懂 | 检查独立系统声音开关、识别语言和本机离线资源；失败时显示状态，不自动改用联网识别或麦克风 |
 | 系统声音显示“已配置；观察已暂停” | 仅表示开关已配置，当前没有捕获；恢复观察后仍须经过等待启动、正在启动与实际运行状态 |
+| 聊天问画面却没有附图 | 已有帧须在45秒内且原路由、同意与画面能力仍有效；beta4避免普通设置刷新误清帧，不保证聊天窗口在前台时会新捕一帧 |
 | 零食没有出现 | 只计算监听启用后实际已上报的当前Host用量，检查成长/奖励开关和阈值；不会补造历史用量 |
 | 有零食但不吃 | 查看休息、饱腹、精力、任务等待、安静时段和90秒冷却；递食请求也受门禁限制 |
 | 模型回复格式无效 | beta3触碰使用独立自然文本协议；自动观察和手动聊天仍要求单个合法JSON对象，兼容代码块/说明包装，坏JSON、多个对象或字段错误仍拒绝 |
@@ -381,7 +382,9 @@ npm test
 | `third_party/` | 提取适配模块与完整第三方许可 |
 | `docs/` | 详细指南、来源、许可审计与分层验证记录 |
 
-**beta3的JavaScript全量检查为174项通过、0失败、0跳过**，使用Node.js24.21、实际Host React与合成Unix socket。原生0.5.1/build9及其签名字节保持不变，不将beta2的原生检查算作本轮重新执行；beta3发布、安装与真实触碰复测尚未完成。
+**beta4的JavaScript全量检查为178项通过、0失败、0跳过**，仅调整设置刷新与短期画面保留规则。继续使用同字节的0.5.1/build9原生组件，不新增权限、素材、依赖或原生命令；beta3的174项保留为历史结果。发布与实际安装复测尚未完成，当前不保证聊天窗口在前台时新增采样，也不延长已有帧的45秒有效期。
+
+**beta3的JavaScript全量检查为174项通过、0失败、0跳过**，使用Node.js24.21、实际Host React与合成Unix socket。公开版本对应提交 `805b147`，实际安装87个文件与发行包逐字节匹配，严格签名通过；原生0.5.1/build9的18个bundle文件与beta2一致，不将历史原生检查算作本轮重新执行。安装瞬间设置、成长、用量三个文件字节保留；随后真实互动和模型请求已使成长、用量正常变化，不代表这些文件当前仍与安装前相同。beta3一次身体互动得到自然中文回应；摸头成功属于beta2历史，裙摆复测尚待完成。详见[beta3实机记录](docs/development.md#beta3-desktop-validation)。
 
 已发布的 **0.5.1-beta.1 / build8** 通过165项Node.js 24＋实际Host React测试（0失败、0跳过）、41项权限策略检查及解锁后的完整LaunchServices协议。实际Desktop使用bundled CLI离线安装与公开Release散列一致的包，87个文件匹配、严格签名通过，设置与用量文件逐字节保留，等级/经验/库存及统计保留。重启后真实屏幕权限已就绪，画面开关可开启且不循环确认；该项检查保持观察关闭，不等于已完成画面采集。
 
@@ -389,7 +392,9 @@ npm test
 
 **beta2通过169项Node.js 24＋实际Host React测试（0失败、0跳过）；最终build9通过构建、严格签名、24动作/192帧解码及完整LaunchServices协议；权限41项、AX对象32项、音频状态15项纯检查通过。** 系统声音状态区分已配置但观察暂停、等待启动、正在启动和实际运行，保留真实失败信息。这些检查本身不证明真实AX树/Press、全部OS能力或理解质量通过；模型格式失败根因也不能由一次成功推定。
 
-**beta2发布后的实际Desktop复核（2026-11-04）：** 安装公开发行包后87个文件一致、严格签名通过，安装前后的设置、成长和用量三个文件逐字节保留。真实点击角色身边的蛋糕卷后进食计数增加1、获得20XP；另一次互动获得5XP，紧接着点另一食物显示53秒冷却。真实摸头得到匹配头顶部位的中文模型回应，并从原生聊天记录确认文本。该次身体互动仍出现一次 `invalid_json`；beta2新进程的屏幕预检在一次系统请求和一次重启后仍未授权，等待用户重新切换系统设置中的“安静陪伴”权限后复查。beta1曾授权成功的历史记录不代表beta2此次通过；beta2音频状态文案及真实AX操作仍待实际确认。详情见[发布后记录](docs/development.md#beta2-desktop-validation)。
+**beta2发布后的实际Desktop复核（2026-11-04）：** 安装公开发行包后87个文件一致、严格签名通过，安装前后的设置、成长和用量三个文件逐字节保留。真实点击角色身边的蛋糕卷后进食计数增加1、获得20XP；另一次互动获得5XP，紧接着点另一食物显示53秒冷却。真实摸头得到匹配头顶部位的中文模型回应，并从原生聊天记录确认文本。该次身体互动仍出现一次 `invalid_json`，屏幕预检未授权；beta1曾授权成功的历史记录不代表此次通过。beta2音频状态文案及真实AX操作仍待实际确认。详情见[发布后记录](docs/development.md#beta2-desktop-validation)。
+
+**屏幕权限后续核查：** 用户仅重建“安静陪伴”这一条权限并完成两次系统认证后，重新打开实际Harness，已安装组件的CG预检显示已授权，画面开关可开启且不再重复请求授权；后续观察也已开启。一次自动画面请求识别了当时的前台应用，说明链路可达；受控测试标记的手动回答没有附图，不能记为OCR准确性通过。没有重编或改签名，未确认TCC记录内容，签名身份匹配仍属推断。新系统条目的显示路径也不能用于断言授权记录必然绑定profile路径。详见[核查边界](docs/development.md#screen-permission-followup)。
 
 0.5.0另有一次真实短句PCM播放时钟/RMS测试及20张自有场景嘴框对照：[对照图](docs/assets/q-mouth-qa.png)、[检测摘要](docs/q-mouth-qa.json)。对照图使用合成音量，不是桌面截图；这些历史记录不能代替0.5.1的真实授权或模型验收。
 
