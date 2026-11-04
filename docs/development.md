@@ -1,6 +1,6 @@
 # 开发与验证
 
-本文记录 `0.5.1-beta.5` 设置页重启状态文字兼容、180项代码检查，以及已公开安装beta4的文件、状态和CG授权核对，并保留各旧版历史证据。beta5发布与实际安装复测待完成；继续使用同字节0.5.1/build9原生组件。预算阻止的模型终验、真实AX、视觉及音频范围以下各节为准。安装入口见[项目首页](../README.md)，用户操作见[使用指南](guide.md)。
+本文记录已公开并实际安装的 `0.5.1-beta.5`、180项代码检查及文件/签名/状态保留核对，并保留各旧版证据。最终Host重启未成功，验收设备锁屏，beta5设置页与授权回显待用户解锁后复查；继续使用同字节0.5.1/build9原生组件。模型终验、真实AX、视觉及音频范围以下各节为准。安装入口见[项目首页](../README.md)，用户操作见[使用指南](guide.md)。
 
 ## 环境与依赖
 
@@ -77,7 +77,16 @@ python3 native/protocol-test.py "$companion_app" --launch-services
 
 严格条件为helper已连接，`settings.screenEnabled`、`native.screenEnabled`、`native.screenAuthorized` 均精确为true，`screenConsentPending` 和权限busy均不为true，且 `screenStatus` 精确等于原初始化句，才显示“画面理解已配置；仅在观察开启且有变化时按需采样。”。任何真实错误、待确认、未启用/未授权/未知、断开、其它或近似文字仍保留原反馈。该句不表示已采样或发送画面。
 
-新增2项真实Host React SSR回归：覆盖helper连接形式及观察开/关的重启组合，另覆盖断开、设置/原生状态false或未知、pending、busy、真实错误及非精确文字保留。离线重建client.js后，用Host Electron Node.js24.21.0、实际Host React及合成Unix socket运行16个JS文件，**180项通过、0失败、0跳过**。原生18文件和签名字节保持不变，未增权限、依赖、模型调用或预算豁免；发布及实际安装复测待完成。
+新增2项真实Host React SSR回归：覆盖helper连接形式及观察开/关的重启组合，另覆盖断开、设置/原生状态false或未知、pending、busy、真实错误及非精确文字保留。离线重建client.js后，用Host Electron Node.js24.21.0、实际Host React及合成Unix socket运行16个JS文件，**180项通过、0失败、0跳过**。原生18文件和签名字节保持不变，未增权限、依赖、模型调用或预算豁免；发布和实际安装文件核对已完成，最终UI仍待解锁验收。
+
+<a id="beta5-desktop-validation"></a>
+
+### beta5公开发行后的安装核对（2026-11-04）
+
+- GitHub [v0.5.1-beta.5 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.5)已公开，`draft=false`，固定标签对应提交 [`5dbd998`](https://github.com/Chertuion/dsh-quiet-companion/commit/5dbd998)。通过桌面应用CLI实际安装到desktop profile，版本为0.5.1-beta.5，87文件与公开包逐字节一致。
+- 原生18文件保持不变，严格签名通过，CDHash为 `b7940519fab59a2b6731d33bc713eea330d5a29c`。安装前后设置、成长、用量三文件SHA一致，临时 `QC-SCREEN-7429` 已移除；这是安装瞬间核对，不表示运行后状态永不变化。
+- 最终尝试重启Host时明确设备锁屏，Host未成功启动，已请求用户解锁并等待回复。beta5设置页兼容文字、CG授权回显及其它装后UI尚未实际确认，不将安装校验、180项检查或beta4旧结果记作这次UI通过。
+- beta4上一轮的screen/observation开关为开、CG已授权、今日预算已满以及一次食物请求被睡眠门禁阻止，均只保留在beta4历史范围；没有提高预算、清usage或把被阻止的模型/递食当作成功。本次文档补记不改写已发布标签、资产或发行说明。
 
 ## 0.5.1-beta.4短期画面修复与验证
 
