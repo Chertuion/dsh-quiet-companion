@@ -16,7 +16,7 @@
 
 角色风格是安静、体贴，带一点黏人与俏皮。主动回应由事件与上下文决定，模型可以选择保持安静。角色随 Harness 启停，使用官方桌面版时不需要一直开着终端。
 
-> **本轮测试版：[`v0.5.1-beta.7`](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.7)**。针对实际默认模型Max档画面请求被过小生成上限截断，按明确选中的推理档匹配生成预算；模型与推理档保持原样。设置中同时显示45秒内可用帧数、最近收到时间及帧自身来源应用，帮助区分“已授权”和“已经收到画面”。原生仍为同字节0.5.1/build9；回归及实机范围见[本轮记录](docs/development.md#beta7-validation)。
+> **本轮测试版：[`v0.5.1-beta.8`](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.8)**。保留Max生成预算适配与只读画面诊断，并修复等待中的旧观测跨越撤回/重新开启后复活，以及等待时间被误算为新接收时间的问题。图片的45秒有效期始于Host收到观测时，不因异步等待延长。模型、推理档与同字节0.5.1/build9原生组件保持不变；范围见[本轮记录](docs/development.md#beta8-validation)。
 
 beta6已按“先公开GitHub、再安装”完成89文件、签名与状态保留核对。实际聊天错误终态和顶部重启保留配置已通过；受控画面目标码和真实指针动作仍待解锁后的实际操作，不记为已通过。
 
@@ -119,7 +119,7 @@ beta3为这三类触碰单独约定自然文本回应，模型从请求开始就
 2. 填入本版固定地址：
 
    ```text
-   github:Chertuion/dsh-quiet-companion#v0.5.1-beta.7
+   github:Chertuion/dsh-quiet-companion#v0.5.1-beta.8
    ```
 
 3. 安装后启用插件，按应用提示重新打开 Harness。
@@ -129,7 +129,7 @@ beta7增加Max档生成预算适配和只读画面接收诊断；beta6重启配�
 
 ### 使用 Release 安装包
 
-在对应 [Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.7) 的 **Assets** 中下载 [`dsh-quiet-companion-0.5.1-beta.7.tgz`](https://github.com/Chertuion/dsh-quiet-companion/releases/download/v0.5.1-beta.7/dsh-quiet-companion-0.5.1-beta.7.tgz)，无需解压，把下载文件的完整本机路径填入“添加插件”。GitHub 自动生成的 Source code ZIP/TAR 是源码快照，不是此预编译安装包。GitHub源码拉取停滞时可选择同版已下载的Release安装包；历史版本见 [beta4 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.4)、[beta3 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.3)、[beta2 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.2) 和 [beta1 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.1)。
+在对应 [Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.8) 的 **Assets** 中下载 [`dsh-quiet-companion-0.5.1-beta.8.tgz`](https://github.com/Chertuion/dsh-quiet-companion/releases/download/v0.5.1-beta.8/dsh-quiet-companion-0.5.1-beta.8.tgz)，无需解压，把下载文件的完整本机路径填入“添加插件”。GitHub 自动生成的 Source code ZIP/TAR 是源码快照，不是此预编译安装包。GitHub源码拉取停滞时可选择同版已下载的Release安装包；历史版本见 [beta4 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.4)、[beta3 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.3)、[beta2 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.2) 和 [beta1 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.1)。
 
 ### 使用桌面应用自带的 CLI
 
@@ -137,7 +137,7 @@ beta7增加Max档生成预算适配和只读画面接收诊断；beta6重启配�
 
 ```sh
 "/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh" \
-  plugin --profile desktop add github:Chertuion/dsh-quiet-companion#v0.5.1-beta.7
+  plugin --profile desktop add github:Chertuion/dsh-quiet-companion#v0.5.1-beta.8
 ```
 
 随后重新打开应用。这里使用的是**桌面应用自带的 CLI**，不要用独立 npm 安装的 `dsh` 去修改桌面端 profile。自定义安装位置请调整路径；参考 [Harness 官方桌面端说明](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-rc.5/apps/desktop/README.zh.md)。
