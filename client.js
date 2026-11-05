@@ -293,6 +293,13 @@ function CompanionSection({ snapshot, controller, disabled }) {
     && native.screenStatus === '画面理解未开启；需要同意向当前模型发送画面并获得系统权限。'
     ? '画面理解已配置；仅在观察开启且有变化时按需采样。'
     : native.screenStatus;
+  const frameSummary = helper ? snapshot.screenFrames : null;
+  const frameCount = Number.isSafeInteger(frameSummary?.count) ? Math.max(0,Math.min(3,frameSummary.count)) : 0;
+  const frameDate = frameCount && typeof frameSummary?.lastReceivedAt === 'number'
+    && Number.isFinite(frameSummary.lastReceivedAt) ? new Date(frameSummary.lastReceivedAt) : null;
+  const frameTime = frameDate && Number.isFinite(frameDate.getTime())
+    ? frameDate.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '未知';
+  const frameApp = typeof frameSummary?.sourceApp === 'string' ? frameSummary.sourceApp : '';
   return h(React.Fragment, null,
     h(Card, { title: '感知与陪伴' },
       h(ToggleRow, { label: '应用感知', checked: settings.observationEnabled, disabled,
@@ -316,6 +323,7 @@ function CompanionSection({ snapshot, controller, disabled }) {
         h(NumberField, { label: '画面采样间隔', value: settings.captureIntervalSeconds ?? 3, min: 1, max: 30, step: 1, unit: '秒', disabled,
           onCommit: next => controller.update({ captureIntervalSeconds: next }) })),
         h('p', { className: 'qcp-muted' }, '感知频率不等于发言频率。只有新事件需要理解时，才选取最近最多 3 帧送给默认模型。'),
+        h('p', { className: 'qcp-muted' }, `45 秒内可用帧：${frameCount}/3 · 最近收到：${frameCount ? frameTime : '暂无有效帧'} · 来源应用：${frameCount ? frameApp || '未知' : '—'}`),
         h('p', { className: 'qcp-note' }, '选中的关键帧会经过 Harness 附件服务，可能保存在本机共享附件缓存中；本插件不承诺自动删除该缓存。'))),
     h(Card, { title: '撒娇抢鼠标' },
       h(ToggleRow, { label: '允许撒娇抢鼠标', checked: settings.mousePlayEnabled,

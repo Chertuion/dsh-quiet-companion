@@ -239,6 +239,29 @@ test('screen feedback preserves errors and all unconfirmed or disconnected resta
   }
 });
 
+test('screen frame diagnostics render received local time and escaped source without claiming model success',{skip:!React},()=>{
+  const lastReceivedAt=Date.now();
+  const html=pageFor('companion',{...fixture,screenFrames:{count:2,lastReceivedAt,sourceApp:'Synthetic Player <private>'}});
+  assert.ok(html.includes('45 秒内可用帧：2/3'));
+  assert.ok(html.includes(new Date(lastReceivedAt).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'})));
+  assert.ok(html.includes('来源应用：Synthetic Player &lt;private&gt;'));
+  assert.equal(html.includes('已发送关键帧'),false);assert.equal(html.includes('已看到画面'),false);
+});
+
+test('screen frame diagnostics stay at zero when disconnected and handle empty or invalid timestamps safely',{skip:!React},()=>{
+  for(const snapshot of [fixture,{...fixture,helper:{running:false},screenFrames:{count:3,lastReceivedAt:Date.now(),sourceApp:'Old source'}},
+    {...fixture,screenFrames:{count:0,lastReceivedAt:null,sourceApp:''}}]) {
+    const html=pageFor('companion',snapshot);
+    assert.ok(html.includes('45 秒内可用帧：0/3 · 最近收到：暂无有效帧 · 来源应用：—'));
+    assert.equal(html.includes('Old source'),false);
+  }
+  for(const lastReceivedAt of [null,'not-a-timestamp',Number.NaN,Number.POSITIVE_INFINITY,9e20]) {
+    const html=pageFor('companion',{...fixture,screenFrames:{count:1,lastReceivedAt,sourceApp:''}});
+    assert.ok(html.includes('45 秒内可用帧：1/3 · 最近收到：未知 · 来源应用：未知'));
+    assert.equal(/Invalid Date|NaN/u.test(html),false);
+  }
+});
+
 test('an explicit off remains available with lost helper/model capability or another pending dialog',{skip:!React},async()=>{
   const switches=new Map(),calls=[];
   const controller={update:async patch=>{calls.push(patch);return true;}};
