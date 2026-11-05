@@ -127,9 +127,28 @@ test('the normal mouse test button acts only on an explicit click and reports na
   const html=pageFor('companion',ready,{buttons,controller:{action:async action=>{calls.push(action);return true;}}});
   const button=buttons.get('试一下鼠标轻拉');
   assert.ok(button);assert.equal(button.disabled,false);assert.deepEqual(calls,[]);
-  for(const text of ['原生 30 分钟冷却仍生效','安全条件不满足时不会移动','实际结果以上方原生状态为准','原生指针状态。'])
+  for(const text of ['原生 30 分钟冷却仍生效','安全条件不满足时不会移动','最近原生报告不代表本次请求结果','最近原生报告：原生指针状态。'])
     assert.ok(html.includes(text));
   await button.onClick();assert.deepEqual(calls,['test-mouse-play']);
+});
+
+test('mouse request feedback is truthful and independent of the most recent native report',{skip:!React},()=>{
+  const ready={...fixture,settings:{...fixture.settings,observationEnabled:true,mousePlayEnabled:true},
+    native:{...fixture.native,mousePlayEnabled:true,mouseAuthorized:true,mousePlayActive:false,mouseStatus:'指针互动已结束'}};
+  for(const [phase,message,disabled] of [
+    ['sent','请求已发送，不代表已移动；请观察实际指针，冷却或安全条件不满足时不会执行。',true],
+    ['unconfirmed','尚未确认本次指针移动，请以实际动作为准。',false],
+    ['stale','上次请求已失效；请以当前设置和实际指针为准。',false],
+  ]) {
+    const buttons=new Map();
+    const html=pageFor('companion',{...ready,mouseTestRequest:{id:7,sentAt:1700000000000,phase}},{buttons});
+    assert.ok(html.includes(message));assert.ok(html.includes('最近发送：'));
+    assert.ok(html.includes('最近原生报告：指针互动已结束'));
+    assert.equal(buttons.get('试一下鼠标轻拉').disabled,disabled);
+    assert.equal(html.includes('本次已移动'),false);assert.equal(html.includes('请求编号'),false);
+  }
+  const html=pageFor('companion',ready);
+  assert.equal(html.includes('最近发送：'),false);assert.equal(html.includes('请求已发送，不代表已移动'),false);
 });
 
 test('mouse test stays disabled until the helper, both enable flags, AX grant and observation are confirmed',{skip:!React},()=>{

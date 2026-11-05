@@ -8,6 +8,23 @@ function fixture(call) {
   const timers={setInterval(callback){intervals.add(callback);return callback;},clearInterval(callback){intervals.delete(callback);}};
   return {controller:new CompanionSettingsController({rpc:{call}},{timers}),intervals};
 }
+function visibilityDocument(state='visible') {
+  const listeners=new Set();
+  return {visibilityState:state,listeners,added:0,removed:0,
+    addEventListener(type,listener){assert.equal(type,'visibilitychange');listeners.add(listener);this.added++;},
+    removeEventListener(type,listener){assert.equal(type,'visibilitychange');listeners.delete(listener);this.removed++;},
+    dispatch(){for(const listener of [...listeners]) listener();},
+  };
+}
+async function withDocument(page,run) {
+  const previous=Object.getOwnPropertyDescriptor(globalThis,'document');
+  Object.defineProperty(globalThis,'document',{configurable:true,writable:true,value:page});
+  try {await run();}
+  finally {
+    if(previous) Object.defineProperty(globalThis,'document',previous);
+    else delete globalThis.document;
+  }
+}
 
 test('constructing the settings bridge performs no reads, actions, inference or permission requests',()=>{
   let calls=0; const {controller}=fixture(()=>{calls++;});
@@ -18,6 +35,7 @@ test('mouse test failures display only local Chinese guard messages instead of r
   for(const [code,message] of [
     ['mouse-test-unavailable','请先开启应用感知与指针互动，并确认辅助功能已授权。'],
     ['mouse-test-busy','请等当前授权或指针动作结束后再试。'],
+    ['mouse-test-in-progress','请求已发送，请等待本次反馈后再试。'],
   ]) {
     const calls=[];const {controller}=fixture(async(channel,endpoint,payload)=>{
       calls.push({channel,endpoint,payload});
@@ -36,6 +54,59 @@ test('visible-page polling uses authenticated snapshot channel only and stops wh
   for(const callback of intervals) callback(); await controller.load();
   assert.equal(calls.length,2); assert.equal(calls.every(call=>call.channel==='/api'&&call.endpoint==='quiet-companion/snapshot'),true);
   close(); assert.equal(intervals.size,0); controller.dispose();
+});
+test('becoming visible immediately refreshes a mounted page while hidden events and timers issue no reads',async()=>{
+  const page=visibilityDocument('hidden');
+  await withDocument(page,async()=>{
+    const calls=[];const {controller,intervals}=fixture(async(channel,endpoint,payload)=>{
+      calls.push({channel,endpoint,payload});return {ok:true,value:{screenFrames:{count:calls.length}}};
+    });
+    try {
+      const close=controller.open();
+      assert.equal(calls.length,0,'Opening a hidden page must not read.');
+      page.dispatch();for(const callback of intervals) callback();
+      assert.equal(calls.length,0);
+      page.visibilityState='visible';page.dispatch();
+      assert.equal(calls.length,1,'Visibility change must read without waiting for a polling tick.');
+      await controller.read;
+      assert.equal(controller.state.snapshot.screenFrames.count,1);
+      page.visibilityState='hidden';page.dispatch();for(const callback of intervals) callback();
+      assert.equal(calls.length,1);
+      page.visibilityState='visible';page.dispatch();await controller.read;
+      assert.equal(calls.length,2);
+      assert.deepEqual(calls,[1,2].map(()=>({channel:'/api',endpoint:'quiet-companion/snapshot',payload:{}})));
+      close();
+    } finally {controller.dispose();}
+  });
+});
+test('multiple mounted views share one visibility listener and final close or disposal removes it',async()=>{
+  const page=visibilityDocument();
+  await withDocument(page,async()=>{
+    let calls=0;const {controller,intervals}=fixture(async()=>{calls++;return {ok:true,value:{settings:{}}};});
+    try {
+      const closeFirst=controller.open(),closeSecond=controller.open();await controller.read;
+      assert.equal(page.added,1);assert.equal(page.listeners.size,1);assert.equal(intervals.size,1);
+      const savedListener=[...page.listeners][0];
+      closeFirst();closeFirst();assert.equal(page.listeners.size,1);
+      page.dispatch();await controller.read;assert.equal(calls,2);
+      closeSecond();assert.equal(page.listeners.size,0);assert.equal(page.removed,1);assert.equal(intervals.size,0);
+      page.dispatch();savedListener();assert.equal(calls,2,'A closed view must not refresh even through a stale callback.');
+      const closeAgain=controller.open();await controller.read;
+      assert.equal(page.added,2);assert.equal(page.listeners.size,1);assert.equal(calls,3);
+      controller.dispose();assert.equal(page.listeners.size,0);assert.equal(page.removed,2);assert.equal(intervals.size,0);
+      page.dispatch();savedListener();closeAgain();assert.equal(calls,3);
+    } finally {controller.dispose();}
+  });
+});
+test('documents without event listener APIs retain safe visible polling without registration',async()=>{
+  await withDocument({visibilityState:'visible'},async()=>{
+    let calls=0;const {controller,intervals}=fixture(async()=>{calls++;return {ok:true,value:{settings:{}}};});
+    try {
+      const close=controller.open();await controller.read;assert.equal(calls,1);
+      for(const callback of intervals) callback();await controller.read;assert.equal(calls,2);
+      close();assert.equal(intervals.size,0);
+    } finally {controller.dispose();}
+  });
 });
 test('setting saves and explicit permission actions use distinct payloads and accept returned snapshots',async()=>{
   const calls=[]; const {controller}=fixture(async(channel,endpoint,payload)=>{calls.push({channel,endpoint,payload});return {ok:true,value:{settings:payload.patch??{screenEnabled:false},status:'等待原生授权'}};});

@@ -11,6 +11,7 @@ const BRIDGE_ERRORS = Object.freeze({
   'permission-in-progress': '正在等待原生授权，请在原生提示中继续或取消。',
   'mouse-test-unavailable': '请先开启应用感知与指针互动，并确认辅助功能已授权。',
   'mouse-test-busy': '请等当前授权或指针动作结束后再试。',
+  'mouse-test-in-progress': '请求已发送，请等待本次反馈后再试。',
 });
 
 /** React-free, registration-owned settings bridge. Polls only while this settings page is mounted. */
@@ -25,6 +26,7 @@ class CompanionSettingsController {
     this.disposed = false;
     this.read = null;
     this.timer = null;
+    this.stopVisibility = null;
     this.controllers = new Set();
     this.revision = 0;
     this.store = {
@@ -96,10 +98,16 @@ class CompanionSettingsController {
     if (this.disposed) return () => {};
     this.active++;
     if (this.active === 1) {
-      void this.load();
-      this.timer = this.timers.setInterval(() => {
-        if (typeof document === 'undefined' || document.visibilityState !== 'hidden') void this.load();
-      }, this.intervalMs);
+      const page = typeof document === 'undefined' ? null : document;
+      const loadVisible = () => {
+        if (!this.disposed && this.active > 0 && page?.visibilityState !== 'hidden') void this.load();
+      };
+      if (typeof page?.addEventListener === 'function' && typeof page?.removeEventListener === 'function') {
+        page.addEventListener('visibilitychange', loadVisible);
+        this.stopVisibility = () => page.removeEventListener('visibilitychange', loadVisible);
+      }
+      loadVisible();
+      this.timer = this.timers.setInterval(loadVisible, this.intervalMs);
     }
     let released = false;
     return () => {
@@ -109,6 +117,8 @@ class CompanionSettingsController {
       if (this.active === 0) {
         if (this.timer !== null) this.timers.clearInterval(this.timer);
         this.timer = null;
+        this.stopVisibility?.();
+        this.stopVisibility = null;
         // Reads are disposable; an explicit save already requested by the user may complete.
         if (this.read && !this.state.busy) {
           for (const controller of this.controllers) controller.abort();
@@ -122,6 +132,8 @@ class CompanionSettingsController {
     this.disposed = true;
     if (this.timer !== null) this.timers.clearInterval(this.timer);
     this.timer = null;
+    this.stopVisibility?.();
+    this.stopVisibility = null;
     for (const controller of this.controllers) controller.abort();
     this.controllers.clear();
     this.listeners.clear();

@@ -1,4 +1,5 @@
-安静陪伴 0.5.1-beta.8
+安静陪伴 0.5.1-beta.9
+beta9设置页切回前台立即刷新诊断；鼠标测试区分请求发送、未确认结果和原生最近报告。原生build9及签名未改，受控画面与真实指针仍待实机验证，详见docs/development.md。
 
 beta8：旧观测在等候本地初始化或路由解析时，若经历撤回、重新开启或生命周期变化会丢弃；45秒以Host最初收到时间计算，等待不会续期。保留beta7的Max生成预算适配与帧接收诊断，原生build9和签名不变。最新验证见docs/development.md的beta8部分。
 
@@ -9,7 +10,7 @@ beta7：明确选中Max时匹配更充足的生成预算，遵守更低的同路
 DeepSeek Harness 的 macOS 桌面陪伴插件：沿用默认模型聊天，支持记忆、Agent进度、身边零食与成长，以及可选的画面理解、系统声音转写和语音朗读。
 
 适用：Apple Silicon、macOS14+、Harness0.2.1-rc.5。
-安装：插件 → 添加插件 → github:Chertuion/dsh-quiet-companion#v0.5.1-beta.8
+安装：插件 → 添加插件 → github:Chertuion/dsh-quiet-companion#v0.5.1-beta.9
 固定标签与同版Release包对应，无需解压；本轮安装与实际功能结果以docs/development.md的beta6记录为准，下方beta5及更早验收记录保留其历史范围。
 启用后重新打开 Harness，在“设置 → 安静陪伴”管理。
 

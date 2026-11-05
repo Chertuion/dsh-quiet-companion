@@ -18,6 +18,7 @@ const BRIDGE_ERRORS = Object.freeze({
   'permission-in-progress': '正在等待原生授权，请在原生提示中继续或取消。',
   'mouse-test-unavailable': '请先开启应用感知与指针互动，并确认辅助功能已授权。',
   'mouse-test-busy': '请等当前授权或指针动作结束后再试。',
+  'mouse-test-in-progress': '请求已发送，请等待本次反馈后再试。',
 });
 
 /** React-free, registration-owned settings bridge. Polls only while this settings page is mounted. */
@@ -32,6 +33,7 @@ class CompanionSettingsController {
     this.disposed = false;
     this.read = null;
     this.timer = null;
+    this.stopVisibility = null;
     this.controllers = new Set();
     this.revision = 0;
     this.store = {
@@ -103,10 +105,16 @@ class CompanionSettingsController {
     if (this.disposed) return () => {};
     this.active++;
     if (this.active === 1) {
-      void this.load();
-      this.timer = this.timers.setInterval(() => {
-        if (typeof document === 'undefined' || document.visibilityState !== 'hidden') void this.load();
-      }, this.intervalMs);
+      const page = typeof document === 'undefined' ? null : document;
+      const loadVisible = () => {
+        if (!this.disposed && this.active > 0 && page?.visibilityState !== 'hidden') void this.load();
+      };
+      if (typeof page?.addEventListener === 'function' && typeof page?.removeEventListener === 'function') {
+        page.addEventListener('visibilitychange', loadVisible);
+        this.stopVisibility = () => page.removeEventListener('visibilitychange', loadVisible);
+      }
+      loadVisible();
+      this.timer = this.timers.setInterval(loadVisible, this.intervalMs);
     }
     let released = false;
     return () => {
@@ -116,6 +124,8 @@ class CompanionSettingsController {
       if (this.active === 0) {
         if (this.timer !== null) this.timers.clearInterval(this.timer);
         this.timer = null;
+        this.stopVisibility?.();
+        this.stopVisibility = null;
         // Reads are disposable; an explicit save already requested by the user may complete.
         if (this.read && !this.state.busy) {
           for (const controller of this.controllers) controller.abort();
@@ -129,6 +139,8 @@ class CompanionSettingsController {
     this.disposed = true;
     if (this.timer !== null) this.timers.clearInterval(this.timer);
     this.timer = null;
+    this.stopVisibility?.();
+    this.stopVisibility = null;
     for (const controller of this.controllers) controller.abort();
     this.controllers.clear();
     this.listeners.clear();
@@ -285,9 +297,19 @@ function CompanionSection({ snapshot, controller, disabled }) {
   const audioWait = permissionBusy || (audioPending && native.audioAuthorized !== true);
   const mouseWait = permissionBusy || (mousePending && native.mouseAuthorized !== true);
   const snoozed = Number(settings.snoozeUntil) > Date.now();
+  const mouseRequest = snapshot.mouseTestRequest;
+  const mouseRequestStatus = ({
+    sent: '请求已发送，不代表已移动；请观察实际指针，冷却或安全条件不满足时不会执行。',
+    unconfirmed: '尚未确认本次指针移动，请以实际动作为准。',
+    stale: '上次请求已失效；请以当前设置和实际指针为准。',
+  })[mouseRequest?.phase];
+  const mouseRequestDate = typeof mouseRequest?.sentAt === 'number' && Number.isFinite(mouseRequest.sentAt)
+    ? new Date(mouseRequest.sentAt) : null;
+  const mouseRequestTime = mouseRequestDate && Number.isFinite(mouseRequestDate.getTime())
+    ? mouseRequestDate.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '';
   const canTestMouse = helper && settings.mousePlayEnabled === true && native.mousePlayEnabled === true
     && native.mouseAuthorized === true && settings.observationEnabled === true && !snoozed
-    && !mousePending && !permissionBusy && native.mousePlayActive !== true;
+    && !mousePending && !permissionBusy && native.mousePlayActive !== true && mouseRequest?.phase !== 'sent';
   const screenStatus = helper && settings.screenEnabled === true && native.screenEnabled === true
     && native.screenAuthorized === true && !screenPending && !permissionBusy
     && native.screenStatus === '画面理解未开启；需要同意向当前模型发送画面并获得系统权限。'
@@ -336,9 +358,11 @@ function CompanionSection({ snapshot, controller, disabled }) {
           onCommit: mousePlayAfterMinutes => controller.update({ mousePlayAfterMinutes }) }),
         h('p', { className: 'qcp-muted' }, '开启需要 macOS 辅助功能权限；点击开关后，由原生宠物显示确认与权限提示。'),
         h('p', { className: 'qcp-status', role: 'status' }, `辅助功能：${native.mouseAuthorized===true?'已授权':native.mouseAuthorized===false?'未授权':'待读取'} · 状态：${native.mousePlayActive===true?'正在轻拉鼠标':native.mousePlayActive===false?'未在轻拉鼠标':'待读取'}`),
-        native.mouseStatus?h('p',{className:'qcp-muted'},native.mouseStatus):null,
+        native.mouseStatus?h('p',{className:'qcp-muted'},`最近原生报告：${native.mouseStatus}`):null,
+        mouseRequestStatus?h('p',{className:'qcp-note',role:'status'},mouseRequestStatus,
+          mouseRequestTime?` 最近发送：${mouseRequestTime}`:''):null,
         h('div', { className: 'qcp-actions' }, button('试一下鼠标轻拉', () => controller.action('test-mouse-play'), disabled || !canTestMouse)),
-        h('p', { className: 'qcp-note' }, '点击并松开后会尝试轻拉最多 1.5 秒；真实移动鼠标、任意按键或 Esc 立即停止。原生 30 分钟冷却仍生效，安全条件不满足时不会移动；实际结果以上方原生状态为准。'),
+        h('p', { className: 'qcp-note' }, '点击并松开后会尝试轻拉最多 1.5 秒；真实移动鼠标、任意按键或 Esc 立即停止。原生 30 分钟冷却仍生效，安全条件不满足时不会移动；最近原生报告不代表本次请求结果。'),
         mousePending ? h('div', { className: 'qcp-actions' },
           h('p', { className: 'qcp-note', role: 'status' }, '鼠标开启请求正在等待辅助功能权限；重新检查不会自动开启。'),
           button('取消鼠标开启', () => controller.update({ mousePlayEnabled: false }), disabled, 'ghost')) : null)),
