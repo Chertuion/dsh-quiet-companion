@@ -4,14 +4,14 @@
   "capturedOn": "2026-11-05",
   "pluginVersion": "0.5.1-beta.9",
   "hostVersion": "0.2.1-rc.5",
-  "captureMethod": "CUA App.getScreenshot",
+  "captureMethod": "前10张为CUA App.getScreenshot；proactive-desktop-bubble.png为用户提供的原始运行截图",
   "processing": {
     "redrawn": false,
     "cropped": false,
     "reencoded": false,
     "originalCaptureBytesVerified": true
   },
-  "privacyScope": "仅本插件原生窗口及系统预览中本项目自有测试卡；不登记私有绝对路径、用户名、个人对话或用量账目。",
+  "privacyScope": "前10张仅包含本插件原生窗口及系统预览中的自有测试卡；新增用户截图包含角色气泡及截图时的工作正文背景。清单不登记私有绝对路径、用户名或账号信息。",
   "rights": "截图不新增MIT授权；角色图来源与权利边界见../../../assets/orange-character/ASSET_SOURCE.md；既有软件归属见../../../THIRD_PARTY_NOTICES.md。",
   "images": [
     {
@@ -153,6 +153,20 @@
       "window": "原生桌宠窗口",
       "uiVisible": "角色顶部显示“已完成”，角色周围仍有零食。",
       "context": "这是同一真实Host任务完成后的窗口，不是任务执行中的截图。"
+    },
+    {
+      "filename": "proactive-desktop-bubble.png",
+      "mimeType": "image/png",
+      "width": 788,
+      "height": 882,
+      "bytes": 446921,
+      "sha256": "3b263acd89b4bdbe8a91805dadcae9aaab6bfc4c60729f47616bca08c4f19041",
+      "originalBytesVerified": true,
+      "providedOn": "2026-11-05",
+      "captureMethod": "用户在本次对话提供的原始运行截图",
+      "window": "桌面角色气泡，背景为截图时的工作正文",
+      "uiVisible": "橙发Q版角色上方显示回应气泡，零食分布在角色身边，成长侧栏未显示。",
+      "context": "展示用户提供的实际桌面气泡效果；不从单张图片推定对应调用、触发过程或准确运行版本。图片未重绘、裁剪或转码。"
     }
   ]
 }
