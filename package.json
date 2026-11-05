@@ -1,6 +1,6 @@
 {
   "name": "dsh-quiet-companion",
-  "version": "0.5.1-beta.5",
+  "version": "0.5.1-beta.6",
   "description": "安静陪伴：Q版橙发桌面伙伴，默认模型交流、记忆、Agent进度、身边零食成长与本机语音口型。",
   "type": "module",
   "main": "index.mjs",

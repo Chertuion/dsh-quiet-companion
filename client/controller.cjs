@@ -9,6 +9,8 @@ const BRIDGE_ERRORS = Object.freeze({
   'vision-unavailable': '当前 Harness 默认模型不支持图片，暂时无法开启画面理解。',
   'model-required': '请先在 Harness 中配置默认模型。',
   'permission-in-progress': '正在等待原生授权，请在原生提示中继续或取消。',
+  'mouse-test-unavailable': '请先开启应用感知与指针互动，并确认辅助功能已授权。',
+  'mouse-test-busy': '请等当前授权或指针动作结束后再试。',
 });
 
 /** React-free, registration-owned settings bridge. Polls only while this settings page is mounted. */

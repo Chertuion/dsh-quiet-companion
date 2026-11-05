@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CompanionRuntime } from './lib/runtime.mjs';
 import { launchNativeHelper } from './lib/helper.mjs';
+import { createHelperRestarter, clearHelperTransientState } from './lib/helper-restart.mjs';
 import { createSettingsHandler } from './lib/settings-rpc.mjs';
 import { registerSettingsChannel } from './lib/host-channel.mjs';
 
@@ -16,22 +17,23 @@ export function apply(ctx) {
     if(process.platform!=='darwin'||process.arch!=='arm64') throw new Error('安静陪伴仅支持 Apple Silicon macOS。');
     const appPath=join(dirname(fileURLToPath(import.meta.url)),'native/QuietCompanion.app');
     if(!existsSync(join(appPath,'Contents/MacOS/QuietCompanion'))) throw new Error('安静陪伴安装包缺少原生组件，请重新安装。');
-    let disposed=false,helper,restarting;
+    let disposed=false,helper;
     const pending=new Set();
     const runtime=new CompanionRuntime(ctx,{send:message=>helper?.send(message),
       stateDir:join(process.env.DSH_HOME||join(homedir(),'.dsh'),'quiet-companion')});
-    const receive=message=>{
-      if(disposed) return;
-      const work=runtime.handle(message).catch(()=>runtime.status('这次操作未完成，请检查模型配置或本机权限。'));
+    const receive=(message,source)=>{
+      const isCurrent=()=>!disposed&&helper===source;
+      if(!isCurrent()) return;
+      const work=runtime.handle(message,{isCurrent}).catch(()=>{
+        if(isCurrent()) runtime.status('这次操作未完成，请检查模型配置或本机权限。');
+      });
       pending.add(work);void work.finally(()=>pending.delete(work));
     };
     const start=()=>{
-      const current=launchNativeHelper({appPath,onMessage:message=>{if(helper===current) receive(message);},onExit:reason=>{
+      const current=launchNativeHelper({appPath,onMessage:message=>receive(message,current),onExit:reason=>{
         if(disposed||helper!==current) return;
-        runtime.cancel();runtime.clearFrames();runtime.clearTranscript();
-        const stop=runtime.handle({type:'settings',observationEnabled:false,screenEnabled:false,
-          videoAudioEnabled:false,consentPair:'',audioConsentPair:''}).then(()=>runtime.status(reason)).catch(()=>{});
-        pending.add(stop);void stop.finally(()=>pending.delete(stop));
+        helper=undefined;
+        clearHelperTransientState(runtime);runtime.status(reason+' 当前不采集画面或声音。');
         void current.dispose();
       }});
       helper=current;
@@ -39,17 +41,9 @@ export function apply(ctx) {
       return current.ready;
     };
     void runtime.ready.catch(()=>runtime.status('本地设置或记忆读取失败，观察尚未开始。'));
-    const restartHelper=()=>{
-      if(restarting) return restarting;
-      restarting=(async()=>{
-        await runtime.handle({type:'settings',observationEnabled:false,screenEnabled:false,videoAudioEnabled:false,
-          consentPair:'',audioConsentPair:''});
-        await helper?.dispose();
-        if(!disposed) await start();
-      })().finally(()=>{restarting=null;});
-      return restarting;
-    };
-    const handler=createSettingsHandler({runtime,getHelper:()=>helper,restartHelper});
+    const restarter=createHelperRestarter({runtime,start,isDisposed:()=>disposed,
+      detach:()=>{const previous=helper;helper=undefined;return previous;}});
+    const handler=createSettingsHandler({runtime,getHelper:()=>helper,restartHelper:restarter.restart});
     let stopChannel;
     try {stopChannel=registerSettingsChannel(ctx,handler);}
     catch(error) {void runtime.dispose().catch(()=>{});throw error;}
@@ -58,7 +52,7 @@ export function apply(ctx) {
       if(disposed) return;
       disposed=true;
       const stoppingRuntime=runtime.dispose();
-      await Promise.allSettled([stoppingRuntime,stopChannel?.(),helper?.dispose(),...(restarting?[restarting]:[]),...pending]);
+      await Promise.allSettled([stoppingRuntime,stopChannel?.(),helper?.dispose(),...(restarter.pending?[restarter.pending]:[]),...pending]);
     };
   });
 }

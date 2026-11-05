@@ -16,7 +16,7 @@
 
 角色风格是安静、体贴，带一点黏人与俏皮。主动回应由事件与上下文决定，模型可以选择保持安静。角色随 Harness 启停，使用官方桌面版时不需要一直开着终端。
 
-> **当前测试版：[`v0.5.1-beta.5`](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.5)**。11月5日实际桌面已确认宠物连接、默认Flash、观察/画面开启、CG授权及新配置提示，无重复授权；拉面进食成功、+20XP，默认模型的裙摆触碰自然回应已显示于聊天窗口。原生0.5.1/build9与TCC未改动。受控OCR、系统音频和鼠标权限仍未验，范围见[开发记录](docs/development.md#beta5-ui-validation)。
+> **本轮测试版：[`v0.5.1-beta.6`](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.6)**。修复重启宠物清掉合法开关与同意、自动观察回复格式不匹配，以及显式请求失败后聊天一直等待的问题；增加受实际授权和原生安全条件约束的“试一下鼠标轻拉”。206项回归通过，原生仍为同字节0.5.1/build9。控制音源的真实系统声音识别已通过；新版安装、受控画面和真实鼠标结果分别记录在[开发记录](docs/development.md#beta6-validation)，不会把代码测试当作全部实机验收。
 
 ## 目录
 
@@ -117,17 +117,17 @@ beta3为这三类触碰单独约定自然文本回应，模型从请求开始就
 2. 填入本版固定地址：
 
    ```text
-   github:Chertuion/dsh-quiet-companion#v0.5.1-beta.5
+   github:Chertuion/dsh-quiet-companion#v0.5.1-beta.6
    ```
 
 3. 安装后启用插件，按应用提示重新打开 Harness。
 4. 打开 **设置 → 安静陪伴**，确认原生组件已连接。
 
-beta5只修正设置页的一句过时初始化状态；beta4的短期画面保留和beta3的触碰协议继续保留。beta5固定标签与Release已公开，更早版本见下方历史Release。
+beta6包含重启配置保留、自动观察自然回应协议、错误终态和显式鼠标测试入口；beta5状态提示、beta4短期画面保留与beta3触碰协议继续保留。固定标签与同版Release包对应，历史版本见发行列表。
 
 ### 使用 Release 安装包
 
-在对应 [Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.5) 的 **Assets** 中下载 [`dsh-quiet-companion-0.5.1-beta.5.tgz`](https://github.com/Chertuion/dsh-quiet-companion/releases/download/v0.5.1-beta.5/dsh-quiet-companion-0.5.1-beta.5.tgz)，无需解压，把下载文件的完整本机路径填入“添加插件”。GitHub 自动生成的 Source code ZIP/TAR 是源码快照，不是此预编译安装包。GitHub源码拉取停滞时可选择同版已下载的Release安装包；历史版本见 [beta4 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.4)、[beta3 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.3)、[beta2 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.2) 和 [beta1 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.1)。
+在对应 [Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.6) 的 **Assets** 中下载 [`dsh-quiet-companion-0.5.1-beta.6.tgz`](https://github.com/Chertuion/dsh-quiet-companion/releases/download/v0.5.1-beta.6/dsh-quiet-companion-0.5.1-beta.6.tgz)，无需解压，把下载文件的完整本机路径填入“添加插件”。GitHub 自动生成的 Source code ZIP/TAR 是源码快照，不是此预编译安装包。GitHub源码拉取停滞时可选择同版已下载的Release安装包；历史版本见 [beta4 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.4)、[beta3 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.3)、[beta2 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.2) 和 [beta1 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.1)。
 
 ### 使用桌面应用自带的 CLI
 
@@ -135,7 +135,7 @@ beta5只修正设置页的一句过时初始化状态；beta4的短期画面保�
 
 ```sh
 "/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh" \
-  plugin --profile desktop add github:Chertuion/dsh-quiet-companion#v0.5.1-beta.5
+  plugin --profile desktop add github:Chertuion/dsh-quiet-companion#v0.5.1-beta.6
 ```
 
 随后重新打开应用。这里使用的是**桌面应用自带的 CLI**，不要用独立 npm 安装的 `dsh` 去修改桌面端 profile。自定义安装位置请调整路径；参考 [Harness 官方桌面端说明](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-rc.5/apps/desktop/README.zh.md)。

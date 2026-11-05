@@ -37,7 +37,10 @@ function pageFor(tab,snapshot=fixture,hooks={}) {
   let registration;
   const effects=[];
   const injectedReact={...React,useState:initial=>React.useState(initial==='companion'?tab:initial)};
-  const primitives={Button:({variant,size,children,...props})=>React.createElement('button',props,children),
+  const primitives={Button:({variant,size,children,...props})=>{
+    if(typeof children==='string') hooks.buttons?.set(children,props);
+    return React.createElement('button',props,children);
+  },
     Switch:({checked,label,disabled,onChange,title})=>{
       hooks.switches?.set(label,{checked,disabled,onChange});
       return React.createElement('button',{role:'switch','aria-label':label,'aria-checked':checked,disabled,title,onClick:()=>onChange(!checked)});
@@ -114,6 +117,37 @@ test('mouse play exposes actual native authorization and active state',{skip:!Re
   assert.match(html,/aria-label="允许撒娇抢鼠标"[^>]*aria-checked="true"/u);
   assert.ok(html.includes('辅助功能：已授权 · 状态：正在轻拉鼠标'));
   assert.match(html,/<input[^>]*min="5"[^>]*max="120"[^>]*value="45"/u);
+});
+
+test('the normal mouse test button acts only on an explicit click and reports native safety limits',{skip:!React},async()=>{
+  const buttons=new Map(),calls=[];
+  const ready={...fixture,settings:{...fixture.settings,observationEnabled:true,mousePlayEnabled:true},
+    native:{...fixture.native,mousePlayEnabled:true,mouseAuthorized:true,mousePlayActive:false,
+      mouseConsentPending:false,permissionRequestInFlight:false,mouseStatus:'原生指针状态。'}};
+  const html=pageFor('companion',ready,{buttons,controller:{action:async action=>{calls.push(action);return true;}}});
+  const button=buttons.get('试一下鼠标轻拉');
+  assert.ok(button);assert.equal(button.disabled,false);assert.deepEqual(calls,[]);
+  for(const text of ['原生 30 分钟冷却仍生效','安全条件不满足时不会移动','实际结果以上方原生状态为准','原生指针状态。'])
+    assert.ok(html.includes(text));
+  await button.onClick();assert.deepEqual(calls,['test-mouse-play']);
+});
+
+test('mouse test stays disabled until the helper, both enable flags, AX grant and observation are confirmed',{skip:!React},()=>{
+  const ready={...fixture,settings:{...fixture.settings,observationEnabled:true,mousePlayEnabled:true},
+    native:{...fixture.native,mousePlayEnabled:true,mouseAuthorized:true,mousePlayActive:false}};
+  for(const snapshot of [
+    fixture,{...ready,helper:{running:false}},
+    {...ready,settings:{...ready.settings,mousePlayEnabled:false}},
+    {...ready,settings:{...ready.settings,observationEnabled:false}},
+    {...ready,settings:{...ready.settings,snoozeUntil:Date.now()+60_000}},
+    ...['mousePlayEnabled','mouseAuthorized'].flatMap(key=>[false,undefined].map(value=>
+      ({...ready,native:{...ready.native,[key]:value}}))),
+    ...['mouseConsentPending','permissionRequestInFlight','mousePlayActive'].map(key=>
+      ({...ready,native:{...ready.native,[key]:true}})),
+  ]) {
+    const buttons=new Map();pageFor('companion',snapshot,{buttons});
+    assert.equal(buttons.get('试一下鼠标轻拉').disabled,true);
+  }
 });
 
 test('growth renders actual experience, bounded needs, stacked inventory and waiting reason',{skip:!React},()=>{

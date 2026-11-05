@@ -16,6 +16,8 @@ const BRIDGE_ERRORS = Object.freeze({
   'vision-unavailable': '当前 Harness 默认模型不支持图片，暂时无法开启画面理解。',
   'model-required': '请先在 Harness 中配置默认模型。',
   'permission-in-progress': '正在等待原生授权，请在原生提示中继续或取消。',
+  'mouse-test-unavailable': '请先开启应用感知与指针互动，并确认辅助功能已授权。',
+  'mouse-test-busy': '请等当前授权或指针动作结束后再试。',
 });
 
 /** React-free, registration-owned settings bridge. Polls only while this settings page is mounted. */
@@ -283,6 +285,9 @@ function CompanionSection({ snapshot, controller, disabled }) {
   const audioWait = permissionBusy || (audioPending && native.audioAuthorized !== true);
   const mouseWait = permissionBusy || (mousePending && native.mouseAuthorized !== true);
   const snoozed = Number(settings.snoozeUntil) > Date.now();
+  const canTestMouse = helper && settings.mousePlayEnabled === true && native.mousePlayEnabled === true
+    && native.mouseAuthorized === true && settings.observationEnabled === true && !snoozed
+    && !mousePending && !permissionBusy && native.mousePlayActive !== true;
   const screenStatus = helper && settings.screenEnabled === true && native.screenEnabled === true
     && native.screenAuthorized === true && !screenPending && !permissionBusy
     && native.screenStatus === '画面理解未开启；需要同意向当前模型发送画面并获得系统权限。'
@@ -324,6 +329,8 @@ function CompanionSection({ snapshot, controller, disabled }) {
         h('p', { className: 'qcp-muted' }, '开启需要 macOS 辅助功能权限；点击开关后，由原生宠物显示确认与权限提示。'),
         h('p', { className: 'qcp-status', role: 'status' }, `辅助功能：${native.mouseAuthorized===true?'已授权':native.mouseAuthorized===false?'未授权':'待读取'} · 状态：${native.mousePlayActive===true?'正在轻拉鼠标':native.mousePlayActive===false?'未在轻拉鼠标':'待读取'}`),
         native.mouseStatus?h('p',{className:'qcp-muted'},native.mouseStatus):null,
+        h('div', { className: 'qcp-actions' }, button('试一下鼠标轻拉', () => controller.action('test-mouse-play'), disabled || !canTestMouse)),
+        h('p', { className: 'qcp-note' }, '点击并松开后会尝试轻拉最多 1.5 秒；真实移动鼠标、任意按键或 Esc 立即停止。原生 30 分钟冷却仍生效，安全条件不满足时不会移动；实际结果以上方原生状态为准。'),
         mousePending ? h('div', { className: 'qcp-actions' },
           h('p', { className: 'qcp-note', role: 'status' }, '鼠标开启请求正在等待辅助功能权限；重新检查不会自动开启。'),
           button('取消鼠标开启', () => controller.update({ mousePlayEnabled: false }), disabled, 'ghost')) : null)),

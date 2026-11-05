@@ -13,6 +13,22 @@ test('constructing the settings bridge performs no reads, actions, inference or 
   let calls=0; const {controller}=fixture(()=>{calls++;});
   assert.equal(calls,0); assert.equal(controller.store.getSnapshot().status,'idle'); controller.dispose();
 });
+
+test('mouse test failures display only local Chinese guard messages instead of remote diagnostics',async()=>{
+  for(const [code,message] of [
+    ['mouse-test-unavailable','请先开启应用感知与指针互动，并确认辅助功能已授权。'],
+    ['mouse-test-busy','请等当前授权或指针动作结束后再试。'],
+  ]) {
+    const calls=[];const {controller}=fixture(async(channel,endpoint,payload)=>{
+      calls.push({channel,endpoint,payload});
+      return {ok:false,error:{code,message:'PRIVATE_REMOTE_DIAGNOSTIC'}};
+    });
+    assert.equal(await controller.action('test-mouse-play'),false);
+    assert.equal(controller.state.error,message);assert.equal(JSON.stringify(controller.state).includes('PRIVATE_REMOTE'),false);
+    assert.deepEqual(calls,[{channel:'/api',endpoint:'quiet-companion/action',payload:{action:'test-mouse-play'}}]);
+    controller.dispose();
+  }
+});
 test('visible-page polling uses authenticated snapshot channel only and stops when closed',async()=>{
   const calls=[]; const {controller,intervals}=fixture(async(channel,endpoint,payload)=>{calls.push({channel,endpoint,payload});return {ok:true,value:{settings:{observationEnabled:false}}};});
   const close=controller.open(); await controller.load();
