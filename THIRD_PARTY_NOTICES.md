@@ -80,6 +80,12 @@ Host的React依赖图还涉及 [loose-envify 1.4.0](https://github.com/zertosh/l
 
 当前素材已替换此前鲸尾立绘及QCYTSN/dsh-dafeiyu、PC2005-cloud/dsh-pet动画集，不包含archived/restricted BigFish、其光标或声音。历史 `v0.2.0-beta.1`、`v0.2.0-beta.2`、`v0.3.0-beta.1` 含旧动画并保留相应原MIT；`v0.1.0-preview.1` 只有旧参考生成立绘。历史文件适用各自当时保留的条件，不能将旧动画MIT转授当前橙发参考或生成图。`v0.4.0-beta.1` 起为橙发角色，本次0.5.0再换为同一人物设定的Q版素材；原有记忆和成长记录不是素材许可的一部分，也不因更换画面而改写。
 
+## 文档实测截图
+
+[docs/assets/screenshots](docs/assets/screenshots/README.md)的10张图片来自2026-11-05实际运行的安静陪伴0.5.1-beta.9与系统预览窗口，经CUA `App.getScreenshot` 捕获；发布JPEG与原始捕获逐字节一致，未重绘、未裁剪、未转码。界面数据是当时快照；模型回应分别标注既有手动结果与新自动回应，Agent图片区分思考中与已完成。尺寸、字节数、SHA-256和各图范围见[截图清单](docs/assets/screenshots/manifest.json)。
+
+截图包含本插件原生AppKit界面、既有Host任务功能和本项目自有受控测试卡，未复制第三方截图、图库或图标包，未新增依赖或MIT授权。图中Q版角色继续适用上述参考与生成素材权利边界，不因截图展示另行取得授权；截图也不替代动态行为或任意内容理解的实测记录。
+
 ## 仅调研，未作为依赖或复制实现
 
 [Open-LLM-VTuber](https://github.com/Open-LLM-VTuber/Open-LLM-VTuber)、[`xp-level-system`](https://www.npmjs.com/package/xp-level-system)、[`xp-parser`](https://www.npmjs.com/package/xp-parser)没有安装、导入或随包提供其代码/素材；功能相似不表示已接入。CrossPet仅核验过固定提交 [5c64326b6e7fc175eda0360c0bb5c4732541d138](https://github.com/lokicorvus/crosspet/tree/5c64326b6e7fc175eda0360c0bb5c4732541d138)，没有复制图片、角色配置、提示词或代码。其代码MIT明确排除素材，[角色素材为CC BY-NC-SA 4.0](https://github.com/lokicorvus/crosspet/blob/5c64326b6e7fc175eda0360c0bb5c4732541d138/characters/LICENSE.md)，不能将该许可当成本项目新生成图的授权来源。
