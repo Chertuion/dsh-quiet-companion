@@ -4,7 +4,7 @@
 
 **在你工作、浏览和看视频时，能聊两句，也懂得安静陪着你的桌面伙伴。**
 
-[发行版本](https://github.com/Chertuion/dsh-quiet-companion/releases) · [使用指南](docs/guide.md) · [更新记录](CHANGELOG.md) · [问题反馈](https://github.com/Chertuion/dsh-quiet-companion/issues)
+[发行版本](https://github.com/Chertuion/dsh-quiet-companion-pet/releases) · [使用指南](docs/guide.md) · [更新记录](CHANGELOG.md) · [问题反馈](https://github.com/Chertuion/dsh-quiet-companion-pet/issues)
 
 <img src="docs/assets/screenshots/desktop-companion.jpg" width="360" alt="实际安装的Q版桌面角色，顶部显示空闲，8份零食分布在角色身边，成长状态栏已收起">
 
@@ -16,7 +16,7 @@
 
 角色风格是安静、体贴，带一点黏人与俏皮。主动回应由事件与上下文决定，模型可以选择保持安静。角色随 Harness 启停，使用官方桌面版时不需要一直开着终端。
 
-> **当前版本：[`v0.5.1-beta.9`](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.9)**，已公开并安装验证。支持 Apple Silicon Mac、macOS 14及以上、官方 Harness 桌面版 `0.2.1-rc.5`。直接跳到[安装步骤](#安装到官方桌面版)。
+> **当前版本：[`v0.5.1-beta.9`](https://github.com/Chertuion/dsh-quiet-companion-pet/releases/tag/v0.5.1-beta.9)**，已公开并安装验证。支持 Apple Silicon Mac、macOS 14及以上、官方 Harness 桌面版 `0.2.1-rc.5`。直接跳到[安装步骤](#安装到官方桌面版)。
 
 本文配图包含已安装版本的窗口实拍和用户提供的桌面气泡运行截图，均保留原始图片内容，并分别注明来源。测试卡为自有测试内容，主动评论与手动问答均来自真实运行；成长数值为拍摄时的本机状态。截图来源、各图范围与原始文件校验见[截图说明](docs/assets/screenshots/README.md)，功能验收条件见[验证记录](docs/development.md#beta9-validation)。
 
@@ -188,7 +188,7 @@
 2. 填入本版固定地址：
 
    ```text
-   github:Chertuion/dsh-quiet-companion#v0.5.1-beta.9
+   github:Chertuion/dsh-quiet-companion-pet#v0.5.1-beta.9
    ```
 
 3. 安装后启用插件，按应用提示重新打开 Harness。
@@ -198,7 +198,7 @@
 
 ### 使用 Release 安装包
 
-在对应 [Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.9) 的 **Assets** 中下载 [`dsh-quiet-companion-0.5.1-beta.9.tgz`](https://github.com/Chertuion/dsh-quiet-companion/releases/download/v0.5.1-beta.9/dsh-quiet-companion-0.5.1-beta.9.tgz)，无需解压，把下载文件的完整本机路径填入“添加插件”。GitHub 自动生成的 Source code ZIP/TAR 是源码快照，不是此预编译安装包。GitHub 源码拉取停滞时可选择同版已下载的 Release 安装包；旧版见[发行列表](https://github.com/Chertuion/dsh-quiet-companion/releases)。
+在对应 [Release](https://github.com/Chertuion/dsh-quiet-companion-pet/releases/tag/v0.5.1-beta.9) 的 **Assets** 中下载 [`dsh-quiet-companion-0.5.1-beta.9.tgz`](https://github.com/Chertuion/dsh-quiet-companion-pet/releases/download/v0.5.1-beta.9/dsh-quiet-companion-0.5.1-beta.9.tgz)，无需解压，把下载文件的完整本机路径填入“添加插件”。GitHub 自动生成的 Source code ZIP/TAR 是源码快照，不是此预编译安装包。GitHub 源码拉取停滞时可选择同版已下载的 Release 安装包；旧版见[发行列表](https://github.com/Chertuion/dsh-quiet-companion-pet/releases)。
 
 ### 使用桌面应用自带的 CLI
 
@@ -206,7 +206,7 @@
 
 ```sh
 "/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh" \
-  plugin --profile desktop add github:Chertuion/dsh-quiet-companion#v0.5.1-beta.9
+  plugin --profile desktop add github:Chertuion/dsh-quiet-companion-pet#v0.5.1-beta.9
 ```
 
 随后重新打开应用。这里使用的是**桌面应用自带的 CLI**，不要用独立 npm 安装的 `dsh` 去修改桌面端 profile。自定义安装位置请调整路径；参考 [Harness 官方桌面端说明](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.1-rc.5/apps/desktop/README.zh.md)。
@@ -507,4 +507,4 @@ npm test
 
 自有代码当前为 **`UNLICENSED`**，仓库没有统一授予MIT许可；第三方部分继续遵守各自原许可。角色素材另见[素材来源](assets/orange-character/ASSET_SOURCE.md)，未随软件许可额外授予再分发权。引用、调研或保留原许可，也不表示获得上游作者的背书。
 
-欢迎通过 [Issues](https://github.com/Chertuion/dsh-quiet-companion/issues) 反馈问题或建议。涉及外部代码、模型或素材的改动，请同时给出来源、具体版本、适用许可和修改范围，便于持续维护完整的归属记录。
+欢迎通过 [Issues](https://github.com/Chertuion/dsh-quiet-companion-pet/issues) 反馈问题或建议。涉及外部代码、模型或素材的改动，请同时给出来源、具体版本、适用许可和修改范围，便于持续维护完整的归属记录。

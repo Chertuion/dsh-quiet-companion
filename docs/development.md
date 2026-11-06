@@ -162,7 +162,7 @@ python3 native/protocol-test.py "$companion_app" --launch-services
 
 ### beta5公开发行后的安装核对（2026-11-04）
 
-- GitHub [v0.5.1-beta.5 Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.5)已公开，`draft=false`，固定标签对应提交 [`5dbd998`](https://github.com/Chertuion/dsh-quiet-companion/commit/5dbd998)。通过桌面应用CLI实际安装到desktop profile，版本为0.5.1-beta.5，87文件与公开包逐字节一致。
+- GitHub [v0.5.1-beta.5 Release](https://github.com/Chertuion/dsh-quiet-companion-pet/releases/tag/v0.5.1-beta.5)已公开，`draft=false`，固定标签对应提交 [`5dbd998`](https://github.com/Chertuion/dsh-quiet-companion-pet/commit/5dbd998)。通过桌面应用CLI实际安装到desktop profile，版本为0.5.1-beta.5，87文件与公开包逐字节一致。
 - 原生18文件保持不变，严格签名通过，CDHash为 `b7940519fab59a2b6731d33bc713eea330d5a29c`。安装前后设置、成长、用量三文件SHA一致，临时 `QC-SCREEN-7429` 已移除；这是安装瞬间核对，不表示运行后状态永不变化。
 - 2026-11-04尝试重启Host时设备锁屏，Host未成功启动，当时设置页与CG回显尚未确认。这是当日历史记录；次日解锁后的实际结果另列，不以安装核对或旧版结果替代UI验收。
 - beta4上一轮的screen/observation开关为开、CG已授权、11月4日预算已满以及一次食物请求被睡眠门禁阻止，均只保留在beta4历史范围；没有提高预算、清usage或把被阻止的模型/递食当作成功。本次文档补记不改写已发布标签、资产或发行说明。
@@ -187,7 +187,7 @@ python3 native/protocol-test.py "$companion_app" --launch-services
 
 保持0.5.1/build9的原生18文件及签名字节，不重新编译或增加原生命令、权限、素材、依赖。Harness/角色聊天在前台时不保证新增采样，手动请求仍可能没有可用附图；此修复不等于主动截图，也不保证受控标记OCR成功。beta4已公开并实际安装，功能终验逐项另记；beta3的174项计数和既有CG授权结果仍仅作该版本历史保留。
 
-公开发行对应提交 [`221630c`](https://github.com/Chertuion/dsh-quiet-companion/commit/221630c)，[固定标签与Release](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.4)已公开，资产为35,957,787字节，SHA-256为 `e5da5a62afdca14fe2b573eba4f8ac439b2e43485072ac7295a72d2a272c35eb`；GitHub资产上传状态及非草稿状态已核对。固定标签和资产保持冻结，本段为后续文档补记，实际安装校验见下。
+公开发行对应提交 [`221630c`](https://github.com/Chertuion/dsh-quiet-companion-pet/commit/221630c)，[固定标签与Release](https://github.com/Chertuion/dsh-quiet-companion-pet/releases/tag/v0.5.1-beta.4)已公开，资产为35,957,787字节，SHA-256为 `e5da5a62afdca14fe2b573eba4f8ac439b2e43485072ac7295a72d2a272c35eb`；GitHub资产上传状态及非草稿状态已核对。固定标签和资产保持冻结，本段为后续文档补记，实际安装校验见下。
 
 <a id="beta4-desktop-validation"></a>
 
@@ -211,7 +211,7 @@ python3 native/protocol-test.py "$companion_app" --launch-services
 
 ### beta3公开发行后的实际Desktop复核（2026-11-04）
 
-- [公开发行版](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.3)对应提交 [`805b147`](https://github.com/Chertuion/dsh-quiet-companion/commit/805b147)。公开GitHub资产的SHA-256与冻结安装包一致：`31ad91ad76678799a49177c622c704bc60e7a5a5ec1b0ae5bbe30e8cc99cec71`。实际profile中的87个文件与包逐字节匹配，原生组件严格签名验证通过；bundle内18文件与beta2一致，没有重新构建或改签名。
+- [公开发行版](https://github.com/Chertuion/dsh-quiet-companion-pet/releases/tag/v0.5.1-beta.3)对应提交 [`805b147`](https://github.com/Chertuion/dsh-quiet-companion-pet/commit/805b147)。公开GitHub资产的SHA-256与冻结安装包一致：`31ad91ad76678799a49177c622c704bc60e7a5a5ec1b0ae5bbe30e8cc99cec71`。实际profile中的87个文件与包逐字节匹配，原生组件严格签名验证通过；bundle内18文件与beta2一致，没有重新构建或改签名。
 - 安装完成、恢复互动前的工具断言确认设置、成长、用量三个文件与安装前逐字节一致。这是安装瞬间的保留结果，不把它扩展为运行后始终不变。
 - 后续真实互动、进食及模型请求正常更新成长和用量。一次只读快照中，等级仍为2、经验72→100、实体库存24→25，原有31条用量去重记录均保留；设置散列仍匹配，成长/用量散列已因运行变化，未见重置。该快照不是当前永久数值，也不再称三个文件当前字节均相同。
 - beta3实际身体互动得到自然中文模型回应，记录为该路径通过；摸头成功仍引用beta2历史，裙摆留待重启后复测。未据此宣称所有部位或原先 `invalid_json` 根因均已验证。
@@ -243,7 +243,7 @@ python3 native/protocol-test.py "$companion_app" --launch-services
 
 ### beta2公开发行后的实际Desktop复核（2026-11-04）
 
-- 已从[公开发行版](https://github.com/Chertuion/dsh-quiet-companion/releases/tag/v0.5.1-beta.2)完成实际Desktop安装；发行对应提交为 [`d3bf465`](https://github.com/Chertuion/dsh-quiet-companion/commit/d3bf465)。安装后87个文件与发行包一致，严格签名通过；安装前后的设置、成长、用量三个文件逐字节保留。
+- 已从[公开发行版](https://github.com/Chertuion/dsh-quiet-companion-pet/releases/tag/v0.5.1-beta.2)完成实际Desktop安装；发行对应提交为 [`d3bf465`](https://github.com/Chertuion/dsh-quiet-companion-pet/commit/d3bf465)。安装后87个文件与发行包一致，严格签名通过；安装前后的设置、成长、用量三个文件逐字节保留。
 - 真实点击角色身边的蛋糕卷后，进食计数增加1、获得20XP。另一次互动获得5XP，单独记录，不并入进食奖励；紧接着点击另一食物显示53秒冷却，未绕过进食门禁。
 - 真实摸头得到与头顶部位匹配的中文模型回应，并从原生聊天记录确认文本保留。一次身体互动仍返回 `invalid_json`，其根因尚未确认，不记录为所有部位均成功。
 - beta2新进程的屏幕预检未授权；一次系统权限请求和一次重启后仍为未授权。随后用户已重新切换系统开关，仍未恢复，系统条目路径与签名身份的核查见[后续记录](#screen-permission-followup)。不将保存开关或重启当作授权成功；beta1曾通过的屏幕授权仅保留为历史结果，不能用于证明此次beta2通过。

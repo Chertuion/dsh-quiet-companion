@@ -11,7 +11,7 @@ beta6历史：重启保留合法开关与同一模型发送同意，清除短期
 DeepSeek Harness 的 macOS 桌面陪伴插件：沿用默认模型聊天，支持记忆、Agent进度、身边零食与成长，以及可选的画面理解、系统声音转写和语音朗读。
 
 适用：Apple Silicon、macOS14+、Harness0.2.1-rc.5。
-安装：插件 → 添加插件 → github:Chertuion/dsh-quiet-companion#v0.5.1-beta.9
+安装：插件 → 添加插件 → github:Chertuion/dsh-quiet-companion-pet#v0.5.1-beta.9
 固定标签与同版Release包对应，无需解压；当前安装与实际功能结果以docs/development.md的beta9记录为准，下方各旧版验收记录保留其当时范围。
 启用后重新打开 Harness，在“设置 → 安静陪伴”管理。
 
